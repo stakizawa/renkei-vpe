@@ -1,0 +1,159 @@
+#! /bin/env ruby
+
+##############################################################################
+# Environment Configuration
+##############################################################################
+RVPS_LOCATION=ENV["RVPS_LOCATION"]
+
+if !RVPS_LOCATION
+  $stderr.puts 'set "RVPS_LOCATION" valiable.'
+  exit 1
+else
+  RUBY_LIB_LOCATION=RVPS_LOCATION+"/lib"
+end
+
+$: << RUBY_LIB_LOCATION
+
+##############################################################################
+# Required libraries
+##############################################################################
+require 'renkei-vps'
+require 'OpenNebula'
+require 'optparse'
+
+##############################################################################
+# Global variables
+##############################################################################
+client = OpenNebula::Client.new()
+img_pool = OpenNebula::ImagePool.new(client, -1)
+
+xml_output = false
+
+# TODO make it to a local variable in print_list_friendly
+$list_columns = {
+  :id      => { :name => 'ID',
+                :size => 4,
+                :proc => lambda {|d,e| d.id} },
+  :user    => { :name => 'USER',
+                :size => 8,
+                :proc => lambda {|d,e| d["USERNAME"]} },
+  :name    => { :name => 'NAME',
+                :size => 30,
+                :proc => lambda {|d,e|
+                           if d["PUBLIC"].to_i == 1 then d.name
+                           else "- " + d.name end} },
+  :regtime => { :name => 'REGTIME',
+                :size => 20,
+                :proc => lambda {|d,e| str_register_time(d)} },
+  :state   => { :name => 'STAT',
+                :size => 4,
+                :proc => lambda {|d,e| d.short_state_str} },
+
+  :default => [:id, :user, :name, :regtime, :state]
+}
+
+##############################################################################
+# Functions
+##############################################################################
+def print_list_friendly(img_pool)
+  table = ShowTable.new($list_columns)
+
+  scr_bold
+  scr_underline
+  print table.header_str
+  scr_restore
+  puts
+
+  puts table.data_str(img_pool)
+end
+
+##############################################################################
+# main
+##############################################################################
+
+begin
+  parser = OptionParser.new
+  parser.banner = <<EOT
+Usage:
+    rvpsimage command <options>
+
+Commands:
+    import
+
+    export
+
+    delete
+
+    publish
+
+    unpublish
+
+    list <-x>
+      list registered images you can use.
+
+    show
+
+    help
+      show this message.
+
+Options:
+EOT
+
+  parser.on('-x', '--xml', ': xml output mode') do
+    xml_output = true
+  end
+
+  parser.parse!(ARGV)
+rescue OptionParser::ParseError
+  $stderr.puts parser.help
+  exit 1
+rescue => e
+  $stderr.puts e.message + "\n\n"
+  $stderr.puts parser.help
+  exit 1
+end
+
+command = ARGV.shift
+case command
+when 'import'
+
+when 'export'
+
+when 'delete'
+
+when 'publish'
+
+when 'unpublish'
+
+when 'list'
+  # retrieve image pool info.
+  rc = img_pool.info
+  if OpenNebula.is_error?(rc)
+    $stderr.puts rc.message
+    exit 1
+  end
+
+  if xml_output
+    puts img_pool.to_xml
+  else
+    print_list_friendly(img_pool)
+  end
+
+when 'show'
+
+when 'help'
+  puts parser.help
+
+else
+  $stderr.puts "Unknown command: #{command}"
+  $stderr.puts parser.help
+
+end
+
+
+### Local variables:
+### mode: Ruby
+### coding: utf-8-unix
+### indent-tabs-mode: nil
+### End:
+
