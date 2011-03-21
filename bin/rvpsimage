@@ -19,44 +19,43 @@ $: << RUBY_LIB_LOCATION
 ##############################################################################
 require 'renkei-vps'
 require 'OpenNebula'
+require 'fileutils'
 require 'optparse'
 
 ##############################################################################
 # Global variables
 ##############################################################################
+CMD_NAME = 'rvpeimage'
+
 client = OpenNebula::Client.new()
-img_pool = OpenNebula::ImagePool.new(client, -1)
-
 xml_output = false
-
-# TODO make it to a local variable in print_list_friendly
-$list_columns = {
-  :id      => { :name => 'ID',
-                :size => 4,
-                :proc => lambda {|d,e| d.id} },
-  :user    => { :name => 'USER',
-                :size => 8,
-                :proc => lambda {|d,e| d["USERNAME"]} },
-  :name    => { :name => 'NAME',
-                :size => 30,
-                :proc => lambda {|d,e|
-                           if d["PUBLIC"].to_i == 1 then d.name
-                           else "- " + d.name end} },
-  :regtime => { :name => 'REGTIME',
-                :size => 20,
-                :proc => lambda {|d,e| str_register_time(d)} },
-  :state   => { :name => 'STAT',
-                :size => 4,
-                :proc => lambda {|d,e| d.short_state_str} },
-
-  :default => [:id, :user, :name, :regtime, :state]
-}
 
 ##############################################################################
 # Functions
 ##############################################################################
 def print_list_friendly(img_pool)
-  table = ShowTable.new($list_columns)
+  list_columns = {
+#    :id      => { :name => 'ID',
+#                  :size => 4,
+#                  :proc => lambda {|d,e| d.id} },
+    :user    => { :name => 'OWNER',
+                  :size => 10,
+                  :proc => lambda {|d,e| d["USERNAME"]} },
+    :name    => { :name => 'NAME',
+                  :size => 30,
+                  :proc => lambda {|d,e|
+                             if d["PUBLIC"].to_i == 1 then d.name
+                             else "- " + d.name end} },
+    :regtime => { :name => 'REGTIME',
+                  :size => 20,
+                  :proc => lambda {|d,e| str_register_time(d)} },
+    :state   => { :name => 'STAT',
+                  :size => 4,
+                  :proc => lambda {|d,e| d.short_state_str} },
+
+    :default => [:user, :name, :regtime, :state]
+  }
+  table = ShowTable.new(list_columns)
 
   scr_bold
   scr_underline
@@ -75,26 +74,51 @@ begin
   parser = OptionParser.new
   parser.banner = <<EOT
 Usage:
-    rvpsimage command <options>
+    #{CMD_NAME} command <options>
 
 Commands:
-    import
+    import definition_file
+        import an image to the system which is defined in definition_file.
 
-    export
+        $ #{CMD_NAME} import centos.dsk
 
-    delete
+    export image_name file_name
+        export an image named image_name to a file named file_name.
+        If file_name file is a directory, it outputs a file under the
+        directorynamed named 'file_name/image_name'.
 
-    publish
+        $ #{CMD_NAME} export centos5.5_virtio centos.img
 
-    unpublish
+    delete image_names
+        delete specified images. image_names can be names of images.
+
+        $ #{CMD_NAME} delete centos5.5_virtio
+        $ #{CMD_NAME} delete centos5.5_virtio 'ttylinux sample'
+
+    publish image_names
+        publish specified images. image_names can be names of images.
+
+        $ #{CMD_NAME} publish centos5.5_virtio
+        $ #{CMD_NAME} publish centos5.5_virtio 'ttylinux sample'
+
+    unpublish image_names
+        unpublish specified images. image_names can be names of images.
+
+        $ #{CMD_NAME} unpublish centos5.5_virtio
+        $ #{CMD_NAME} unpublish centos5.5_virtio 'ttylinux sample'
 
     list <-x>
-      list registered images you can use.
+        list registered images you can use.
 
-    show
+    show <-x> image_names
+        show information about specified images. image_names can be names
+        of images.
+
+        $ #{CMD_NAME} show centos5.5_virtio
+        $ #{CMD_NAME} show centos5.5_virtio 'ttylinux sample'
 
     help
-      show this message.
+        show this message.
 
 Options:
 EOT
@@ -115,20 +139,113 @@ end
 
 command = ARGV.shift
 case command
+#######################################
+# import an image to the system
 when 'import'
+  check_parameters('import', 1)
+  begin
+    template = File.read(ARGV[0])
+  rescue
+    $stderr.puts "Can't read definition file: #{ARGV[0]}"
+    exit 1
+  end
 
+  image = OpenNebula::Image.new(OpenNebula::Image.build_xml, client)
+  rc = OpenNebula::ImageRepository.new.create(image, template)
+  if is_successful?(rc)
+    puts "NAME: " + image.name
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+
+#######################################
+# export an image
 when 'export'
+  check_parameters('export', 2)
+  img_name = ARGV[0]
+  out_name = ARGV[1]
 
+  id = get_image_id(img_name)
+  image = OpenNebula::Image.new_with_id(id, client)
+  rc = image.info
+
+  if is_successful?(rc)
+    # decide output file name
+    if FileTest.exist?(out_name)
+      if FileTest.directory?(out_name)
+        out_name += '/' + image['NAME'].gsub(/\s+/, '_')
+      else
+        $stderr.puts "File exists: #{out_name}"
+        exit 1
+      end
+    end
+
+    FileUtils.cp(image['SOURCE'], out_name)
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+
+
+#######################################
+# delete an image
 when 'delete'
+  check_parameters('delete', 1)
 
+  img_repo = OpenNebula::ImageRepository.new
+  ARGV.each do |img_name|
+    id = get_image_id(img_name)
+    image = OpenNebula::Image.new_with_id(id, client)
+    rc = img_repo.delete(image)
+    if is_successful?(rc)
+      puts "Image deleted: #{image.name}"
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
+
+#######################################
+# publish an image
 when 'publish'
+  check_parameters('publish', 1)
 
+  ARGV.each do |img_name|
+    id = get_image_id(img_name)
+    image = OpenNebula::Image.new_with_id(id, client)
+    rc = image.publish
+    if is_successful?(rc)
+      puts "Image published"
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
+
+#######################################
+# unpublish an image
 when 'unpublish'
+  check_parameters('unpublish', 1)
 
+  ARGV.each do |img_name|
+    id = get_image_id(img_name)
+    image = OpenNebula::Image.new_with_id(id, client)
+    rc = image.unpublish
+    if is_successful?(rc)
+      puts "Image unpublished"
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
+
+#######################################
+# show image list
 when 'list'
-  # retrieve image pool info.
+  img_pool = OpenNebula::ImagePool.new(client, -1)
   rc = img_pool.info
-  if OpenNebula.is_error?(rc)
+  if is_error?(rc)
     $stderr.puts rc.message
     exit 1
   end
@@ -139,8 +256,61 @@ when 'list'
     print_list_friendly(img_pool)
   end
 
+#######################################
+# show image info
 when 'show'
+  check_parameters('show', 1)
 
+  ARGV.each do |img_name|
+    id = get_image_id(img_name)
+    image = OpenNebula::Image.new_with_id(id, client)
+    rc = image.info
+
+    if is_successful?(rc)
+      if xml_output
+        puts image.to_xml
+      else
+        str="%-15s: %-30s"
+
+        # print header
+        print_header("%-80s", "IMAGE INFORMATION", true)
+
+#        # print ID
+#        puts str % ["ID", image.id.to_s]
+        # print Name
+        puts str % ["NAME", image.name]
+        # print Register time
+        value = image['REGTIME'].to_i
+        if value == 0
+          value = '-'
+        else
+          value = Time.at(value).strftime("%m/%d %H:%M:%S")
+        end
+        puts str % ["REGISTER TIME", value]
+        # print Public flag
+        if image['PUBLIC'].to_i == 1
+          public_str = "Yes"
+        else
+          public_str = "No"
+        end
+        puts str % ["PUBLIC", public_str]
+        # print State
+        puts str % ["STATE", image.state_str]
+        # print Description
+        image.template_str.each_line do |line|
+          if /^(DESCRIPTION)\s*=\s*(.+)/ =~ line
+            puts str % [$1, $2]
+          end
+        end
+      end
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
+
+#######################################
+# show help
 when 'help'
   puts parser.help
 
