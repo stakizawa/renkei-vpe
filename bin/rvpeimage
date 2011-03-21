@@ -3,13 +3,13 @@
 ##############################################################################
 # Environment Configuration
 ##############################################################################
-RVPS_LOCATION=ENV["RVPS_LOCATION"]
+RVPE_LOCATION=ENV["RVPE_LOCATION"]
 
-if !RVPS_LOCATION
-  $stderr.puts 'set "RVPS_LOCATION" valiable.'
+if !RVPE_LOCATION
+  $stderr.puts 'set "RVPE_LOCATION" valiable.'
   exit 1
 else
-  RUBY_LIB_LOCATION=RVPS_LOCATION+"/lib"
+  RUBY_LIB_LOCATION=RVPE_LOCATION+"/lib"
 end
 
 $: << RUBY_LIB_LOCATION
@@ -17,7 +17,7 @@ $: << RUBY_LIB_LOCATION
 ##############################################################################
 # Required libraries
 ##############################################################################
-require 'renkei-vps'
+require 'renkei-vpe'
 require 'OpenNebula'
 require 'fileutils'
 require 'optparse'
@@ -186,7 +186,6 @@ when 'export'
     $stderr.puts rc.message
     exit 1
   end
-
 
 #######################################
 # delete an image
