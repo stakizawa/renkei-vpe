@@ -1,21 +1,3 @@
-# -------------------------------------------------------------------------- #
-# Copyright 2002-2010, OpenNebula Project Leads (OpenNebula.org)             #
-#                                                                            #
-# Licensed under the Apache License, Version 2.0 (the "License"); you may    #
-# not use this file except in compliance with the License. You may obtain    #
-# a copy of the License at                                                   #
-#                                                                            #
-# http://www.apache.org/licenses/LICENSE-2.0                                 #
-#                                                                            #
-# Unless required by applicable law or agreed to in writing, software        #
-# distributed under the License is distributed on an "AS IS" BASIS,          #
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   #
-# See the License for the specific language governing permissions and        #
-# limitations under the License.                                             #
-#--------------------------------------------------------------------------- #
-
-require 'OpenNebula'
-
 #####################
 # CONSOLE UTILITIES #
 #####################
@@ -235,16 +217,16 @@ end
 # Miscelaneous #
 ################
 
-def get_one_client(session=nil)
-    OpenNebula::Client.new(session)
+def get_rvpe_client(session=nil)
+    RenkeiVPE::Client.new(session)
 end
 
 def is_error?(result)
-    OpenNebula.is_error?(result)
+    RenkeiVPE.is_error?(result)
 end
 
 def is_successful?(result)
-    !OpenNebula.is_error?(result)
+    !RenkeiVPE.is_error?(result)
 end
 
 def check_parameters(name, number)
@@ -265,7 +247,7 @@ def get_entity_id(name, pool_class)
     return name if name.match(/^[0123456789]+$/)
 
     # TODO: get vm's from the actual user
-    pool=pool_class.new(get_one_client)
+    pool=pool_class.new(get_rvpe_client)
     result=pool.info
 
     # TODO: Check for errors
@@ -289,29 +271,29 @@ def get_entity_id(name, pool_class)
     result
 end
 
-def get_vm_id(name)
-    get_entity_id(name, OpenNebula::VirtualMachinePool)
-end
+# def get_vm_id(name)
+#     get_entity_id(name, RenkeiVPE::VirtualMachinePool)
+# end
 
-def get_host_id(name)
-    get_entity_id(name, OpenNebula::HostPool)
-end
+# def get_host_id(name)
+#     get_entity_id(name, RenkeiVPE::HostPool)
+# end
 
-def get_vn_id(name)
-    get_entity_id(name, OpenNebula::VirtualNetworkPool)
-end
+# def get_vn_id(name)
+#     get_entity_id(name, RenkeiVPE::VirtualNetworkPool)
+# end
 
-def get_user_id(name)
-    get_entity_id(name, OpenNebula::UserPool)
-end
+# def get_user_id(name)
+#     get_entity_id(name, RenkeiVPE::UserPool)
+# end
 
 def get_image_id(name)
-    get_entity_id(name, OpenNebula::ImagePool)
+    get_entity_id(name, RenkeiVPE::ImagePool)
 end
 
-def get_cluster_id(name)
-    get_entity_id(name, OpenNebula::ClusterPool)
-end
+# def get_cluster_id(name)
+#     get_entity_id(name, RenkeiVPE::ClusterPool)
+# end
 
 def str_running_time(data)
     stime=Time.at(data["STIME"].to_i)

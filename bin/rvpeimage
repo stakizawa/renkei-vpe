@@ -3,13 +3,13 @@
 ##############################################################################
 # Environment Configuration
 ##############################################################################
-RVPE_LOCATION=ENV["RVPE_LOCATION"]
+RVPE_LOCATION = ENV['RVPE_LOCATION']
 
 if !RVPE_LOCATION
   $stderr.puts 'set "RVPE_LOCATION" valiable.'
   exit 1
 else
-  RUBY_LIB_LOCATION=RVPE_LOCATION+"/lib"
+  RUBY_LIB_LOCATION = RVPE_LOCATION + '/lib'
 end
 
 $: << RUBY_LIB_LOCATION
@@ -18,7 +18,7 @@ $: << RUBY_LIB_LOCATION
 # Required libraries
 ##############################################################################
 require 'renkei-vpe'
-require 'OpenNebula'
+require 'client_utilities'
 require 'fileutils'
 require 'optparse'
 
@@ -27,7 +27,7 @@ require 'optparse'
 ##############################################################################
 CMD_NAME = 'rvpeimage'
 
-client = OpenNebula::Client.new()
+client = RenkeiVPE::Client.new()
 xml_output = false
 
 ##############################################################################
@@ -150,8 +150,8 @@ when 'import'
     exit 1
   end
 
-  image = OpenNebula::Image.new(OpenNebula::Image.build_xml, client)
-  rc = OpenNebula::ImageRepository.new.create(image, template)
+  image = RenkeiVPE::Image.new(RenkeiVPE::Image.build_xml, client)
+  rc = image.register(template)
   if is_successful?(rc)
     puts "NAME: " + image.name
   else
@@ -167,7 +167,7 @@ when 'export'
   out_name = ARGV[1]
 
   id = get_image_id(img_name)
-  image = OpenNebula::Image.new_with_id(id, client)
+  image = RenkeiVPE::Image.new_with_id(id, client)
   rc = image.info
 
   if is_successful?(rc)
@@ -192,11 +192,10 @@ when 'export'
 when 'delete'
   check_parameters('delete', 1)
 
-  img_repo = OpenNebula::ImageRepository.new
   ARGV.each do |img_name|
     id = get_image_id(img_name)
-    image = OpenNebula::Image.new_with_id(id, client)
-    rc = img_repo.delete(image)
+    image = RenkeiVPE::Image.new_with_id(id, client)
+    rc = image.unregister
     if is_successful?(rc)
       puts "Image deleted: #{image.name}"
     else
@@ -212,7 +211,7 @@ when 'publish'
 
   ARGV.each do |img_name|
     id = get_image_id(img_name)
-    image = OpenNebula::Image.new_with_id(id, client)
+    image = RenkeiVPE::Image.new_with_id(id, client)
     rc = image.publish
     if is_successful?(rc)
       puts "Image published"
@@ -229,7 +228,7 @@ when 'unpublish'
 
   ARGV.each do |img_name|
     id = get_image_id(img_name)
-    image = OpenNebula::Image.new_with_id(id, client)
+    image = RenkeiVPE::Image.new_with_id(id, client)
     rc = image.unpublish
     if is_successful?(rc)
       puts "Image unpublished"
@@ -242,7 +241,7 @@ when 'unpublish'
 #######################################
 # show image list
 when 'list'
-  img_pool = OpenNebula::ImagePool.new(client, -1)
+  img_pool = RenkeiVPE::ImagePool.new(client, -1)
   rc = img_pool.info
   if is_error?(rc)
     $stderr.puts rc.message
@@ -262,7 +261,7 @@ when 'show'
 
   ARGV.each do |img_name|
     id = get_image_id(img_name)
-    image = OpenNebula::Image.new_with_id(id, client)
+    image = RenkeiVPE::Image.new_with_id(id, client)
     rc = image.info
 
     if is_successful?(rc)
@@ -325,4 +324,3 @@ end
 ### coding: utf-8-unix
 ### indent-tabs-mode: nil
 ### End:
-

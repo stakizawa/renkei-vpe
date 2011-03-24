@@ -1,0 +1,58 @@
+#! /bin/env ruby
+
+##############################################################################
+# Environment Configuration
+##############################################################################
+RVPE_LOCATION = ENV['RVPE_LOCATION']
+
+if !RVPE_LOCATION
+  $stderr.puts 'set "RVPE_LOCATION" valiable.'
+  exit 1
+else
+  RUBY_LIB_LOCATION = RVPE_LOCATION + '/lib'
+end
+
+$: << RUBY_LIB_LOCATION
+
+##############################################################################
+# Required libraries
+##############################################################################
+require 'xmlrpc/server'
+require 'renkei-vpe-server'
+#require 'fileutils'
+#require 'optparse'
+
+##############################################################################
+# Global variables
+##############################################################################
+CMD_NAME = 'rvped'
+CNF_FILE = RVPE_LOCATION + '/etc/rvped.conf'
+
+##############################################################################
+# Setup XML RPC
+##############################################################################
+include RenkeiVPEServer
+
+server = XMLRPC::Server.new('8080') # TODO read config
+one_endpoint = 'http://localhost:2633/RPC2'
+server.add_handler(Image::INTERFACE, Image.new(one_endpoint))
+server.add_handler(ImagePool::INTERFACE, ImagePool.new(one_endpoint))
+
+# to support system.listMethods, system.methodSignature and system.methodHelp
+server.add_introspection
+# when method missing and wrong arguments
+server.set_default_handler do |name, *args|
+  raise XMLRPC::FaultException.new(-99, "Method #{name} missing" +
+                                   " or wrong number of parameters!")
+end
+
+##############################################################################
+# Setup XML RPC
+##############################################################################
+server.serve
+
+### Local variables:
+### mode: Ruby
+### coding: utf-8-unix
+### indent-tabs-mode: nil
+### End:
