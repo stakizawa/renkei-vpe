@@ -17,39 +17,168 @@ $: << RUBY_LIB_LOCATION
 ##############################################################################
 # Required libraries
 ##############################################################################
-require 'xmlrpc/server'
 require 'renkei-vpe-server'
-#require 'fileutils'
-#require 'optparse'
+require 'optparse'
+require 'fileutils'
 
 ##############################################################################
 # Global variables
 ##############################################################################
 CMD_NAME = 'rvped'
+PID_FILE = RVPE_LOCATION + '/var/rvped.pid'
 CNF_FILE = RVPE_LOCATION + '/etc/rvped.conf'
 
 ##############################################################################
-# Setup XML RPC
+# Functions
 ##############################################################################
-include RenkeiVPEServer
 
-server = XMLRPC::Server.new('8080') # TODO read config
-one_endpoint = 'http://localhost:2633/RPC2'
-server.add_handler(Image::INTERFACE, Image.new(one_endpoint))
-server.add_handler(ImagePool::INTERFACE, ImagePool.new(one_endpoint))
+# return 0 if server successfuly starts
+# return 1 if server doesn't start
+def start_server(is_daemon)
+  case status_server
+  when 0
+    puts 'server is already running'
+    return 1
+  when 1
+    puts "pid file exists. I'll delete it to run the server."
+    FileUtils.rm(PID_FILE)
+  end
 
-# to support system.listMethods, system.methodSignature and system.methodHelp
-server.add_introspection
-# when method missing and wrong arguments
-server.set_default_handler do |name, *args|
-  raise XMLRPC::FaultException.new(-99, "Method #{name} missing" +
-                                   " or wrong number of parameters!")
+  config = RenkeiVPE::ServerConfig.read_config(CNF_FILE)
+  server = RenkeiVPE::Server.new(config)
+  if is_daemon
+    RenkeiVPE::Server.daemonize(PID_FILE) do
+      server.start
+    end
+  else
+    server.start
+  end
+
+  return 0
+end
+
+# return 0 if server successfuly stops
+# return 1 if server doesn't stop
+def stop_server
+  case status_server
+  when  1
+    puts 'server is not running'
+    return 1
+  when -1
+    puts "pid file doesn't exist."
+    return 1
+  end
+
+  Process.kill(9, server_pid)
+  FileUtils.rm(PID_FILE)
+
+  return 0
+end
+
+# return  0 if process exist
+# return  1 if process does not exist
+# return -1 if PID_FILE does not exist
+def status_server
+  return -1 unless FileTest.exist?(PID_FILE)
+
+  begin
+    Process.getpgid(server_pid)
+    return 0
+  rescue
+    return 1
+  end
+end
+
+def server_pid
+  File.read(PID_FILE).to_i
 end
 
 ##############################################################################
-# Setup XML RPC
+# main
 ##############################################################################
-server.serve
+daemon_mode = true
+
+begin
+  parser = OptionParser.new
+  parser.banner = <<EOT
+Usage:
+    #{CMD_NAME} command <options>
+
+Commands:
+    start <-f>
+        start daemon.
+
+        $ #{CMD_NAME} start
+
+    stop
+        stop daemon.
+
+        $ #{CMD_NAME} stop
+
+    status
+        ask status the daemon.
+
+        $ #{CMD_NAME} status
+
+Options:
+EOT
+
+  parser.on('-f', '--foreground', ": run #{CMD_NAME} in foreground") do
+    daemon_mode = false
+  end
+
+  parser.parse!(ARGV)
+rescue OptionParser::ParseError
+  $stderr.puts parser.help
+  exit 1
+rescue => e
+  $stderr.puts e.message + "\n\n"
+  $stderr.puts parser.help
+  exit 1
+end
+
+command = ARGV.shift
+case command
+#######################################
+# start RenkeiVPE server
+when 'start'
+  result = start_server(daemon_mode)
+  if result == 0
+    puts "#{CMD_NAME} starts"
+  else
+    puts "#{CMD_NAME} doesn't start"
+  end
+
+#######################################
+# stop RenkeiVPE server
+when 'stop'
+  result = stop_server
+  if result == 0
+    puts "#{CMD_NAME} stops"
+  else
+    puts "#{CMD_NAME} doesn't stop"
+  end
+
+#######################################
+# ask status of RenkeiVPE server
+when 'status'
+  result = status_server
+  if result == 0
+    puts "#{CMD_NAME}(#{server_pid}) is running..."
+  else
+    puts "#{CMD_NAME} is not running"
+  end
+
+#######################################
+# show help
+when 'help'
+  puts parser.help
+
+else
+  $stderr.puts "Unknown command: #{command}"
+  $stderr.puts parser.help
+
+end
 
 ### Local variables:
 ### mode: Ruby

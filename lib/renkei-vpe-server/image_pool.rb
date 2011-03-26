@@ -1,6 +1,6 @@
 require 'xmlrpc/client'
 
-module RenkeiVPEServer
+module RenkeiVPE
   class ImagePool
     def initialize(one_endpoint)
       @client = XMLRPC::Client.new2(one_endpoint)
