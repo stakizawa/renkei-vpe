@@ -353,3 +353,11 @@ end
 def expand_args(args)
     args.collect {|arg| expand_range(arg) }.flatten
 end
+
+
+### Local variables:
+### mode: Ruby
+### coding: utf-8-unix
+### indent-tabs-mode: nil
+### End:
+
