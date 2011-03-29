@@ -1,10 +1,9 @@
-require 'xmlrpc/client'
-require 'pp'
+require 'renkei-vpe-server/one_client'
 
 module RenkeiVPE
-  class Image
+  class Image < OpenNebulaClient
     def initialize(one_endpoint)
-      @client = XMLRPC::Client.new2(one_endpoint)
+      super(one_endpoint)
     end
 
     # return information about this image.
@@ -15,7 +14,9 @@ module RenkeiVPE
     #             if successful this is the string with the information
     #             about the image
     def info(session, id)
-      @client.call_async('one.image.info', session, id)
+      one_auth(session) do
+        call_one_xmlrpc('one.image.info', session, id)
+      end
     end
 
     # allocates a new image.
@@ -26,7 +27,9 @@ module RenkeiVPE
     #             if successful this is the associated id (int id)
     #             generated for this image
     def allocate(session, template)
-      @client.call_async('one.image.allocate', session, template)
+      one_auth(session) do
+        call_one_xmlrpc('one.image.allocate', session, template)
+      end
     end
 
     # deletes an image from the image pool.
@@ -36,7 +39,9 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             otherwise it does not exist.
     def delete(session, id)
-      @client.call_async('one.image.delete', session, id)
+      one_auth(session) do
+        call_one_xmlrpc('one.image.delete', session, id)
+      end
     end
 
     # enables or disables an image
@@ -47,7 +52,9 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             otherwise it is the image id.
     def enable(session, id, enabled)
-      @client.call_async('one.image.enable', session, id, enabled)
+      one_auth(session) do
+        call_one_xmlrpc('one.image.enable', session, id, enabled)
+      end
     end
 
     # publishes or unpublishes an image.
@@ -58,10 +65,13 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             otherwise it is the image id.
     def publish(session, id, published)
-      @client.call_async('one.image.publish', session, id, published)
+      one_auth(session) do
+        call_one_xmlrpc('one.image.publish', session, id, published)
+      end
     end
   end
 end
+
 
 # Local Variables:
 # mode: Ruby

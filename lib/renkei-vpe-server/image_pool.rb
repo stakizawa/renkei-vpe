@@ -1,9 +1,9 @@
-require 'xmlrpc/client'
+require 'renkei-vpe-server/one_client'
 
 module RenkeiVPE
-  class ImagePool
+  class ImagePool < OpenNebulaClient
     def initialize(one_endpoint)
-      @client = XMLRPC::Client.new2(one_endpoint)
+      super(one_endpoint)
     end
 
     # return information about image pool.
@@ -13,10 +13,13 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             if successful this is the information string
     def info(session, flag)
-      @client.call_async('one.imagepool.info', session, flag)
+      one_auth(session) do
+        call_one_xmlrpc('one.imagepool.info', session, flag)
+      end
     end
   end
 end
+
 
 # Local Variables:
 # mode: Ruby
