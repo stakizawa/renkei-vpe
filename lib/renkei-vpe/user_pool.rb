@@ -1,13 +1,13 @@
 require 'renkei-vpe/pool'
 
 module RenkeiVPE
-    class ImagePool < Pool
+    class UserPool < Pool
         #######################################################################
         # Constants and Class attribute accessors
         #######################################################################
 
-        IMAGE_POOL_METHODS = {
-            :info => "imagepool.info"
+        USER_POOL_METHODS = {
+            :info => "userpool.info"
         }
 
         #######################################################################
@@ -15,25 +15,22 @@ module RenkeiVPE
         #######################################################################
 
         # +client+ a Client object that represents a XML-RPC connection
-        # +user_id+ is to refer to a Pool with Images from that user
-        def initialize(client, user_id=-1)
-            super('IMAGE_POOL','IMAGE',client)
-
-            @user_id  = user_id
+        def initialize(client)
+            super('USER_POOL','USER',client)
         end
 
-        # Default Factory Method for the Pools
+        # Factory method to create User objects
         def factory(element_xml)
-            RenkeiVPE::Image.new(element_xml,@client)
+            RenkeiVPE::User.new(element_xml,@client)
         end
 
         #######################################################################
-        # XML-RPC Methods for the Image Object
+        # XML-RPC Methods for the User Object
         #######################################################################
 
-        # Retrieves all or part of the Images in the pool.
+        # Retrieves all the Users in the pool.
         def info()
-            super(IMAGE_POOL_METHODS[:info],@user_id)
+            super(USER_POOL_METHODS[:info])
         end
     end
 end

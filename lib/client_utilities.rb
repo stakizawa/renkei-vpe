@@ -212,6 +212,19 @@ class ShowTable
 
 end
 
+def print_xml_friendly(list_columns, xml)
+  table = ShowTable.new(list_columns)
+
+  scr_bold
+  scr_underline
+  print table.header_str
+  scr_restore
+  puts
+
+  puts table.data_str(xml)
+end
+
+
 
 ################
 # Miscelaneous #
@@ -283,9 +296,9 @@ end
 #     get_entity_id(name, RenkeiVPE::VirtualNetworkPool)
 # end
 
-# def get_user_id(name)
-#     get_entity_id(name, RenkeiVPE::UserPool)
-# end
+def get_user_id(name)
+    get_entity_id(name, RenkeiVPE::UserPool)
+end
 
 def get_image_id(name)
     get_entity_id(name, RenkeiVPE::ImagePool)

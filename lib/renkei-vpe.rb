@@ -19,6 +19,8 @@ require 'digest/sha1'
 
 require 'renkei-vpe/xml_utils'
 require 'renkei-vpe/pool'
+require 'renkei-vpe/user'
+require 'renkei-vpe/user_pool'
 require 'renkei-vpe/image'
 require 'renkei-vpe/image_pool'
 

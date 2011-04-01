@@ -1,10 +1,8 @@
 require 'renkei-vpe-server/one_client'
 
 module RenkeiVPE
-  class Image < OpenNebulaClient
-    def initialize(one_endpoint)
-      super(one_endpoint)
-    end
+  class Image
+    include RenkeiVPE::OpenNebulaClient
 
     # return information about this image.
     # +session+   string that represents user session

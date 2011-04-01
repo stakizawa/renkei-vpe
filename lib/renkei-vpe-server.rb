@@ -1,6 +1,7 @@
 ##############################################################################
 # Environment Configuration
 ##############################################################################
+# obtain OnenNebula library path
 one_location = ENV['ONE_LOCATION']
 
 if !one_location
@@ -11,6 +12,9 @@ end
 
 $: << ruby_lib_location
 
+# obtain Renkei-VPE path
+$rvpe_path = File.dirname(File.dirname(File.expand_path(__FILE__)))
+
 ##############################################################################
 # Load libraries
 ##############################################################################
@@ -18,8 +22,12 @@ require 'xmlrpc/server'
 require 'yaml'
 require 'pp'
 
+require 'renkei-vpe-server/database'
+require 'renkei-vpe-server/user'
+require 'renkei-vpe-server/user_pool'
 require 'renkei-vpe-server/image'
 require 'renkei-vpe-server/image_pool'
+require 'renkei-vpe-server/one_client'
 
 ##############################################################################
 # RenkeiVPE module for the server
@@ -31,10 +39,18 @@ module RenkeiVPE
   ############################################################################
   class Server
     def initialize(config)
+      # initialize database
+      RenkeiVPE::Database.init($rvpe_path + '/var/rvpe.db')
+
+      # initialize one client
+      RenkeiVPE::OpenNebulaClient.init(config.one_endpoint)
+
       # setup xml rpc methods
       rpcms = [
-               [Image::INTERFACE,     Image.new(config.one_endpoint)],
-               [ImagePool::INTERFACE, ImagePool.new(config.one_endpoint)],
+               [User::INTERFACE,      User.new],
+               [UserPool::INTERFACE,  UserPool.new],
+               [Image::INTERFACE,     Image.new],
+               [ImagePool::INTERFACE, ImagePool.new],
               ]
 
       # setup xml rpc server
@@ -116,6 +132,22 @@ module RenkeiVPE
   ############################################################################
   # Implement xml rpc interfaces
   ############################################################################
+  class User
+    INTERFACE = XMLRPC::interface('rvpe.user') do
+      meth('val info(string, int)',
+           'Retrieve information about the user',
+           'info')
+    end
+  end
+
+  class UserPool
+    INTERFACE = XMLRPC::interface('rvpe.userpool') do
+      meth('val info(string)',
+           'Retrieve information about user pool',
+           'info')
+    end
+  end
+
   class Image
     INTERFACE = XMLRPC::interface('rvpe.image') do
       meth('val info(string, int)',
@@ -138,7 +170,7 @@ module RenkeiVPE
 
   class ImagePool
     INTERFACE = XMLRPC::interface('rvpe.imagepool') do
-      meth('bool_string info(string, int)',
+      meth('val info(string, int)',
            'Retrieve information about image pool',
            'info')
     end

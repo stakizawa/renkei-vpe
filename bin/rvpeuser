@@ -1,0 +1,225 @@
+#! /bin/env ruby
+
+##############################################################################
+# Environment Configuration
+##############################################################################
+RVPE_LOCATION = ENV['RVPE_LOCATION']
+
+if !RVPE_LOCATION
+  $stderr.puts 'set "RVPE_LOCATION" valiable.'
+  exit 1
+else
+  RUBY_LIB_LOCATION = RVPE_LOCATION + '/lib'
+end
+
+$: << RUBY_LIB_LOCATION
+
+##############################################################################
+# Required libraries
+##############################################################################
+require 'renkei-vpe'
+require 'client_utilities'
+require 'optparse'
+
+##############################################################################
+# Global variables
+##############################################################################
+CMD_NAME = 'rvpeuser'
+
+client = RenkeiVPE::Client.new()
+xml_output = false
+
+list_columns = {
+  :id      => { :name => 'ID',
+                :size => 4,
+                :proc => lambda {|d,e| d.id} },
+  :user    => { :name => 'USER',
+                :size => 15,
+                :left => true,
+                :proc => lambda {|d,e| d["NAME"]} },
+
+  :default => [:id, :user]
+}
+
+##############################################################################
+# main
+##############################################################################
+
+begin
+  parser = OptionParser.new
+  parser.banner = <<EOT
+Usage:
+    #{CMD_NAME} command <options>
+
+Notes:
+    This command can be used only by administrator.
+
+Commands:
+    create user_name password
+        create a new user
+
+        $ #{CMD_NAME} create user1 password1
+
+    enable user_name
+        enable a user. An enabled user can use the system. user_name can
+        be name or id of the user.
+
+        $ #{CMD_NAME} enable user1
+        $ #{CMD_NAME} enable 1
+
+    disable user_name
+        disable a user. A disabled user can not use the system. user_name
+        can be name or id of the user.
+
+        $ #{CMD_NAME} disable user1
+        $ #{CMD_NAME} disable 1
+
+    delete user_name
+        delete a user from the system. site_name can be name or id of
+        the user.
+
+        $ #{CMD_NAME} delete user1
+        $ #{CMD_NAME} delete 1
+
+    list <-x>
+        list registered users.
+
+    show <-x> user_names
+        show information about specified users. user_names can be names
+        or ids of users.
+
+        $ #{CMD_NAME} show user1 user2
+        $ #{CMD_NAME} show 1 2
+
+    passwd user_name password
+        change password of the user. user_name can be name or id of the
+        user.
+
+        $ #{CMD_NAME} passwd user1 password1
+
+    help
+        show this message.
+
+Options:
+EOT
+
+  parser.on('-x', '--xml', ': xml output mode') do
+    xml_output = true
+  end
+
+  parser.parse!(ARGV)
+rescue OptionParser::ParseError
+  $stderr.puts parser.help
+  exit 1
+rescue => e
+  $stderr.puts e.message + "\n\n"
+  $stderr.puts parser.help
+  exit 1
+end
+
+command = ARGV.shift
+case command
+#######################################
+# create a user
+when 'create'
+  check_parameters('create', 2)
+  # TODO
+
+#######################################
+# enable a user
+when 'enable'
+  check_parameters('enable', 1)
+  # TODO
+
+#######################################
+# disable a user
+when 'disable'
+  check_parameters('disable', 1)
+  # TODO
+
+#######################################
+# delete a user
+when 'delete'
+  check_parameters('delete', 1)
+  # TODO
+
+#######################################
+# list users
+when 'list'
+  user_pool = RenkeiVPE::UserPool.new(client)
+  rc = user_pool.info
+  if is_error?(rc)
+    $stderr.puts rc.message
+    exit 1
+  end
+
+  if xml_output
+    puts user_pool.to_xml
+  else
+    print_xml_friendly(list_columns, user_pool)
+  end
+
+#######################################
+# show sites
+when 'show'
+  check_parameters('show', 1)
+
+  ARGV.each do |user_name|
+    id = get_user_id(user_name)
+    user = RenkeiVPE::User.new_with_id(id, client)
+    rc = user.info
+
+    if is_successful?(rc)
+      if xml_output
+        puts user.to_xml
+      else
+        str="%-15s: %-30s"
+
+        # print header
+        print_header("%-80s", "USER INFORMATION", true)
+
+        # print ID
+        puts str % ['ID', user.id.to_s]
+        # print Name
+        puts str % ['NAME', user.name]
+        # print Enable flag
+        if user['ENABLED'].to_i == 1
+          enable_str = 'Yes'
+        else
+          enable_str = 'No'
+        end
+        puts str % ['ENABLE', enable_str]
+        # print Zones
+        puts str % ['ZONES', user['ZONES']]
+        # print Password
+        puts str % ['PASSWORD', user['PASSWORD']]
+      end
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
+
+#######################################
+# change user password
+when 'passwd'
+  check_parameters('passwd', 2)
+  # TODO
+
+#######################################
+# show help
+when 'help'
+  puts parser.help
+
+else
+  $stderr.puts "Unknown command: #{command}"
+  $stderr.puts parser.help
+
+end
+
+
+### Local variables:
+### mode: Ruby
+### coding: utf-8-unix
+### indent-tabs-mode: nil
+### End:

@@ -2,13 +2,14 @@ require 'xmlrpc/client'
 
 module RenkeiVPE
 
-  # All classes which access OpenNebula must implement this class.
-  class OpenNebulaClient
+  # All classes which access OpenNebula must include this module.
+  module OpenNebulaClient
     ONE_AUTH_METHOD = 'one.userpool.info'
 
-    def initialize(one_endpoint)
-      @client = XMLRPC::Client.new2(one_endpoint)
+    def init(one_endpoint)
+      @@client = XMLRPC::Client.new2(one_endpoint)
     end
+    module_function :init
 
     protected
 
@@ -32,7 +33,8 @@ module RenkeiVPE
     end
 
     def call_one_xmlrpc(method, session, *args)
-      @client.call_async(method, session, *args)
+      raise 'RenkeiVPE::OpenNebulaClient.init is not called!' unless @@client
+      @@client.call_async(method, session, *args)
     end
 
     private
