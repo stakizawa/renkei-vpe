@@ -1,0 +1,40 @@
+<IMAGE_POOL>
+  <IMAGE>
+    <ID>0</ID>
+    <UID>0</UID>
+    <USERNAME>oneadmin</USERNAME>
+    <NAME>ttylinux sample</NAME>
+    <TYPE>0</TYPE>
+    <PUBLIC>1</PUBLIC>
+    <PERSISTENT>0</PERSISTENT>
+    <REGTIME>1294726955</REGTIME>
+    <SOURCE>/opt/one/gfarm/home/oneadmin/64cf2a374f8826b94ff76f697535e6703d853388</SOURCE>
+    <STATE>1</STATE>
+    <RUNNING_VMS>0</RUNNING_VMS>
+    <TEMPLATE>
+      <DESCRIPTION><![CDATA[ttylinux sample from OpenNebula]]></DESCRIPTION>
+      <DEV_PREFIX><![CDATA[hd]]></DEV_PREFIX>
+      <NAME><![CDATA[ttylinux sample]]></NAME>
+      <PATH><![CDATA[/opt/one/ttylinux/ttylinux.img]]></PATH>
+    </TEMPLATE>
+  </IMAGE>
+  <IMAGE>
+    <ID>4</ID>
+    <UID>0</UID>
+    <USERNAME>oneadmin</USERNAME>
+    <NAME>ttylinux sample2</NAME>
+    <TYPE>0</TYPE>
+    <PUBLIC>0</PUBLIC>
+    <PERSISTENT>0</PERSISTENT>
+    <REGTIME>1300636358</REGTIME>
+    <SOURCE>/opt/one/gfarm/home/oneadmin/c92219ad50f1d637ea88822e4b279e967e2e6bda</SOURCE>
+    <STATE>1</STATE>
+    <RUNNING_VMS>0</RUNNING_VMS>
+    <TEMPLATE>
+      <DESCRIPTION><![CDATA[ttylinux sample from OpenNebula, private for admin]]></DESCRIPTION>
+      <DEV_PREFIX><![CDATA[hd]]></DEV_PREFIX>
+      <NAME><![CDATA[ttylinux sample2]]></NAME>
+      <PATH><![CDATA[/opt/one/ttylinux/ttylinux.img]]></PATH>
+    </TEMPLATE>
+  </IMAGE>
+</IMAGE_POOL>

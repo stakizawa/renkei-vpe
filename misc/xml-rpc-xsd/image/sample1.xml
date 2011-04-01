@@ -1,0 +1,18 @@
+<IMAGE>
+  <ID>0</ID>
+  <UID>0</UID>
+  <NAME>ttylinux sample</NAME>
+  <TYPE>0</TYPE>
+  <PUBLIC>1</PUBLIC>
+  <PERSISTENT>0</PERSISTENT>
+  <REGTIME>1294726955</REGTIME>
+  <SOURCE>/opt/one/gfarm/home/oneadmin/64cf2a374f8826b94ff76f697535e6703d853388</SOURCE>
+  <STATE>1</STATE>
+  <RUNNING_VMS>0</RUNNING_VMS>
+  <TEMPLATE>
+    <DESCRIPTION><![CDATA[ttylinux sample from OpenNebula]]></DESCRIPTION>
+    <DEV_PREFIX><![CDATA[hd]]></DEV_PREFIX>
+    <NAME><![CDATA[ttylinux sample]]></NAME>
+    <PATH><![CDATA[/opt/one/ttylinux/ttylinux.img]]></PATH>
+  </TEMPLATE>
+</IMAGE>
