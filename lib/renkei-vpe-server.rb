@@ -22,12 +22,12 @@ require 'xmlrpc/server'
 require 'yaml'
 require 'pp'
 
-require 'renkei-vpe-server/database'
+require 'renkei-vpe-server/model'
 require 'renkei-vpe-server/user'
 require 'renkei-vpe-server/user_pool'
 require 'renkei-vpe-server/image'
 require 'renkei-vpe-server/image_pool'
-require 'renkei-vpe-server/one_client'
+require 'renkei-vpe-server/server_role'
 
 ##############################################################################
 # RenkeiVPE module for the server
@@ -137,6 +137,18 @@ module RenkeiVPE
       meth('val info(string, int)',
            'Retrieve information about the user',
            'info')
+      meth('val allocate(string, string, string)',
+           'Allocates a new user',
+           'allocate')
+      meth('val delete(string, int)',
+           'Deletes a user from the user pool',
+           'delete')
+      meth('val enable(string, int, bool)',
+           'Enables or disables a user',
+           'enable')
+      meth('val passwd(string, int, string)',
+           'Changes password for the given user',
+           'passwd')
     end
   end
 
@@ -154,7 +166,7 @@ module RenkeiVPE
            'Retrieve information about the image',
            'info')
       meth('val allocate(string, string)',
-           'Allocates a new image in OpenNebula',
+           'Allocates a new image',
            'allocate')
       meth('val delete(string, int)',
            'Deletes an image from the image pool',

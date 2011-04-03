@@ -16,6 +16,7 @@ module RenkeiVPE
 
         doc = REXML::Document.new(rc[1])
         doc.each_element('/USER_POOL/USER') do |e|
+          # TODO replace ID
           User.insert_zones_to_onexml(e)
         end
 

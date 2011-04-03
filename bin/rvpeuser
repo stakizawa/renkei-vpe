@@ -60,18 +60,18 @@ Commands:
 
         $ #{CMD_NAME} create user1 password1
 
-    enable user_name
-        enable a user. An enabled user can use the system. user_name can
-        be name or id of the user.
+    enable user_names
+        enable users. An enabled user can use the system. user_names can
+        be names or ids of users.
 
-        $ #{CMD_NAME} enable user1
+        $ #{CMD_NAME} enable user1 user2
         $ #{CMD_NAME} enable 1
 
-    disable user_name
-        disable a user. A disabled user can not use the system. user_name
-        can be name or id of the user.
+    disable user_names
+        disable users. A disabled user can not use the system. user_names
+        can be names or ids of users.
 
-        $ #{CMD_NAME} disable user1
+        $ #{CMD_NAME} disable user1 user2
         $ #{CMD_NAME} disable 1
 
     delete user_name
@@ -129,13 +129,35 @@ when 'create'
 # enable a user
 when 'enable'
   check_parameters('enable', 1)
-  # TODO
+
+  ARGV.each do |user_name|
+    id = get_user_id(user_name)
+    user = RenkeiVPE::User.new_with_id(id, client)
+    rc = user.enable
+    if is_successful?(rc)
+      puts "User enabled: #{user_name}"
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
 
 #######################################
 # disable a user
 when 'disable'
   check_parameters('disable', 1)
-  # TODO
+
+  ARGV.each do |user_name|
+    id = get_user_id(user_name)
+    user = RenkeiVPE::User.new_with_id(id, client)
+    rc = user.disable
+    if is_successful?(rc)
+      puts "User disabled: #{user_name}"
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
 
 #######################################
 # delete a user

@@ -1,3 +1,4 @@
+require 'renkei-vpe-server/model'
 require 'xmlrpc/client'
 
 module RenkeiVPE
@@ -68,7 +69,6 @@ module RenkeiVPE
   # All classes that process client request must have this class as their
   # super class.
   class ServerRole
-    include RenkeiVPE::Database
     include RenkeiVPE::OpenNebulaClient
 
     def authenticate(session, strict_auth=false, &block)
@@ -77,13 +77,12 @@ module RenkeiVPE
       username = session.split(':')[0]
 
       # 2. check if user is registered in Renkei VPE
-      rc = Users.find('id', "name='#{username}'")
-      return [false, "User named '#{username}' is not found."] unless rc
-      userid = rc[0]
+      u = RenkeiVPE::Model::User.find_by_name(username)
+      return [false, "User named '#{username}' is not found."] unless u
+      userid = u.id
 
       # 3. check if user is enabled
-      rc = Users.find('enabled', "id='#{userid}'")
-      unless rc[0] == '1'
+      unless u.enabled == 1
         return [false, "User named '#{username}' is not enabled."]
       end
 

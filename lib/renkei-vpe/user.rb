@@ -58,8 +58,13 @@ module RenkeiVPE
         end
 
         # Enables the User
-        def delete()
-            super(USER_METHODS[:enable])
+        def enable
+            set_enabled(true)
+        end
+
+        # Disables the User
+        def disable
+            set_enabled(false)
         end
 
         # Deletes the User
@@ -74,6 +79,17 @@ module RenkeiVPE
             return Error.new('ID not defined') if !@pe_id
 
             rc = @client.call(USER_METHODS[:passwd], @pe_id, password)
+            rc = nil if !RenkeiVPE.is_error?(rc)
+
+            return rc
+        end
+
+    private
+
+        def set_enabled(enabled)
+            return Error.new('ID not defined') if !@pe_id
+
+            rc = @client.call(USER_METHODS[:enable], @pe_id, enabled)
             rc = nil if !RenkeiVPE.is_error?(rc)
 
             return rc
