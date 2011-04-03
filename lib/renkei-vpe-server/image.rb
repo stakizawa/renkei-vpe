@@ -1,8 +1,7 @@
 require 'renkei-vpe-server/one_client'
 
 module RenkeiVPE
-  class Image
-    include RenkeiVPE::OpenNebulaClient
+  class Image < ServerRole
 
     # return information about this image.
     # +session+   string that represents user session
@@ -12,7 +11,7 @@ module RenkeiVPE
     #             if successful this is the string with the information
     #             about the image
     def info(session, id)
-      one_auth(session) do
+      authenticate(session) do
         call_one_xmlrpc('one.image.info', session, id)
       end
     end
@@ -25,7 +24,7 @@ module RenkeiVPE
     #             if successful this is the associated id (int id)
     #             generated for this image
     def allocate(session, template)
-      one_auth(session) do
+      authenticate(session) do
         call_one_xmlrpc('one.image.allocate', session, template)
       end
     end
@@ -37,7 +36,7 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             otherwise it does not exist.
     def delete(session, id)
-      one_auth(session) do
+      authenticate(session) do
         call_one_xmlrpc('one.image.delete', session, id)
       end
     end
@@ -50,7 +49,7 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             otherwise it is the image id.
     def enable(session, id, enabled)
-      one_auth(session) do
+      authenticate(session) do
         call_one_xmlrpc('one.image.enable', session, id, enabled)
       end
     end
@@ -63,7 +62,7 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             otherwise it is the image id.
     def publish(session, id, published)
-      one_auth(session) do
+      authenticate(session) do
         call_one_xmlrpc('one.image.publish', session, id, published)
       end
     end

@@ -1,11 +1,8 @@
 require 'renkei-vpe-server/one_client'
-require 'renkei-vpe-server/database'
 require 'rexml/document'
 
 module RenkeiVPE
-  class User
-    include RenkeiVPE::OpenNebulaClient
-    include RenkeiVPE::Database
+  class User < ServerRole
 
     # return information about this user.
     # +session+   string that represents user session
@@ -15,7 +12,7 @@ module RenkeiVPE
     #             if successful this is the string with the information
     #             about the user
     def info(session, id)
-      one_auth(session, true) do
+      authenticate(session, true) do
         rc = call_one_xmlrpc('one.user.info', session, id)
         return rc unless rc[0]
 

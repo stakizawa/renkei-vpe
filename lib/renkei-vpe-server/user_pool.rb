@@ -1,11 +1,8 @@
 require 'renkei-vpe-server/one_client'
-require 'renkei-vpe-server/database'
 require 'rexml/document'
 
 module RenkeiVPE
-  class UserPool
-    include RenkeiVPE::OpenNebulaClient
-    include RenkeiVPE::Database
+  class UserPool < ServerRole
 
     # return information about image pool.
     # +session+   string that represents user session
@@ -13,7 +10,7 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             if successful this is the information string
     def info(session)
-      one_auth(session, true) do
+      authenticate(session, true) do
         rc = call_one_xmlrpc('one.userpool.info', session)
         return rc unless rc[0]
 

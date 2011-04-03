@@ -65,6 +65,33 @@ module RenkeiVPE
 
   end
 
+  # All classes that process client request must have this class as their
+  # super class.
+  class ServerRole
+    include RenkeiVPE::Database
+    include RenkeiVPE::OpenNebulaClient
+
+    def authenticate(session, strict_auth=false, &block)
+      # 1. get user name
+      # it assumes that session string equals to one session string
+      username = session.split(':')[0]
+
+      # 2. check if user is registered in Renkei VPE
+      rc = Users.find('id', "name='#{username}'")
+      return [false, "User named '#{username}' is not found."] unless rc
+      userid = rc[0]
+
+      # 3. check if user is enabled
+      rc = Users.find('enabled', "id='#{userid}'")
+      unless rc[0] == '1'
+        return [false, "User named '#{username}' is not enabled."]
+      end
+
+      # 4. do one authentication
+      one_auth(session, strict_auth, &block)
+    end
+  end
+
 end
 
 
