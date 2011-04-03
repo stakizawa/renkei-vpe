@@ -1,4 +1,4 @@
-require 'renkei-vpe-server/one_client'
+require 'renkei-vpe-server/server_role'
 require 'rexml/document'
 
 module RenkeiVPE

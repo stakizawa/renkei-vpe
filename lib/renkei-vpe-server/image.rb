@@ -1,4 +1,4 @@
-require 'renkei-vpe-server/one_client'
+require 'renkei-vpe-server/server_role'
 
 module RenkeiVPE
   class Image < ServerRole
