@@ -19,6 +19,7 @@ module RenkeiVPE
       @@db_file
     end
 
+    # execute +sql+ on database
     def execute(sql)
       begin
         db = SQLite3::Database.new(@@db_file)
@@ -34,6 +35,7 @@ module RenkeiVPE
       end
     end
 
+    # execute +sqls+ as a transaction on database
     def transaction(*sqls)
       begin
         db = SQLite3::Database.new(@@db_file)
@@ -47,6 +49,7 @@ module RenkeiVPE
       end
     end
 
+    # initializate the database
     def init(db_file)
       Database.file = db_file
 
@@ -62,6 +65,9 @@ module RenkeiVPE
   ############################################################################
   module Model
 
+    ##########################################################################
+    # Super class for all models
+    ##########################################################################
     class BaseModel
       # name and schema of a table that stores instance of this model
       @@table_name   = nil
@@ -139,12 +145,16 @@ module RenkeiVPE
       end
     end
 
+    ##########################################################################
+    # Model for Renkei VPE user
+    ##########################################################################
     class User < BaseModel
       @@table_name = 'users'
 
       @@table_schema = <<SQL
 CREATE TABLE #{@@table_name} (
   id      INTEGER PRIMARY KEY AUTOINCREMENT,
+  oid     INTEGER,
   name    VARCHAR(256),
   enabled INTEGER,
   zones   TEXT,
@@ -153,11 +163,17 @@ CREATE TABLE #{@@table_name} (
 );
 SQL
 
-      attr_accessor :name, :enabled, :zones
+      attr_accessor :oid, :name, :enabled, :zones
 
       protected
 
       def check_fields
+        unless @oid
+          raise "'oid' field must not be nil."
+        end
+        unless @oid.kind_of?(Integer)
+          raise "'oid' must be an integer"
+        end
         unless @name
           raise "'name' field must not be nil."
         end
@@ -176,7 +192,7 @@ SQL
       end
 
       def to_create_record_str
-        "'#{@name}',#{@enabled},'#{@zones}'"
+        "#{@oid},'#{@name}',#{@enabled},'#{@zones}'"
       end
 
       def to_find_id_str
@@ -184,7 +200,7 @@ SQL
       end
 
       def to_update_record_str
-        "name='#{@name}',enabled=#{@enabled},zones='#{@zones}'"
+        "oid=#{@oid},name='#{@name}',enabled=#{@enabled},zones='#{@zones}'"
       end
 
 
@@ -197,9 +213,10 @@ SQL
         u = User.new
         u.instance_eval do
           @id      = vals[0]
-          @name    = vals[1]
-          @enabled = vals[2].to_i
-          @zones   = vals[3]
+          @oid     = vals[1].to_i
+          @name    = vals[2]
+          @enabled = vals[3].to_i
+          @zones   = vals[4]
         end
         return u
       end
@@ -213,9 +230,10 @@ SQL
         u = User.new
         u.instance_eval do
           @id      = vals[0]
-          @name    = vals[1]
-          @enabled = vals[2].to_i
-          @zones   = vals[3]
+          @oid     = vals[1].to_i
+          @name    = vals[2]
+          @enabled = vals[3].to_i
+          @zones   = vals[4]
         end
         return u
       end
@@ -238,10 +256,10 @@ if __FILE__ == $0
     @@user2 = 'shin'
     @@user3 = 'test'
     @@user4 = 'test2'
-    @@user_sql1 = "INSERT INTO users VALUES (0, '#{@@user1}', 1, 'tt;ni');"
-    @@user_sql2 = "INSERT INTO users VALUES (1, '#{@@user2}', 1, 'tt;ni');"
-    @@user_sql3 = "INSERT INTO users VALUES (5, '#{@@user3}', 1, 'tt;ni');"
-    @@user_sql4 = "INSERT INTO users VALUES (6, '#{@@user4}', 1, 'tt;ni');"
+    @@user_sql1 = "INSERT INTO users VALUES (0, 0, '#{@@user1}', 1, 'tt;ni');"
+    @@user_sql2 = "INSERT INTO users VALUES (1, 1, '#{@@user2}', 1, 'tt;ni');"
+    @@user_sql3 = "INSERT INTO users VALUES (5, 5, '#{@@user3}', 1, 'tt;ni');"
+    @@user_sql4 = "INSERT INTO users VALUES (6, 6, '#{@@user4}', 1, 'tt;ni');"
 
     def setup
       FileUtils.rm_rf(@@db_file)
@@ -298,6 +316,7 @@ if __FILE__ == $0
         end
       end
 
+      u.oid = 9
       u.enabled = 1
       assert_nothing_raised do
         u.instance_eval do
@@ -310,6 +329,7 @@ if __FILE__ == $0
     def test_05
       u = Model::User.new
 
+      u.oid = 10
       u.enabled = 1
       assert_raise(RuntimeError) do
         # u.name is unset
