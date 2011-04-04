@@ -14,7 +14,7 @@ module RenkeiVPE
     def info(session, id)
       authenticate(session, true) do
         user = RenkeiVPE::Model::User.find_by_id(id)
-        return [false, "User whose id is '#{id}' is not found"] unless user
+        return [false, "User[#{id}] is not found"] unless user
         rc = call_one_xmlrpc('one.user.info', session, user.oid)
         return rc unless rc[0]
 
@@ -36,8 +36,24 @@ module RenkeiVPE
     #             if successful this is the associated id (int uid)
     #             generated for this user
     def allocate(session, name, passwd)
-      # TODO
-      raise NotImplementedError
+      authenticate(session, true) do
+        user = RenkeiVPE::Model::User.find_by_name(name)
+        return [false, "User already exists: #{name}"] if user
+
+        rc = call_one_xmlrpc('one.user.allocate', session, name, passwd)
+        return rc unless rc[0]
+
+        begin
+          user = RenkeiVPE::Model::User.new
+          user.name = name
+          user.enabled = 1
+          user.oid = rc[1]
+          user.create
+        rescue => e
+          return [false, e.message]
+        end
+        return [true, user.id]
+      end
     end
 
     # deletes a user.
@@ -47,8 +63,20 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             otherwise it does not exist.
     def delete(session, id)
-      # TODO
-      raise NotImplementedError
+      authenticate(session, true) do
+        user = RenkeiVPE::Model::User.find_by_id(id)
+        return [false, "User[#{id}] does not exist."] unless user
+
+        rc = call_one_xmlrpc('one.user.delete', session, user.oid)
+        return rc unless rc[0]
+
+        begin
+          user.delete
+        rescue => e
+          return [false, e.message]
+        end
+        return [true, '']
+      end
     end
 
     # enables or disables a user
@@ -61,9 +89,7 @@ module RenkeiVPE
     def enable(session, id, enabled)
       authenticate(session, true) do
         user = RenkeiVPE::Model::User.find_by_id(id)
-        unless user
-          return [false, "User whose id is '#{id}' does not exist."]
-        end
+        return [false, "User[#{id}] does not exist."] unless user
 
         if enabled
           user.enabled = 1
@@ -83,8 +109,12 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             otherwise it does not exist.
     def passwd(session, id, passwd)
-      # TODO
-      raise NotImplementedError
+      authenticate(session, true) do
+        user = RenkeiVPE::Model::User.find_by_id(id)
+        return [false, "User[#{id}] does not exist."] unless user
+
+        call_one_xmlrpc('one.user.passwd', session, user.oid, passwd)
+      end
     end
 
     def update_zones(session, id, zones)

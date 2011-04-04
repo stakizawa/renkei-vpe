@@ -2,9 +2,9 @@ require 'renkei-vpe/pool'
 
 module RenkeiVPE
     class User < PoolElement
-        # ---------------------------------------------------------------------
+        #######################################################################
         # Constants and Class Methods
-        # ---------------------------------------------------------------------
+        #######################################################################
         USER_METHODS = {
             :info     => "user.info",
             :allocate => "user.allocate",
@@ -30,18 +30,18 @@ module RenkeiVPE
             XMLElement.build_xml(user_xml, 'USER')
         end
 
-        # ---------------------------------------------------------------------
+        #######################################################################
         # Class constructor
-        # ---------------------------------------------------------------------
+        #######################################################################
         def initialize(xml, client)
             super(xml,client)
 
             @client = client
         end
 
-        # ---------------------------------------------------------------------
+        #######################################################################
         # XML-RPC Methods for the User Object
-        # ---------------------------------------------------------------------
+        #######################################################################
 
         # Retrieves the information of the given User.
         def info()
@@ -54,7 +54,13 @@ module RenkeiVPE
         #
         # +password+ Password for the new user
         def allocate(username, password)
-            super(USER_METHODS[:allocate], username, password)
+            rc = super(USER_METHODS[:allocate], username, password)
+            if RenkeiVPE.is_error?(rc)
+                return rc
+            end
+
+            @name = username
+            return nil
         end
 
         # Enables the User
@@ -68,7 +74,7 @@ module RenkeiVPE
         end
 
         # Deletes the User
-        def delete()
+        def delete
             super(USER_METHODS[:delete])
         end
 

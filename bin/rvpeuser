@@ -1,4 +1,5 @@
 #! /bin/env ruby
+# TODO implement zone management
 
 ##############################################################################
 # Environment Configuration
@@ -123,7 +124,17 @@ case command
 # create a user
 when 'create'
   check_parameters('create', 2)
-  # TODO
+
+  name = ARGV[0]
+  pass = ARGV[1]
+  user = RenkeiVPE::User.new(RenkeiVPE::User.build_xml, client)
+  rc = user.allocate(name, pass)
+  if is_successful?(rc)
+    puts "NAME: " + user.name
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
 
 #######################################
 # enable a user
@@ -163,7 +174,17 @@ when 'disable'
 # delete a user
 when 'delete'
   check_parameters('delete', 1)
-  # TODO
+
+  name = ARGV[0]
+  id = get_user_id(name)
+  user = RenkeiVPE::User.new_with_id(id, client)
+  rc = user.delete
+  if is_successful?(rc)
+    puts "NAME deleted: " + name
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
 
 #######################################
 # list users
@@ -226,7 +247,18 @@ when 'show'
 # change user password
 when 'passwd'
   check_parameters('passwd', 2)
-  # TODO
+
+  name = ARGV[0]
+  pass = ARGV[1]
+  id = get_user_id(name)
+  user = RenkeiVPE::User.new_with_id(id, client)
+  rc = user.passwd(pass)
+  if is_successful?(rc)
+    puts "Password for the user is changed: " + name
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
 
 #######################################
 # show help

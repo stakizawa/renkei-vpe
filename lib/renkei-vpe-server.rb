@@ -104,6 +104,10 @@ module RenkeiVPE
       'one_endpoint' => 'http://localhost:2633/RPC2',
     }
 
+    instance_methods.each do |m|
+      undef_method m unless m.to_s =~ /^__|method_missing|respond_to?/
+    end
+
     def self.read_config(conf_file)
       # load configs defined in 'conf_file' to the config
       ServerConfig.new(YAML.load_file(conf_file))
@@ -120,11 +124,12 @@ module RenkeiVPE
         raise Exception, "Argument error: #{param}"
       end
 
-      val = @configs[param]
-      unless val
-        raise Exception, "Unknown config parameter: #{param}"
-      end
-      return val
+      super if !respond_to?(param)
+      return @configs[param]
+    end
+
+    def respond_to?(method)
+      @configs.include?(method.to_s) || super
     end
   end
 
