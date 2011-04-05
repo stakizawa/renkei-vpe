@@ -1,0 +1,73 @@
+rvpeuser
+  create   user_name  password
+  enable   user_names
+  disable  user_names
+  delete   user_name
+  list
+  show     user_names
+  passwd   user_name  password
+
+
+
+rvpeimage
+  import     definition_file
+  export     image_name  file_name
+  delete     image_names
+  publish    image_names
+  unpublish  image_names
+  list
+  show       image_names
+
+
+
+rvpezone
+  create      definition_file
+  delete      zone_name
+  list
+  show        zone_names
+
+  addhost     zone_name host_names
+  removehost  zone_name host_names
+  listhost    zone_name
+
+  addvnet     zone_name definition_file
+  removevnet  zone_name vnet_names
+  listvnet    zone_name
+
+
+
+rvpevnet
+  create       zone_name definition_file
+  delete       zone_name vnet_name
+  show         zone_name vnet_name
+
+  adddns       zone_name vnet_name dns_server_names
+  removedns    zone_name vnet_name dns_server_names
+  listdns      zone_name vnet_name
+
+  addntp       zone_name vnet_name ntp_server_names
+  removentp    zone_name vnet_name ntp_server_names
+  listntp      zone_name vnet_name
+
+  addvhost     zone_name vnet_name vhost_name vhost_addr
+  removevhost  zone_name vnet_name vhost_name
+
+
+
+rvpehost
+  show     zone_name host_names
+  enable   zone_name host_names
+  disable  zone_name host_names
+  sync
+
+
+
+rvpevm
+  create type site
+  shutdown name
+  suspend name
+  resume name
+  mark_save name
+  restart name
+  list
+  show name
