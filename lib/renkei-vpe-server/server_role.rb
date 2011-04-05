@@ -38,6 +38,8 @@ module RenkeiVPE
       @@client.call_async(method, session, *args)
     end
 
+    module_function :call_one_xmlrpc
+
     private
 
     # It authenticate user session.

@@ -152,6 +152,37 @@ module RenkeiVPE
         sql = "SELECT * FROM #{@table_name} WHERE #{condition};"
         return Database.execute(sql)
       end
+
+      # It finds and returns a record whose id is +id+.
+      # It returns nil if not found.
+      def self.find_by_id(id)
+        vals = find("id=#{id}")
+        return nil unless vals
+        return gen_instance(vals)
+      end
+
+      # It finds and returns a record whose name is +name+.
+      # It returns nil if not found.
+      def self.find_by_name(name)
+        vals = find("name='#{name}'")
+        return nil unless vals
+        return gen_instance(vals)
+      end
+
+      # It iterates all records stored in db.
+      def self.each
+        sql = "SELECT * FROM #{@table_name}"
+        Database.execute(sql) do |row|
+          yield gen_instance(row)
+        end
+      end
+
+      # It generates instance of this class using attr.
+      # +attr+   array of values for instance fields
+      # +return+ instance of this class
+      def self.gen_instance(attr)
+        raise NotImplementedException
+      end
     end
 
     ##########################################################################
@@ -213,36 +244,14 @@ SQL
       end
 
 
-      # It finds and returns a user whose id is +id+.
-      # It returns nil if not found.
-      def self.find_by_id(id)
-        vals = User.find("id=#{id}")
-        return nil unless vals
-
+      def self.gen_instance(attr)
         u = User.new
         u.instance_eval do
-          @id      = vals[0]
-          @oid     = vals[1].to_i
-          @name    = vals[2]
-          @enabled = vals[3].to_i
-          @zones   = vals[4]
-        end
-        return u
-      end
-
-      # It finds and returns a user whose name is +name+.
-      # It returns nil if not found.
-      def self.find_by_name(name)
-        vals = User.find("name='#{name}'")
-        return nil unless vals
-
-        u = User.new
-        u.instance_eval do
-          @id      = vals[0]
-          @oid     = vals[1].to_i
-          @name    = vals[2]
-          @enabled = vals[3].to_i
-          @zones   = vals[4]
+          @id      = attr[0]
+          @oid     = attr[1].to_i
+          @name    = attr[2]
+          @enabled = attr[3].to_i
+          @zones   = attr[4]
         end
         return u
       end
@@ -305,39 +314,18 @@ SQL
       end
 
 
-      # It finds and returns a zone whose id is +id+.
-      # It returns nil if not found.
-      def self.find_by_id(id)
-        vals = Zone.find("id=#{id}")
-        return nil unless vals
-
+      def self.gen_instance(attr)
         z = Zone.new
         z.instance_eval do
-          @id       = vals[0]
-          @oid      = vals[1].to_i
-          @name     = vals[2]
-          @hosts    = vals[3]
-          @networks = vals[4]
+          @id       = attr[0]
+          @oid      = attr[1].to_i
+          @name     = attr[2]
+          @hosts    = attr[3]
+          @networks = attr[4]
         end
         return z
       end
 
-      # It finds and returns a zone whose name is +name+.
-      # It returns nil if not found.
-      def self.find_by_name(name)
-        vals = Zone.find("name='#{name}'")
-        return nil unless vals
-
-        z = Zone.new
-        z.instance_eval do
-          @id       = vals[0]
-          @oid      = vals[1].to_i
-          @name     = vals[2]
-          @hosts    = vals[3]
-          @networks = vals[4]
-        end
-        return z
-      end
     end
 
   end

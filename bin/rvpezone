@@ -179,7 +179,7 @@ when 'delete'
   check_parameters('delete', 1)
 
   name = ARGV[0]
-  id = name  #id = get_zone_id(ARGV[0]) #TODO
+  id = get_zone_id(ARGV[0])
   zone = RenkeiVPE::Zone.new_with_id(id, client)
   rc = zone.delete
   if is_successful?(rc)
@@ -192,15 +192,26 @@ when 'delete'
 #######################################
 # list zones
 when 'list'
-  # TODO
+  zone_pool = RenkeiVPE::ZonePool.new(client)
+  rc = zone_pool.info
+  if is_error?(rc)
+    $stderr.puts rc.message
+    exit 1
+  end
+
+  if xml_output
+    puts zone_pool.to_xml
+  else
+#    print_xml_friendly(list_columns, user_pool)
+  end
 
 #######################################
 # show zones
 when 'show'
   check_parameters('show', 1)
 
-  ARGV.each do |id|#|zone_name|  # TODO
-#    id = get_zone_id(zone_name) # TODO
+  ARGV.each do |zone_name|
+    id = get_zone_id(zone_name)
     zone = RenkeiVPE::Zone.new_with_id(id, client)
     rc = zone.info
 
@@ -222,8 +233,7 @@ when 'addhost'
   check_parameters('addhost', 2)
 
   zone_name = ARGV.shift
-  id = zone_name
-  #  id = get_zone_id(zone_name) # TODO
+  id = get_zone_id(zone_name)
   zone = RenkeiVPE::Zone.new_with_id(id, client)
   ARGV.each do |host_name|
     rc = zone.addhost(host_name)
@@ -241,8 +251,7 @@ when 'removehost'
   check_parameters('removehost', 2)
 
   zone_name = ARGV.shift
-  id = zone_name
-  #  id = get_zone_id(zone_name) # TODO
+  id = get_zone_id(zone_name)
   zone = RenkeiVPE::Zone.new_with_id(id, client)
   ARGV.each do |host_name|
     rc = zone.rmhost(host_name)

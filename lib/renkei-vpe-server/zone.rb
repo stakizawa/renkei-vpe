@@ -48,38 +48,9 @@ module RenkeiVPE
         zone = RenkeiVPE::Model::Zone.find_by_id(id)
         return [false, "Zone[#{id}] is not found"] unless zone
 
-        # crete xml document
+        zone_e = Zone.to_xml_element(zone, session)
         doc = REXML::Document.new
-        zone_e = REXML::Element.new('ZONE')
         doc.add(zone_e)
-
-        # set id
-        id_e = REXML::Element.new('ID')
-        id_e.add(REXML::Text.new(zone.id))
-        zone_e.add(id_e)
-
-        # set name
-        name_e = REXML::Element.new('NAME')
-        name_e.add(REXML::Text.new(zone.name))
-        zone_e.add(name_e)
-
-        # set hosts
-        hosts_e = REXML::Element.new('HOSTS')
-        zone_e.add(hosts_e)
-        zone.hosts.split(/\s+/).map{ |i| i.to_i }.each do |hid|
-          rc = call_one_xmlrpc('one.host.info', session, hid)
-          return rc unless rc[0]
-
-          host_e = REXML::Element.new('HOST')
-          host_e.add(REXML::Document.new(rc[1]).get_text('HOST/NAME'))
-          hosts_e.add(host_e)
-        end
-
-        # set networks
-        # TODO implement
-        nets_e = REXML::Element.new('NETWORKS')
-        nets_e.add(REXML::Text.new('To be implemented'))
-        zone_e.add(nets_e)
 
         return [true, doc.to_s]
       end
@@ -333,6 +304,44 @@ module RenkeiVPE
 
       result = (err_msg.size == 0)? true : false
       return [result, err_msg]
+    end
+
+
+    def self.to_xml_element(zone, one_session)
+      # toplevel ZONE element
+      zone_e = REXML::Element.new('ZONE')
+
+      # set id
+      id_e = REXML::Element.new('ID')
+      id_e.add(REXML::Text.new(zone.id))
+      zone_e.add(id_e)
+
+      # set name
+      name_e = REXML::Element.new('NAME')
+      name_e.add(REXML::Text.new(zone.name))
+      zone_e.add(name_e)
+
+      # set hosts
+      hosts_e = REXML::Element.new('HOSTS')
+      zone_e.add(hosts_e)
+      zone.hosts.split(/\s+/).map{ |i| i.to_i }.each do |hid|
+        rc = RenkeiVPE::OpenNebulaClient.call_one_xmlrpc('one.host.info',
+                                                         one_session,
+                                                         hid)
+        return rc unless rc[0]
+
+        host_e = REXML::Element.new('HOST')
+        host_e.add(REXML::Document.new(rc[1]).get_text('HOST/NAME'))
+        hosts_e.add(host_e)
+      end
+
+      # set networks
+      # TODO implement
+      nets_e = REXML::Element.new('NETWORKS')
+      nets_e.add(REXML::Text.new('To be implemented'))
+      zone_e.add(nets_e)
+
+      return zone_e
     end
 
   end

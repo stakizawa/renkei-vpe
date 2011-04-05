@@ -2,13 +2,13 @@ require 'renkei-vpe-server/server_role'
 require 'rexml/document'
 
 module RenkeiVPE
-  class UserPool < ServerRole
+  class ZonePool < ServerRole
     ##########################################################################
     # Define xml rpc interfaces
     ##########################################################################
-    INTERFACE = XMLRPC::interface('rvpe.userpool') do
+    INTERFACE = XMLRPC::interface('rvpe.zonepool') do
       meth('val info(string)',
-           'Retrieve information about user pool',
+           'Retrieve information about zone pool',
            'info')
     end
 
@@ -23,18 +23,20 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             if successful this is the information string
     def info(session)
-      authenticate(session, true) do
-        rc = call_one_xmlrpc('one.userpool.info', session)
-        return rc unless rc[0]
+      authenticate(session) do
+        doc = REXML::Document.new
+        pool_e = REXML::Element.new('ZONE_POOL')
+        doc.add(pool_e)
 
-        doc = REXML::Document.new(rc[1])
-        doc.each_element('/USER_POOL/USER') do |e|
-          User.modify_onexml(e)
+        RenkeiVPE::Model::Zone.each do |z|
+          zone_e = Zone.to_xml_element(z, session)
+          pool_e.add(zone_e)
         end
 
         return [true, doc.to_s]
       end
     end
+
   end
 end
 

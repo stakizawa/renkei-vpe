@@ -304,9 +304,9 @@ def get_image_id(name)
     get_entity_id(name, RenkeiVPE::ImagePool)
 end
 
-# def get_cluster_id(name)
-#     get_entity_id(name, RenkeiVPE::ClusterPool)
-# end
+def get_zone_id(name)
+    get_entity_id(name, RenkeiVPE::ZonePool)
+end
 
 def str_running_time(data)
     stime=Time.at(data["STIME"].to_i)
