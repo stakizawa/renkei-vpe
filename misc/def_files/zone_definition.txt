@@ -1,4 +1,6 @@
 # yaml file format
+# The mandatory fields is only 'name'.
+# However, if you specify 'network', all network fields are mandatory.
 name: tokyo tech
 host:
   - 192.168.0.2
