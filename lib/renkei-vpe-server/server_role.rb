@@ -79,7 +79,6 @@ module RenkeiVPE
       # 2. check if user is registered in Renkei VPE
       u = RenkeiVPE::Model::User.find_by_name(username)
       return [false, "User named '#{username}' is not found."] unless u
-      userid = u.id
 
       # 3. check if user is enabled
       unless u.enabled == 1
@@ -96,6 +95,6 @@ end
 
 # Local Variables:
 # mode: Ruby
-# coding: utf-8
+# coding: utf-8-unix
 # indent-tabs-mode: nil
 # End:

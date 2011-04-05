@@ -3,6 +3,19 @@ require 'rexml/document'
 
 module RenkeiVPE
   class UserPool < ServerRole
+    ##########################################################################
+    # Define xml rpc interfaces
+    ##########################################################################
+    INTERFACE = XMLRPC::interface('rvpe.userpool') do
+      meth('val info(string)',
+           'Retrieve information about user pool',
+           'info')
+    end
+
+
+    ##########################################################################
+    # Implement xml rpc functions
+    ##########################################################################
 
     # return information about image pool.
     # +session+   string that represents user session
@@ -28,6 +41,6 @@ end
 
 # Local Variables:
 # mode: Ruby
-# coding: utf-8
+# coding: utf-8-unix
 # indent-tabs-mode: nil
 # End:

@@ -23,11 +23,13 @@ require 'yaml'
 require 'pp'
 
 require 'renkei-vpe-server/model'
+require 'renkei-vpe-server/server_role'
 require 'renkei-vpe-server/user'
 require 'renkei-vpe-server/user_pool'
 require 'renkei-vpe-server/image'
 require 'renkei-vpe-server/image_pool'
-require 'renkei-vpe-server/server_role'
+require 'renkei-vpe-server/zone'
+require 'renkei-vpe-server/zone_pool'
 
 ##############################################################################
 # RenkeiVPE module for the server
@@ -51,6 +53,8 @@ module RenkeiVPE
                [UserPool::INTERFACE,  UserPool.new],
                [Image::INTERFACE,     Image.new],
                [ImagePool::INTERFACE, ImagePool.new],
+               [Zone::INTERFACE,      Zone.new],
+               [ZonePool::INTERFACE,  ZonePool.new],
               ]
 
       # setup xml rpc server
@@ -130,66 +134,6 @@ module RenkeiVPE
 
     def respond_to?(method)
       @configs.include?(method.to_s) || super
-    end
-  end
-
-
-  ############################################################################
-  # Implement xml rpc interfaces
-  ############################################################################
-  class User
-    INTERFACE = XMLRPC::interface('rvpe.user') do
-      meth('val info(string, int)',
-           'Retrieve information about the user',
-           'info')
-      meth('val allocate(string, string, string)',
-           'Allocates a new user',
-           'allocate')
-      meth('val delete(string, int)',
-           'Deletes a user from the user pool',
-           'delete')
-      meth('val enable(string, int, bool)',
-           'Enables or disables a user',
-           'enable')
-      meth('val passwd(string, int, string)',
-           'Changes password for the given user',
-           'passwd')
-    end
-  end
-
-  class UserPool
-    INTERFACE = XMLRPC::interface('rvpe.userpool') do
-      meth('val info(string)',
-           'Retrieve information about user pool',
-           'info')
-    end
-  end
-
-  class Image
-    INTERFACE = XMLRPC::interface('rvpe.image') do
-      meth('val info(string, int)',
-           'Retrieve information about the image',
-           'info')
-      meth('val allocate(string, string)',
-           'Allocates a new image',
-           'allocate')
-      meth('val delete(string, int)',
-           'Deletes an image from the image pool',
-           'delete')
-      meth('val enable(string, int, bool)',
-           'Enables or disables an image',
-           'enable')
-      meth('val publish(string, int, bool)',
-           'Publishes or unpublishes an image',
-           'publish')
-    end
-  end
-
-  class ImagePool
-    INTERFACE = XMLRPC::interface('rvpe.imagepool') do
-      meth('val info(string, int)',
-           'Retrieve information about image pool',
-           'info')
     end
   end
 

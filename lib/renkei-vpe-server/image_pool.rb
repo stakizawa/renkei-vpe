@@ -2,6 +2,19 @@ require 'renkei-vpe-server/server_role'
 
 module RenkeiVPE
   class ImagePool < ServerRole
+    ##########################################################################
+    # Define xml rpc interfaces
+    ##########################################################################
+    INTERFACE = XMLRPC::interface('rvpe.imagepool') do
+      meth('val info(string, int)',
+           'Retrieve information about image pool',
+           'info')
+    end
+
+
+    ##########################################################################
+    # Implement xml rpc functions
+    ##########################################################################
 
     # return information about image pool.
     # +session+   string that represents user session
@@ -20,6 +33,6 @@ end
 
 # Local Variables:
 # mode: Ruby
-# coding: utf-8
+# coding: utf-8-unix
 # indent-tabs-mode: nil
 # End:

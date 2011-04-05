@@ -23,6 +23,8 @@ require 'renkei-vpe/user'
 require 'renkei-vpe/user_pool'
 require 'renkei-vpe/image'
 require 'renkei-vpe/image_pool'
+require 'renkei-vpe/zone'
+#require 'renkei-vpe/zone_pool'
 
 ##############################################################################
 # RenkeiVPE module

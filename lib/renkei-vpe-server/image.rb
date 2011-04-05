@@ -2,6 +2,31 @@ require 'renkei-vpe-server/server_role'
 
 module RenkeiVPE
   class Image < ServerRole
+    ##########################################################################
+    # Define xml rpc interfaces
+    ##########################################################################
+    INTERFACE = XMLRPC::interface('rvpe.image') do
+      meth('val info(string, int)',
+           'Retrieve information about the image',
+           'info')
+      meth('val allocate(string, string)',
+           'Allocates a new image',
+           'allocate')
+      meth('val delete(string, int)',
+           'Deletes an image from the image pool',
+           'delete')
+      meth('val enable(string, int, bool)',
+           'Enables or disables an image',
+           'enable')
+      meth('val publish(string, int, bool)',
+           'Publishes or unpublishes an image',
+           'publish')
+    end
+
+
+    ##########################################################################
+    # Implement xml rpc functions
+    ##########################################################################
 
     # return information about this image.
     # +session+   string that represents user session
@@ -72,6 +97,6 @@ end
 
 # Local Variables:
 # mode: Ruby
-# coding: utf-8
+# coding: utf-8-unix
 # indent-tabs-mode: nil
 # End:

@@ -3,6 +3,31 @@ require 'rexml/document'
 
 module RenkeiVPE
   class User < ServerRole
+    ##########################################################################
+    # Define xml rpc interfaces
+    ##########################################################################
+    INTERFACE = XMLRPC::interface('rvpe.user') do
+      meth('val info(string, int)',
+           'Retrieve information about the user',
+           'info')
+      meth('val allocate(string, string, string)',
+           'Allocates a new user',
+           'allocate')
+      meth('val delete(string, int)',
+           'Deletes a user from the user pool',
+           'delete')
+      meth('val enable(string, int, bool)',
+           'Enables or disables a user',
+           'enable')
+      meth('val passwd(string, int, string)',
+           'Changes password for the given user',
+           'passwd')
+    end
+
+
+    ##########################################################################
+    # Implement xml rpc functions
+    ##########################################################################
 
     # return information about this user.
     # +session+   string that represents user session
@@ -156,8 +181,9 @@ module RenkeiVPE
   end
 end
 
+
 # Local Variables:
 # mode: Ruby
-# coding: utf-8
+# coding: utf-8-unix
 # indent-tabs-mode: nil
 # End:

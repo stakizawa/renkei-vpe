@@ -54,6 +54,7 @@ module RenkeiVPE
       Database.file = db_file
 
       Model::User.create_table_if_necessary
+      Model::Zone.create_table_if_necessary
     end
 
     module_function :file=, :file, :execute, :transaction, :init
@@ -70,37 +71,40 @@ module RenkeiVPE
     ##########################################################################
     class BaseModel
       # name and schema of a table that stores instance of this model
-      @@table_name   = nil
-      @@table_schema = nil
+      @table_name   = nil
+      @table_schema = nil
 
       # id of instance of this model
-      @id = nil
       attr_reader :id
 
       # creates a record that represents this instance on the table.
       def create
         check_fields
-        sql = "INSERT INTO #{@@table_name} VALUES (NULL,#{to_create_record_str})"
+        sql = "INSERT INTO #{table} VALUES (NULL,#{to_create_record_str})"
         Database.transaction(sql)
-        sql = "SELECT id FROM #{@@table_name} WHERE #{to_find_id_str}"
+        sql = "SELECT id FROM #{table} WHERE #{to_find_id_str}"
         @id = Database.execute(sql)[0]
       end
 
       # updates a record that represents this instance on the table.
       def update
         check_fields
-        sql = "UPDATE #{@@table_name} SET #{to_update_record_str} WHERE id=#{@id}"
+        sql = "UPDATE #{table} SET #{to_update_record_str} WHERE id=#{@id}"
         Database.transaction(sql)
       end
 
       # deletes a record that represents this instance from the table.
       def delete
         raise "'id' is not set." if @id == nil
-        sql = "DELETE FROM #{@@table_name} WHERE id=#{@id}"
+        sql = "DELETE FROM #{table} WHERE id=#{@id}"
         Database.transaction(sql)
       end
 
       protected
+
+      def table
+        self.class.table_name
+      end
 
       # It checks all fields.
       # Do nothing if all fields is fine, otherwise raise an excepton.
@@ -124,23 +128,28 @@ module RenkeiVPE
       end
 
 
+      # It returns table name.
+      def self.table_name
+        @table_name
+      end
+
       # It creates table on db.
       # return true if table is created, otherwise return false
       def self.create_table_if_necessary
         # check if table has been created
-        sql = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='#{@@table_name}'"
+        sql = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='#{@table_name}'"
         Database.execute(sql) do |row|
           return false if row[0] != '0'
         end
 
-        Database.transaction(@@table_schema)
+        Database.transaction(@table_schema)
         return true
       end
 
       # It finds and returns records that match the given +condition+.
       # It return Array if found, otherwise return nil.
       def self.find(condition)
-        sql = "SELECT * FROM #{@@table_name} WHERE #{condition};"
+        sql = "SELECT * FROM #{@table_name} WHERE #{condition};"
         return Database.execute(sql)
       end
     end
@@ -149,10 +158,10 @@ module RenkeiVPE
     # Model for Renkei VPE user
     ##########################################################################
     class User < BaseModel
-      @@table_name = 'users'
+      @table_name = 'users'
 
-      @@table_schema = <<SQL
-CREATE TABLE #{@@table_name} (
+      @table_schema = <<SQL
+CREATE TABLE #{@table_name} (
   id      INTEGER PRIMARY KEY AUTOINCREMENT,
   oid     INTEGER,
   name    VARCHAR(256),
@@ -239,6 +248,98 @@ SQL
       end
 
     end
+
+    ##########################################################################
+    # Model for Zone that means a site
+    ##########################################################################
+    class Zone < BaseModel
+      @table_name = 'zones'
+
+      @table_schema = <<SQL
+CREATE TABLE #{@table_name} (
+  id       INTEGER PRIMARY KEY AUTOINCREMENT,
+  oid      INTEGER,
+  name     VARCHAR(256),
+  hosts   TEXT,
+  networks TEXT,
+
+  UNIQUE(name)
+);
+SQL
+
+      attr_accessor :oid, :name, :hosts, :networks
+
+      protected
+
+      def check_fields
+        unless @oid
+          raise "'oid' field must not be nil."
+        end
+        unless @oid.kind_of?(Integer)
+          raise "'oid' must be an integer"
+        end
+        unless @name
+          raise "'name' field must not be nil."
+        end
+        unless @name.instance_of?(String)
+          raise "'name' must be a string"
+        end
+        unless @hosts == nil || @hosts.instance_of?(String)
+          raise "'hosts' must be nil or a string"
+        end
+        unless @networks == nil || @networks.instance_of?(String)
+          raise "'networks' must be nil or a string"
+        end
+      end
+
+      def to_create_record_str
+        "#{@oid},'#{@name}','#{@hosts}','#{@networks}'"
+      end
+
+      def to_find_id_str
+        "name='#{@name}'"
+      end
+
+      def to_update_record_str
+        "oid=#{@oid},name='#{@name}',hosts='#{@hosts}',networks='#{@networks}'"
+      end
+
+
+      # It finds and returns a zone whose id is +id+.
+      # It returns nil if not found.
+      def self.find_by_id(id)
+        vals = Zone.find("id=#{id}")
+        return nil unless vals
+
+        z = Zone.new
+        z.instance_eval do
+          @id       = vals[0]
+          @oid      = vals[1].to_i
+          @name     = vals[2]
+          @hosts    = vals[3]
+          @networks = vals[4]
+        end
+        return z
+      end
+
+      # It finds and returns a zone whose name is +name+.
+      # It returns nil if not found.
+      def self.find_by_name(name)
+        vals = Zone.find("name='#{name}'")
+        return nil unless vals
+
+        z = Zone.new
+        z.instance_eval do
+          @id       = vals[0]
+          @oid      = vals[1].to_i
+          @name     = vals[2]
+          @hosts    = vals[3]
+          @networks = vals[4]
+        end
+        return z
+      end
+    end
+
   end
 end
 
@@ -377,6 +478,7 @@ if __FILE__ == $0
     end
   end
 end
+
 
 # Local Variables:
 # mode: Ruby
