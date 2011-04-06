@@ -29,6 +29,7 @@ rvpezone
   addhost     zone_name host_names
   removehost  zone_name host_names
   listhost    zone_name
+  sync
 
   addvnet     zone_name definition_file
   removevnet  zone_name vnet_names
@@ -58,7 +59,6 @@ rvpehost
   show     zone_name host_names
   enable   zone_name host_names
   disable  zone_name host_names
-  sync
 
 
 

@@ -1,0 +1,188 @@
+#! /bin/env ruby
+
+##############################################################################
+# Environment Configuration
+##############################################################################
+RVPE_LOCATION = ENV['RVPE_LOCATION']
+
+if !RVPE_LOCATION
+  $stderr.puts 'set "RVPE_LOCATION" valiable.'
+  exit 1
+else
+  RUBY_LIB_LOCATION = RVPE_LOCATION + '/lib'
+end
+
+$: << RUBY_LIB_LOCATION
+
+##############################################################################
+# Required libraries
+##############################################################################
+require 'renkei-vpe'
+require 'client_utilities'
+require 'optparse'
+
+##############################################################################
+# Global variables
+##############################################################################
+CMD_NAME = 'rvpehost'
+
+client = RenkeiVPE::Client.new()
+xml_output = false
+verbose = false
+
+##############################################################################
+# main
+##############################################################################
+
+begin
+  parser = OptionParser.new
+  parser.banner = <<EOT
+Usage:
+    #{CMD_NAME} command <options>
+
+Commands:
+    show <-v> <-x> host_names
+        show information abount specified hosts. host_names can be names
+        of hosts.
+
+        $ #{CMD_NAME} show rpop-titech.cc.titech.ac.jp
+
+    enable host_names
+        enable hosts. An enabled host can run VMs on it. host_names can
+        be names of hosts.
+
+        $ #{CMD_NAME} enable rpop-titech.cc.titech.ac.jp
+
+    disable host_names
+        disable hosts. A disabled host can not run VMs. host_names can
+        be names of hosts.
+
+        $ #{CMD_NAME} disable rpop-titech.cc.titech.ac.jp
+
+    help
+        show this message.
+
+Options:
+EOT
+
+  parser.on('-x', '--xml', ': xml output mode') do
+    xml_output = true
+  end
+
+  parser.on('-v', ': verbose output mode') do
+    verbose = true
+  end
+
+  parser.parse!(ARGV)
+rescue OptionParser::ParseError
+  $stderr.puts parser.help
+  exit 1
+rescue => e
+  $stderr.puts e.message + "\n\n"
+  $stderr.puts parser.help
+  exit 1
+end
+
+command = ARGV.shift
+case command
+#######################################
+# show sites
+when 'show'
+  check_parameters('show', 1)
+
+  ARGV.each do |host_name|
+    id = get_host_id(host_name)
+    host = RenkeiVPE::Host.new_with_id(id, client)
+    rc = host.info
+
+    if is_successful?(rc)
+      if xml_output
+        puts host.to_xml
+      else
+        str    = "%-22s: %-20s"
+        str_h1 = "%-80s"
+
+        print_header(str_h1, "HOST INFORMATION", true)
+
+        puts str % ["ID", host.id.to_s]       if verbose
+        puts str % ["NAME", host.name]
+        puts str % ["ZONE", host['CLUSTER']]
+        puts str % ["STATE", host.state_str]
+        puts str % ["IM_MAD", host['IM_MAD']] if verbose
+        puts str % ["VM_MAD", host['VM_MAD']] if verbose
+        puts str % ["TM_MAD", host['TM_MAD']] if verbose
+        puts
+
+        print_header(str_h1, "HOST SHARES", false)
+
+        puts str % ["MAX MEM", host['HOST_SHARE/MAX_MEM']]
+        puts str % ["USED MEM (REAL)", host['HOST_SHARE/USED_MEM']]
+        puts str % ["USED MEM (ALLOCATED)", host['HOST_SHARE/MEM_USAGE']]
+        puts str % ["MAX CPU", host['HOST_SHARE/MAX_CPU']]
+        puts str % ["USED CPU (REAL)", host['HOST_SHARE/USED_CPU']]
+        puts str % ["USED CPU (ALLOCATED)", host['HOST_SHARE/CPU_USAGE']]
+        puts str % ["RUNNING VMS", host['HOST_SHARE/RUNNING_VMS']]
+
+        if verbose
+          puts
+          print_header(str_h1, "MONITORING INFORMATION", false)
+          puts host.template_str
+        end
+      end
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
+
+#######################################
+# enable hosts
+when 'enable'
+  check_parameters('enable', 1)
+
+  ARGV.each do |host_name|
+    id = get_host_id(host_name)
+    host = RenkeiVPE::Host.new_with_id(id, client)
+    rc = host.enable
+    if is_successful?(rc)
+      puts "Host enabled: #{host_name}"
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
+
+#######################################
+# disable hosts
+when 'disable'
+  check_parameters('disable', 1)
+
+  ARGV.each do |host_name|
+    id = get_host_id(host_name)
+    host = RenkeiVPE::Host.new_with_id(id, client)
+    rc = host.disable
+    if is_successful?(rc)
+      puts "Host disabled: #{host_name}"
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
+
+#######################################
+# show help
+when 'help'
+  puts parser.help
+
+else
+  $stderr.puts "Unknown command: #{command}"
+  $stderr.puts parser.help
+
+end
+
+
+### Local variables:
+### mode: Ruby
+### coding: utf-8-unix
+### indent-tabs-mode: nil
+### End:

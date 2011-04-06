@@ -288,9 +288,9 @@ end
 #     get_entity_id(name, RenkeiVPE::VirtualMachinePool)
 # end
 
-# def get_host_id(name)
-#     get_entity_id(name, RenkeiVPE::HostPool)
-# end
+def get_host_id(name)
+    get_entity_id(name, RenkeiVPE::HostPool)
+end
 
 # def get_vn_id(name)
 #     get_entity_id(name, RenkeiVPE::VirtualNetworkPool)

@@ -30,6 +30,8 @@ require 'renkei-vpe-server/image'
 require 'renkei-vpe-server/image_pool'
 require 'renkei-vpe-server/zone'
 require 'renkei-vpe-server/zone_pool'
+require 'renkei-vpe-server/host'
+require 'renkei-vpe-server/host_pool'
 
 ##############################################################################
 # RenkeiVPE module for the server
@@ -55,6 +57,8 @@ module RenkeiVPE
                [ImagePool::INTERFACE, ImagePool.new],
                [Zone::INTERFACE,      Zone.new],
                [ZonePool::INTERFACE,  ZonePool.new],
+               [Host::INTERFACE,      Host.new],
+               [HostPool::INTERFACE,  HostPool.new],
               ]
 
       # setup xml rpc server

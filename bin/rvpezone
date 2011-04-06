@@ -19,7 +19,6 @@ $: << RUBY_LIB_LOCATION
 ##############################################################################
 require 'renkei-vpe'
 require 'client_utilities'
-require 'fileutils'
 require 'optparse'
 
 ##############################################################################
@@ -29,42 +28,27 @@ CMD_NAME = 'rvpezone'
 
 client = RenkeiVPE::Client.new()
 xml_output = false
+list_columns = {
+  # :id      => { :name => 'ID',
+  #               :size => 4,
+  #               :proc => lambda {|d,e| d.id} },
+  :user    => { :name => 'OWNER',
+                :size => 10,
+                :proc => lambda {|d,e| d["USERNAME"]} },
+  :name    => { :name => 'NAME',
+                :size => 30,
+                :proc => lambda {|d,e|
+                           if d["PUBLIC"].to_i == 1 then d.name
+                           else "- " + d.name end} },
+  :regtime => { :name => 'REGTIME',
+                :size => 20,
+                :proc => lambda {|d,e| str_register_time(d)} },
+  :state   => { :name => 'STAT',
+                :size => 4,
+                :proc => lambda {|d,e| d.short_state_str} },
 
-##############################################################################
-# Functions
-##############################################################################
-def print_list_friendly(img_pool)
-  list_columns = {
-#    :id      => { :name => 'ID',
-#                  :size => 4,
-#                  :proc => lambda {|d,e| d.id} },
-    :user    => { :name => 'OWNER',
-                  :size => 10,
-                  :proc => lambda {|d,e| d["USERNAME"]} },
-    :name    => { :name => 'NAME',
-                  :size => 30,
-                  :proc => lambda {|d,e|
-                             if d["PUBLIC"].to_i == 1 then d.name
-                             else "- " + d.name end} },
-    :regtime => { :name => 'REGTIME',
-                  :size => 20,
-                  :proc => lambda {|d,e| str_register_time(d)} },
-    :state   => { :name => 'STAT',
-                  :size => 4,
-                  :proc => lambda {|d,e| d.short_state_str} },
-
-    :default => [:user, :name, :regtime, :state]
-  }
-  table = ShowTable.new(list_columns)
-
-  scr_bold
-  scr_underline
-  print table.header_str
-  scr_restore
-  puts
-
-  puts table.data_str(img_pool)
-end
+  :default => [:user, :name, :regtime, :state]
+}
 
 ##############################################################################
 # main
