@@ -28,7 +28,9 @@ module RenkeiVPE
     #             about the host
     def info(session, id)
       authenticate(session) do
-        call_one_xmlrpc('one.host.info', session, id)
+        rc = call_one_xmlrpc('one.host.info', session, id)
+        log_result('rvpe.host.info', rc)
+        return rc
       end
     end
 
@@ -41,7 +43,9 @@ module RenkeiVPE
     #             otherwise it does not exist.
     def enable(session, id, enabled)
       authenticate(session, true) do
-        call_one_xmlrpc('one.host.enable', session, id, enabled)
+        rc = call_one_xmlrpc('one.host.enable', session, id, enabled)
+        log_result('rvpe.host.enable', rc)
+        return rc
       end
     end
 

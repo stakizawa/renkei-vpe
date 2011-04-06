@@ -49,13 +49,25 @@ module RenkeiVPE
     #             about the zone
     def info(session, id)
       authenticate(session) do
+        method_name = 'rvpe.zone.info'
+
         zone = RenkeiVPE::Model::Zone.find_by_id(id)
-        return [false, "Zone[#{id}] is not found"] unless zone
+        unless zone
+          msg = "Zone[#{id}] is not found"
+          log_fail_exit(method_name, msg)
+          return [false, msg]
+        end
 
-        zone_e = Zone.to_xml_element(zone, session)
-        doc = REXML::Document.new
-        doc.add(zone_e)
+        begin
+          zone_e = Zone.to_xml_element(zone, session)
+          doc = REXML::Document.new
+          doc.add(zone_e)
+        rescue => e
+          log_fail_exit(method_name, e)
+          return [false, e.message]
+        end
 
+        log_success_exit(method_name)
         return [true, doc.to_s]
       end
     end
@@ -69,15 +81,24 @@ module RenkeiVPE
     #             generated for this zone
     def allocate(session, template)
       authenticate(session, true) do
+        method_name = 'rvpe.zone.allocate'
+
         zone_def = YAML.load(template)
 
         # create a zone
         name = zone_def['name']
         zone = RenkeiVPE::Model::Zone.find_by_name(name)
-        return [false, "Zone already exists: #{name}"] if zone
+        if zone
+          msg = "Zone already exists: #{name}"
+          log_fail_exit(method_name, msg)
+          return [false, msg]
+        end
         # create an associated site in OpenNebula
         rc = call_one_xmlrpc('one.cluster.allocate', session, name)
-        return [false, rc[1]] unless rc[0]
+        unless rc[0]
+          log_fail_exit(method_name, rc[1])
+          return [false, rc[1]]
+        end
         osite_id = rc[1]
         # create a zone record
         begin
@@ -86,6 +107,7 @@ module RenkeiVPE
           zone.oid  = osite_id
           zone.create
         rescue => e
+          log_fail_exit(method_name, e)
           return [false, e.message]
         end
 
@@ -98,6 +120,7 @@ module RenkeiVPE
         rescue => e
           # delete this zone
           delete(session, zone.id)
+          log_fail_exit(method_name, e)
           return [false, e.message]
         end
 
@@ -108,6 +131,7 @@ module RenkeiVPE
           pp net
         end
 
+        log_success_exit(method_name)
         return [true, zone.id]
       end
     end
@@ -120,8 +144,14 @@ module RenkeiVPE
     #             otherwise it does not exist.
     def delete(session, id)
       authenticate(session, true) do
+        method_name = 'rvpe.zone.delete'
+
         zone = RenkeiVPE::Model::Zone.find_by_id(id)
-        return [false, "Zone[#{id}] does not exist."] unless zone
+        unless zone
+          msg = "Zone[#{id}] does not exist."
+          log_fail_exit(method_name, msg)
+          return [false, msg]
+        end
 
         err_msg = ''
 
@@ -153,7 +183,9 @@ module RenkeiVPE
         end
 
         result = (err_msg.size == 0)? true : false
-        return [result, err_msg]
+        rc = [result, err_msg]
+        log_result(method_name, rc)
+        return rc
       end
     end
 
@@ -166,11 +198,18 @@ module RenkeiVPE
     #             otherwise it does not exist.
     def add_host(session, id, host_name)
       authenticate(session, true) do
+        method_name = 'rvpe.zone.add_host'
+
         zone = RenkeiVPE::Model::Zone.find_by_id(id)
-        return [false, "Zone[#{id}] does not exist."] unless zone
+        unless zone
+          msg = "Zone[#{id}] does not exist."
+          log_fail_exit(method_name, msg)
+          return [false, msg]
+        end
 
         rc = add_host_to_zone(session, host_name, zone)
         rc[1] = '' if rc[0]
+        log_result(method_name, rc)
         return rc
       end
     end
@@ -184,8 +223,14 @@ module RenkeiVPE
     #             otherwise it does not exist.
     def remove_host(session, id, host_name)
       authenticate(session, true) do
+        method_name = 'rvpe.zone.remove_host'
+
         zone = RenkeiVPE::Model::Zone.find_by_id(id)
-        return [false, "Zone[#{id}] does not exist."] unless zone
+        unless zone
+          msg = "Zone[#{id}] does not exist."
+          log_fail_exit(msg)
+          return [false, msg]
+        end
 
         # find host id
         host_id = nil
@@ -200,10 +245,13 @@ module RenkeiVPE
         end
 
         if host_id
-          remove_host_from_zone(session, host_id, zone)
+          rc = remove_host_from_zone(session, host_id, zone)
+          log_result(method_name, rc)
+          return rc
         else
-          return [false,
-                  "Host is not found in ZONE[#{zone.name}]: #{host_name}"]
+          msg = "Host is not found in ZONE[#{zone.name}]: #{host_name}"
+          log_fail_exit(method_name, msg)
+          return [false, msg]
         end
       end
     end
@@ -248,6 +296,7 @@ module RenkeiVPE
         else
           FileUtils.touch '/var/lib/one/remotes'
         end
+        log_success_exit('rvpe.zone.sync')
         return [true, '']
       end
     end
@@ -327,6 +376,7 @@ module RenkeiVPE
     end
 
 
+    # It raises an exception when access to one fail
     def self.to_xml_element(zone, one_session)
       # toplevel ZONE element
       zone_e = REXML::Element.new('ZONE')
@@ -348,7 +398,7 @@ module RenkeiVPE
         rc = RenkeiVPE::OpenNebulaClient.call_one_xmlrpc('one.host.info',
                                                          one_session,
                                                          hid)
-        return rc unless rc[0]
+        raise rc[1] unless rc[0]
 
         host_e = REXML::Element.new('HOST')
         host_e.add(REXML::Document.new(rc[1]).get_text('HOST/NAME'))

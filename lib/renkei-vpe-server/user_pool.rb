@@ -25,13 +25,17 @@ module RenkeiVPE
     def info(session)
       authenticate(session, true) do
         rc = call_one_xmlrpc('one.userpool.info', session)
-        return rc unless rc[0]
+        unless rc[0]
+          log_fail_exit('rvpe.userpool.info', rc[1])
+          return rc
+        end
 
         doc = REXML::Document.new(rc[1])
         doc.each_element('/USER_POOL/USER') do |e|
           User.modify_onexml(e)
         end
 
+        log_success_exit('rvpe.userpool.info')
         return [true, doc.to_s]
       end
     end

@@ -24,6 +24,7 @@ require 'pp'
 
 require 'renkei-vpe-server/model'
 require 'renkei-vpe-server/server_role'
+require 'renkei-vpe-server/logger'
 require 'renkei-vpe-server/user'
 require 'renkei-vpe-server/user_pool'
 require 'renkei-vpe-server/image'
@@ -42,9 +43,22 @@ module RenkeiVPE
   # Renkei VPE server components
   ############################################################################
   class Server
+    # Path for log file
+    LOG_FILE = $rvpe_path + '/var/rvped.log'
+    # Path for database file
+    DB_FILE  = $rvpe_path + '/var/rvped.db'
+
     def initialize(config)
+      # initialize logger
+      RenkeiVPE::Logger.init(LOG_FILE)
+      log = RenkeiVPE::Logger.get_logger
+      log.set_level(config.log_level)
+
+      log.info 'Renkei VPE server starts'
+      log.info config.to_s
+
       # initialize database
-      RenkeiVPE::Database.init($rvpe_path + '/var/rvpe.db')
+      RenkeiVPE::Database.init(DB_FILE)
 
       # initialize one client
       RenkeiVPE::OpenNebulaClient.init(config.one_endpoint)
@@ -110,6 +124,7 @@ module RenkeiVPE
     DEFAULTS = {
       'port' => '8081',
       'one_endpoint' => 'http://localhost:2633/RPC2',
+      'log_level' => 'info',
     }
 
     instance_methods.each do |m|
@@ -138,6 +153,16 @@ module RenkeiVPE
 
     def respond_to?(method)
       @configs.include?(method.to_s) || super
+    end
+
+    def to_s
+      line_format = "%15s | %s\n"
+
+      str = "Configuration\n"
+      @configs.each do |k,v|
+        str += line_format % [k,v]
+      end
+      return str.chomp
     end
   end
 

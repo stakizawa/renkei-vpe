@@ -37,7 +37,9 @@ module RenkeiVPE
     #             about the image
     def info(session, id)
       authenticate(session) do
-        call_one_xmlrpc('one.image.info', session, id)
+        rc = call_one_xmlrpc('one.image.info', session, id)
+        log_result('rvpe.image.info', rc)
+        return rc
       end
     end
 
@@ -50,7 +52,9 @@ module RenkeiVPE
     #             generated for this image
     def allocate(session, template)
       authenticate(session) do
-        call_one_xmlrpc('one.image.allocate', session, template)
+        rc = call_one_xmlrpc('one.image.allocate', session, template)
+        log_result('rvpe.image.allocate', rc)
+        return rc
       end
     end
 
@@ -62,7 +66,9 @@ module RenkeiVPE
     #             otherwise it does not exist.
     def delete(session, id)
       authenticate(session) do
-        call_one_xmlrpc('one.image.delete', session, id)
+        rc = call_one_xmlrpc('one.image.delete', session, id)
+        log_result('rvpe.image.delete', rc)
+        return rc
       end
     end
 
@@ -75,7 +81,9 @@ module RenkeiVPE
     #             otherwise it is the image id.
     def enable(session, id, enabled)
       authenticate(session) do
-        call_one_xmlrpc('one.image.enable', session, id, enabled)
+        rc = call_one_xmlrpc('one.image.enable', session, id, enabled)
+        log_result('rvpe.image.enable', rc)
+        return rc
       end
     end
 
@@ -88,7 +96,9 @@ module RenkeiVPE
     #             otherwise it is the image id.
     def publish(session, id, published)
       authenticate(session) do
-        call_one_xmlrpc('one.image.publish', session, id, published)
+        rc = call_one_xmlrpc('one.image.publish', session, id, published)
+        log_result('rvpe.image.publish', rc)
+        return rc
       end
     end
   end

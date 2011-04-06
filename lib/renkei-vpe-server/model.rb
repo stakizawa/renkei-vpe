@@ -1,3 +1,5 @@
+require 'renkei-vpe-server/logger'
+
 require 'rubygems'
 require 'sqlite3'
 
@@ -77,6 +79,10 @@ module RenkeiVPE
       # id of instance of this model
       attr_reader :id
 
+      def initialize
+        @log = RenkeiVPE::Logger.get_logger
+      end
+
       # creates a record that represents this instance on the table.
       def create
         check_fields
@@ -84,6 +90,7 @@ module RenkeiVPE
         Database.transaction(sql)
         sql = "SELECT id FROM #{table} WHERE #{to_find_id_str}"
         @id = Database.execute(sql)[0]
+        @log.debug "Record[#{self}] is added to Table[#{table}]"
       end
 
       # updates a record that represents this instance on the table.
@@ -91,6 +98,7 @@ module RenkeiVPE
         check_fields
         sql = "UPDATE #{table} SET #{to_update_record_str} WHERE id=#{@id}"
         Database.transaction(sql)
+        @log.debug "Record[#{self}] is updated on Table[#{table}]"
       end
 
       # deletes a record that represents this instance from the table.
@@ -98,6 +106,7 @@ module RenkeiVPE
         raise "'id' is not set." if @id == nil
         sql = "DELETE FROM #{table} WHERE id=#{@id}"
         Database.transaction(sql)
+        @log.debug "Record[#{self}] is deleted from Table[#{table}]"
       end
 
       protected
@@ -205,6 +214,10 @@ SQL
 
       attr_accessor :oid, :name, :enabled, :zones
 
+      def to_s
+        "User<id=#{@id},oid=#{@oid},name=#{@name},enabled=#{@enabled},zones=#{@zones}>"
+      end
+
       protected
 
       def check_fields
@@ -277,6 +290,10 @@ CREATE TABLE #{@table_name} (
 SQL
 
       attr_accessor :oid, :name, :hosts, :networks
+
+      def to_s
+        "Zone<id=#{@id},oid=#{@oid},name=#{@name},hosts=#{@hosts},networks=#{@networks}>"
+      end
 
       protected
 

@@ -38,16 +38,26 @@ module RenkeiVPE
     #             about the user
     def info(session, id)
       authenticate(session, true) do
+        method_name = 'rvpe.user.info'
+
         user = RenkeiVPE::Model::User.find_by_id(id)
-        return [false, "User[#{id}] is not found"] unless user
+        unless user
+          msg = "User[#{id}] is not found"
+          log_fail_exit(method_name, msg)
+          return [false, msg]
+        end
         rc = call_one_xmlrpc('one.user.info', session, user.oid)
-        return rc unless rc[0]
+        unless rc[0]
+          log_fail_exit(method_name, rc[1])
+          return rc
+        end
 
         doc = REXML::Document.new(rc[1])
         doc.each_element('/USER') do |e|
           User.modify_onexml(e, id)
         end
 
+        log_success_exit(method_name)
         return [true, doc.to_s]
       end
     end
@@ -62,11 +72,20 @@ module RenkeiVPE
     #             generated for this user
     def allocate(session, name, passwd)
       authenticate(session, true) do
+        method_name = 'rvpe.user.allocate'
+
         user = RenkeiVPE::Model::User.find_by_name(name)
-        return [false, "User already exists: #{name}"] if user
+        if user
+          msg = "User already exists: #{name}"
+          log_fail_exit(method_name, msg)
+          return [false, msg]
+        end
 
         rc = call_one_xmlrpc('one.user.allocate', session, name, passwd)
-        return rc unless rc[0]
+        unless rc[0]
+          log_fail_exit(method_name, rc[1])
+          return rc
+        end
 
         begin
           user = RenkeiVPE::Model::User.new
@@ -75,8 +94,11 @@ module RenkeiVPE
           user.oid = rc[1]
           user.create
         rescue => e
+          log_fail_exit(method_name, e)
           return [false, e.message]
         end
+
+        log_success_exit(method_name)
         return [true, user.id]
       end
     end
@@ -89,17 +111,29 @@ module RenkeiVPE
     #             otherwise it does not exist.
     def delete(session, id)
       authenticate(session, true) do
+        method_name = 'rvpe.user.delete'
+
         user = RenkeiVPE::Model::User.find_by_id(id)
-        return [false, "User[#{id}] does not exist."] unless user
+        unless user
+          msg = "User[#{id}] does not exist."
+          log_fail_exit(method_name, msg)
+          return [false, msg]
+        end
 
         rc = call_one_xmlrpc('one.user.delete', session, user.oid)
-        return rc unless rc[0]
+        unless rc[0]
+          log_fail_exit(method_name, rc[1])
+          return rc
+        end
 
         begin
           user.delete
         rescue => e
+          log_fail_exit(method_name, e)
           return [false, e.message]
         end
+
+        log_success_exit(method_name)
         return [true, '']
       end
     end
@@ -113,15 +147,28 @@ module RenkeiVPE
     #             otherwise it is the user id.
     def enable(session, id, enabled)
       authenticate(session, true) do
-        user = RenkeiVPE::Model::User.find_by_id(id)
-        return [false, "User[#{id}] does not exist."] unless user
+        method_name = 'rvpe.user.enable'
 
-        if enabled
-          user.enabled = 1
-        else
-          user.enabled = 0
+        user = RenkeiVPE::Model::User.find_by_id(id)
+        unless user
+          msg = "User[#{id}] does not exist."
+          log_fail_exit(method_name, msg)
+          return [false, msg]
         end
-        user.update
+
+        begin
+          if enabled
+            user.enabled = 1
+          else
+            user.enabled = 0
+          end
+          user.update
+        rescue => e
+          log_fail_exit(method_name, e)
+          return [false, e.message]
+        end
+
+        log_success_exit(method_name)
         return [true, user.id]
       end
     end
@@ -135,10 +182,18 @@ module RenkeiVPE
     #             otherwise it does not exist.
     def passwd(session, id, passwd)
       authenticate(session, true) do
-        user = RenkeiVPE::Model::User.find_by_id(id)
-        return [false, "User[#{id}] does not exist."] unless user
+        method_name = 'rvpe.user.passwd'
 
-        call_one_xmlrpc('one.user.passwd', session, user.oid, passwd)
+        user = RenkeiVPE::Model::User.find_by_id(id)
+        unless user
+          msg = "User[#{id}] does not exist."
+          log_fail_exit(method_name, msg)
+          return [false, msg]
+        end
+
+        rc = call_one_xmlrpc('one.user.passwd', session, user.oid, passwd)
+        log_result(method_name, rc)
+        return rc
       end
     end
 

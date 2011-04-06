@@ -24,7 +24,9 @@ module RenkeiVPE
     #             if successful this is the information string
     def info(session, flag)
       authenticate(session) do
-        call_one_xmlrpc('one.imagepool.info', session, flag)
+        rc = call_one_xmlrpc('one.imagepool.info', session, flag)
+        log_result('rvpe.imagepool.info', rc)
+        return rc
       end
     end
   end
