@@ -83,11 +83,11 @@ module RenkeiVPE
 
       # 2. check if user is registered in Renkei VPE
       u = RenkeiVPE::Model::User.find_by_name(username)
-      return [false, "User named '#{username}' is not found."] unless u
+      return [false, "User is not found: #{username}"] unless u
 
       # 3. check if user is enabled
       unless u.enabled == 1
-        return [false, "User named '#{username}' is not enabled."]
+        return [false, "User is not enabled: #{username}"]
       end
 
       # 4. do one authentication
