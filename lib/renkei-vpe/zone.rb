@@ -12,7 +12,8 @@ module RenkeiVPE
       :addhost  => 'zone.add_host',
       :rmhost   => 'zone.remove_host',
       :addvnet  => 'zone.add_vnet',
-      :rmvnet   => 'zone.remove_vnet'
+      :rmvnet   => 'zone.remove_vnet',
+      :sync     => 'zone.sync'
     }
 
     # Creates a Zone description with just its identifier.
@@ -76,6 +77,13 @@ module RenkeiVPE
     # Remove a virtual network from this Zone
     def rmvnet(vn_name)
       call_rpc_for_target(ZONE_METHODS[:rmvnet], vn_name)
+    end
+
+    # Synchronize probes with remote hosts
+    def sync
+      rc = @client.call(ZONE_METHODS[:sync])
+      rc = nil if !RenkeiVPE.is_error?(rc)
+      return rc
     end
 
     ##########################################################################

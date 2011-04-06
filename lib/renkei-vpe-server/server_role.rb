@@ -14,15 +14,18 @@ module RenkeiVPE
 
     protected
 
-    def one_auth(session, strict_auth=false, &block)
+    def one_auth(session, admin_auth=false, &block)
       result = __authenticate(session)
       if result[0] == 0
         result = [true,  result[1]]
       elsif result[0] == 1
         result = [false, result[1]]
       else # result[0] == 2
-        result = [false, result[1]] if strict_auth
-        result = [true,  result[1]]
+        if admin_auth
+          result = [false, result[1]]
+        else
+          result = [true,  result[1]]
+        end
       end
 
       if block_given?
@@ -50,7 +53,7 @@ module RenkeiVPE
     # +return[1]+  string that represents message
     def __authenticate(session)
       result = call_one_xmlrpc(ONE_AUTH_METHOD, session)
-      user = 'User[' + session.split(':')[0] + ']'
+      user = session.split(':')[0]
       if result[0]
         val = 0
         msg = "Authentication succeeded: #{user}"
@@ -73,7 +76,7 @@ module RenkeiVPE
   class ServerRole
     include RenkeiVPE::OpenNebulaClient
 
-    def authenticate(session, strict_auth=false, &block)
+    def authenticate(session, admin_auth=false, &block)
       # 1. get user name
       # it assumes that session string equals to one session string
       username = session.split(':')[0]
@@ -88,7 +91,7 @@ module RenkeiVPE
       end
 
       # 4. do one authentication
-      one_auth(session, strict_auth, &block)
+      one_auth(session, admin_auth, &block)
     end
   end
 

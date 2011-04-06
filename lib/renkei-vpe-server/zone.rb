@@ -1,4 +1,5 @@
 require 'renkei-vpe-server/server_role'
+require 'fileutils'
 require 'rexml/document'
 require 'yaml'
 
@@ -29,6 +30,9 @@ module RenkeiVPE
       meth('val remove_vnet(string, int, string)',
            'remove a virtual network from the zone',
            'remove_vnet')
+      meth('val sync(string)',
+           'synchronize probes with remote hosts in all zones',
+           'sync')
     end
 
 
@@ -229,6 +233,22 @@ module RenkeiVPE
       authenticate(session, true) do
         # TODO implement
         raise NotImplementedException
+      end
+    end
+
+    # synchronize probes with remote hosts in all zones.
+    # +session+   string that represents user session
+    # +return[0]+ always true
+    # +return[1]+ always ''
+    def sync(session)
+      authenticate(session, true) do
+        one_loc = ENV['ONE_LOCATION']
+        if one_loc
+          FileUtils.touch "#{one_loc}/var/remotes"
+        else
+          FileUtils.touch '/var/lib/one/remotes'
+        end
+        return [true, '']
       end
     end
 

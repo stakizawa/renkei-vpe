@@ -115,6 +115,9 @@ Commands:
 
         $ #{CMD_NAME} listvnet 'tokyo tech'
 
+    sync
+        synchronizes probes with remote hosts in all zones.
+
     help
         show this message.
 
@@ -270,6 +273,20 @@ when 'removevnet'
 when 'listvnet'
   check_parameters('listdns', 1)
   # TODO
+
+#######################################
+# synchronize probes with remote hosts in all zones
+when 'sync'
+  check_parameters('sync', 0)
+
+  zone = RenkeiVPE::Zone.new(RenkeiVPE::Zone.build_xml, client)
+  rc = zone.sync
+  if is_successful?(rc)
+    puts 'Sync is done.'
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
 
 #######################################
 # show help
