@@ -1,0 +1,347 @@
+#! /bin/env ruby
+
+##############################################################################
+# Environment Configuration
+##############################################################################
+RVPE_LOCATION = ENV['RVPE_LOCATION']
+
+if !RVPE_LOCATION
+  $stderr.puts 'set "RVPE_LOCATION" valiable.'
+  exit 1
+else
+  RUBY_LIB_LOCATION = RVPE_LOCATION + '/lib'
+end
+
+$: << RUBY_LIB_LOCATION
+
+##############################################################################
+# Required libraries
+##############################################################################
+require 'renkei-vpe'
+require 'client_utilities'
+require 'optparse'
+
+##############################################################################
+# Global variables
+##############################################################################
+CMD_NAME = 'rvpevnet'
+
+client = RenkeiVPE::Client.new()
+xml_output = false
+verbose    = false
+list_columns = {
+  :id      => { :name => 'ID',
+                :size => 4,
+                :proc => lambda {|d,e| d.id} },
+  :user    => { :name => 'OWNER',
+                :size => 10,
+                :proc => lambda {|d,e| d["USERNAME"]} },
+  :name    => { :name => 'NAME',
+                :size => 30,
+                :proc => lambda {|d,e|
+                           if d["PUBLIC"].to_i == 1 then d.name
+                           else "- " + d.name end} },
+  :regtime => { :name => 'REGTIME',
+                :size => 20,
+                :proc => lambda {|d,e| str_register_time(d)} },
+  :state   => { :name => 'STAT',
+                :size => 4,
+                :proc => lambda {|d,e| d.short_state_str} },
+
+  :default => [:user, :name, :regtime, :state]
+}
+
+##############################################################################
+# main
+##############################################################################
+
+begin
+  parser = OptionParser.new
+  parser.banner = <<EOT
+Usage:
+    #{CMD_NAME} command <options>
+
+Commands:
+    create zone_name definition_file
+        create a virtual network under the specified zone.
+
+        $ #{CMD_NAME} create 'tokyo tech' titech_net1.vpe
+
+    delete zone_name vnet_name
+        delete a virtual network from the specified zone.
+
+        $ #{CMD_NAME} delete 'tokyo tech' csi_grid
+
+    show <-x> <-v> zone_name <vnet_names>
+        show information about virtual networks under the specified zone.
+        If vnet_names, which can be names of virtual networks' are given,
+        show information about given VNs.
+
+        $ #{CMD_NAME} show 'tokyo tech' csi_grid
+        $ #{CMD_NAME} show 'tokyo tech' csi_grid 'campus net1'
+
+
+    adddns zone_name vnet_name dns_server_names
+        add dns servers referred by VMs that belong to the specified
+        virtual network and run on hosts in the specified zone.
+        dns_server_names can be names of dns servers.
+
+        $ #{CMD_NAME} adddns 'tokyo tech' csi_grid  131.112.5.20
+
+    removedns zone_name vnet_name dns_server_names
+        remove dns servers referred by VMs that belong to the specified
+        virtual network and run on hosts in the specified zone.
+        dns_server_names can be names of dns servers.
+
+        $ #{CMD_NAME} removedns 'tokyo tech' csi_grid 131.112.5.20
+
+    listdns zone_name vnet_names
+        list dns servers referred by VMs that belong to the specified
+        virtual networks and run on hosts in the specified zone.
+        vnet_names can be names of virtual networks.
+
+        $ #{CMD_NAME} listdns 'tokyo tech' csi_grid
+        $ #{CMD_NAME} listdns 'tokyo tech' csi_grid 'campus net1'
+
+
+    addntp zone_name vnet_name ntp_server_names
+        add ntp servers referred by VMs that belong to the specified
+        virtual network and run on hosts in the specified zone.
+        ntp_server_names can be names of ntp servers.
+
+        $ #{CMD_NAME} addntp 'tokyo tech' csi_grid 131.112.5.20
+
+    removentp zone_name vnet_name ntp_server_names
+        remove ntp servers referred by VMs that belong to the specified
+        virtual network and run on hosts in the specified zone.
+        ntp_server_names can be names of ntp servers.
+
+        $ #{CMD_NAME} removentp 'tokyo tech' csi_grid 131.112.5.20
+
+    listntp zone_name vnet_names
+        list ntp servers referred by VMs that belong to the specified
+        virtual networks and run on hosts in the specified zone.
+        vnet_names can be names of virtual networks.
+
+        $ #{CMD_NAME} listntp 'tokyo tech' csi_grid
+        $ #{CMD_NAME} listntp 'tokyo tech' csi_grid 'campus net1'
+
+
+    help
+        show this message.
+
+Options:
+EOT
+
+  parser.on('-x', '--xml', ': xml output mode') do
+    xml_output = true
+  end
+
+  parser.parse!(ARGV)
+rescue OptionParser::ParseError
+  $stderr.puts parser.help
+  exit 1
+rescue => e
+  $stderr.puts e.message + "\n\n"
+  $stderr.puts parser.help
+  exit 1
+end
+
+command = ARGV.shift
+case command
+#######################################
+# create a vn
+when 'create'
+  check_parameters('create', 2)
+
+  zone_name = ARGV[0]
+  def_file  = ARGV[1]
+  begin
+    definition = File.read(def_file)
+  rescue
+    $stderr.puts "Can't read definition file: #{ARGV[0]}"
+    exit 1
+  end
+
+  vnet = RenkeiVPE::VirtualNetwork.new(RenkeiVPE::VirtualNetwork.build_xml,
+                                       client)
+  rc = vnet.register(definition)
+  if is_successful?(rc)
+    puts "VirtualNetwork created: #{vnet.name}"
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+
+#######################################
+# delete a vn
+when 'delete'
+  check_parameters('delete', 2)
+
+  zone_name = ARGV[0]
+  vnet_name = ARGV[1]
+  id = get_vn_id(vnet_name, zone_name)
+  vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
+  rc = vnet.delete
+  if is_successful?(rc)
+    puts "VirtualNetwork deleted: " + vnet_name
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+
+
+#######################################
+# show vns
+when 'show'
+  check_parameters('show', 2)
+
+  zone_name = ARGV.shift
+  ARGV.each do |vnet_name|
+    id = get_vn_id(vnet_name, zone_name)
+    vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
+    rc = vnet.info
+
+    if is_successful?(rc)
+      if xml_output
+        puts vnet.to_xml
+      else
+        # TODO
+      end
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
+
+#######################################
+# add dns servers
+when 'adddns'
+  check_parameters('adddns', 3)
+
+  zone_name = ARGV.shift
+  vnet_name = ARGV.shift
+  servers   = ARGV.join(' ')
+  id = get_vn_id(vnet_name, zone_name)
+  vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
+  rc = vnet.adddns(servers)
+
+  if is_successful?(rc)
+    puts "Server[#{host_name}] added to VirtualNetwork[#{zone_name}::#{vnet_name}]."
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+
+#######################################
+# remove dns servers
+when 'removedns'
+  check_parameters('removedns', 3)
+
+  zone_name = ARGV.shift
+  vnet_name = ARGV.shift
+  servers   = ARGV.join(' ')
+  id = get_vn_id(vnet_name, zone_name)
+  vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
+  rc = vnet.rmdns(servers)
+
+  if is_successful?(rc)
+    puts "Server[#{host_name}] removed from VirtualNetwork[#{zone_name}::#{vnet_name}]."
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+
+#######################################
+# list dns servers
+when 'listdns'
+  check_parameters('listdns', 2)
+
+  zone_name = ARGV.shift
+  ARGV.each do |vnet_name|
+    id = get_vn_id(vnet_name, zone_name)
+    vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
+    rc = vnet.info
+    if is_successful?(rc)
+      # print_dnss(vnet, true) TODO
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
+
+#######################################
+# add ntp servers
+when 'addntp'
+  check_parameters('addntp', 3)
+
+  # TODO the same method as adddns
+  zone_name = ARGV.shift
+  vnet_name = ARGV.shift
+  servers   = ARGV.join(' ')
+  id = get_vn_id(vnet_name, zone_name)
+  vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
+  rc = vnet.addntp(servers)
+
+  if is_successful?(rc)
+    puts "Server[#{host_name}] added to VirtualNetwork[#{zone_name}::#{vnet_name}]."
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+
+#######################################
+# remove ntp servers
+when 'removentp'
+  check_parameters('removentp', 3)
+
+  # TODO the same method as rmdns
+  zone_name = ARGV.shift
+  vnet_name = ARGV.shift
+  servers   = ARGV.join(' ')
+  id = get_vn_id(vnet_name, zone_name)
+  vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
+  rc = vnet.rmntp(servers)
+
+  if is_successful?(rc)
+    puts "Server[#{host_name}] removed from VirtualNetwork[#{zone_name}::#{vnet_name}]."
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+
+#######################################
+# list ntp servers
+when 'listntp'
+  check_parameters('listntp', 2)
+
+  zone_name = ARGV.shift
+  ARGV.each do |vnet_name|
+    id = get_vn_id(vnet_name, zone_name)
+    vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
+    rc = vnet.info
+    if is_successful?(rc)
+      # print_ntps(vnet, true) TODO
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
+
+#######################################
+# show help
+when 'help'
+  puts parser.help
+
+else
+  $stderr.puts "Unknown command: #{command}"
+  $stderr.puts parser.help
+
+end
+
+
+### Local variables:
+### mode: Ruby
+### coding: utf-8-unix
+### indent-tabs-mode: nil
+### End:

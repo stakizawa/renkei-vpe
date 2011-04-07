@@ -41,23 +41,23 @@ Usage:
     #{CMD_NAME} command <options>
 
 Commands:
-    show <-v> <-x> host_names
-        show information abount specified hosts. host_names can be names
-        of hosts.
+    show <-v> <-x> zone_name host_names
+        show information abount specified hosts in the specified zone.
+        host_names can be names of hosts.
 
-        $ #{CMD_NAME} show rpop-titech.cc.titech.ac.jp
+        $ #{CMD_NAME} show 'tokyo tech' rpop-titech.cc.titech.ac.jp
 
-    enable host_names
+    enable zone_name host_names
         enable hosts. An enabled host can run VMs on it. host_names can
         be names of hosts.
 
-        $ #{CMD_NAME} enable rpop-titech.cc.titech.ac.jp
+        $ #{CMD_NAME} enable 'tokyo tech' rpop-titech.cc.titech.ac.jp
 
-    disable host_names
+    disable zone_name host_names
         disable hosts. A disabled host can not run VMs. host_names can
         be names of hosts.
 
-        $ #{CMD_NAME} disable rpop-titech.cc.titech.ac.jp
+        $ #{CMD_NAME} disable 'tokyo tech' rpop-titech.cc.titech.ac.jp
 
     help
         show this message.
@@ -88,10 +88,11 @@ case command
 #######################################
 # show sites
 when 'show'
-  check_parameters('show', 1)
+  check_parameters('show', 2)
 
+  zone_name = ARGV.shift
   ARGV.each do |host_name|
-    id = get_host_id(host_name)
+    id = get_host_id(host_name, zone_name)
     host = RenkeiVPE::Host.new_with_id(id, client)
     rc = host.info
 
@@ -138,10 +139,11 @@ when 'show'
 #######################################
 # enable hosts
 when 'enable'
-  check_parameters('enable', 1)
+  check_parameters('enable', 2)
 
+  zone_name = ARGV.shift
   ARGV.each do |host_name|
-    id = get_host_id(host_name)
+    id = get_host_id(host_name, zone_name)
     host = RenkeiVPE::Host.new_with_id(id, client)
     rc = host.enable
     if is_successful?(rc)
@@ -155,10 +157,11 @@ when 'enable'
 #######################################
 # disable hosts
 when 'disable'
-  check_parameters('disable', 1)
+  check_parameters('disable', 2)
 
+  zone_name = ARGV.shift
   ARGV.each do |host_name|
-    id = get_host_id(host_name)
+    id = get_host_id(host_name, zone_name)
     host = RenkeiVPE::Host.new_with_id(id, client)
     rc = host.disable
     if is_successful?(rc)

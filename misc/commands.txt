@@ -41,18 +41,18 @@ rvpezone
 rvpevnet
   create       zone_name definition_file
   delete       zone_name vnet_name
-  show         zone_name vnet_name
+  show         zone_name vnet_names
 
   adddns       zone_name vnet_name dns_server_names
   removedns    zone_name vnet_name dns_server_names
-  listdns      zone_name vnet_name
+  listdns      zone_name vnet_names
 
   addntp       zone_name vnet_name ntp_server_names
   removentp    zone_name vnet_name ntp_server_names
-  listntp      zone_name vnet_name
+  listntp      zone_name vnet_names
 
-  addvhost     zone_name vnet_name vhost_name vhost_addr
-  removevhost  zone_name vnet_name vhost_name
+#  addvhost     zone_name vnet_name vhost_name vhost_addr
+#  removevhost  zone_name vnet_name vhost_name
 
 
 

@@ -43,28 +43,27 @@ list_columns = {
 ##############################################################################
 # Functions
 ##############################################################################
-def print_hosts(zone, print_zone_name=false)
-  msg = 'HOSTS' + ((print_zone_name)? " - #{zone.name}" : '')
+def print_xml_array(xml_obj,
+                    header_str, target_xpath, msg_on_no_item,
+                    print_name_on_header=false)
+  msg = header_str + ((print_name_on_header)? " - #{xml_obj.name}" : '')
   print_header("%-80s", msg, true)
-  if zone.has_elements?('HOSTS/HOST')
-    zone.each('HOSTS/HOST') do |h|
-      puts h.text
+  if xml_obj.has_elements?(target_xpath)
+    xml_obj.each(target_xpath) do |e|
+      puts e.text
     end
   else
-    puts 'no hosts'
+    puts msg_on_no_item
   end
 end
 
+def print_hosts(zone, print_zone_name=false)
+  print_xml_array(zone, 'HOSTS', 'HOSTS/HOST/NAME', 'no hosts', print_zone_name)
+end
+
 def print_networks(zone, print_zone_name=false)
-  msg = 'NETWORKS' + ((print_zone_name)? " - #{zone.name}" : '')
-  print_header("%-80s", msg, true)
-  if zone.has_elements?('NETWORKS/NETWORK')
-    zone.each('NETWORKS/NETWORK') do |h|
-      puts h.text
-    end
-  else
-    puts 'no networks'
-  end
+  print_xml_array(zone, 'NETWORKS', 'NETWORKS/NETWORK/NAME',
+                  'no networks', print_zone_name)
 end
 
 ##############################################################################
@@ -187,7 +186,7 @@ when 'delete'
   check_parameters('delete', 1)
 
   name = ARGV[0]
-  id = get_zone_id(ARGV[0])
+  id = get_zone_id(name)
   zone = RenkeiVPE::Zone.new_with_id(id, client)
   rc = zone.delete
   if is_successful?(rc)

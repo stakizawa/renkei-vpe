@@ -274,8 +274,6 @@ def get_entity_id(name, pool_class)
         exit -1
     end
 
-    # TODO: Check for errors
-
     objects=pool.select {|object| object.name==name }
 
     class_name=pool_class.name.split('::').last.gsub(/Pool$/, '')
@@ -295,17 +293,42 @@ def get_entity_id(name, pool_class)
     result
 end
 
+def get_entity_id_from_zone(name, zone_name, search_str)
+    return name if name.match(/^[0123456789]+$/)
+
+    pool = RenkeiVPE::ZonePool.new(get_rvpe_client)
+    result = pool.info
+    if RenkeiVPE.is_error?(result)
+        puts result.message
+        exit -1
+    end
+
+    zones = pool.select { |z| z.name == zone_name }
+    if zones.size == 1
+        zone = zones[0]
+        zone.each(search_str) do |h|
+            return h['ID'] if h['NAME'] == name
+        end
+    elsif zones.size > 1
+        puts "There are multiple zone's with name #{zone_name}."
+        exit -1
+    else
+        puts "Zone[#{zone_name}] not found."
+        exit -1
+    end
+end
+
 # def get_vm_id(name)
 #     get_entity_id(name, RenkeiVPE::VirtualMachinePool)
 # end
 
-def get_host_id(name)
-    get_entity_id(name, RenkeiVPE::HostPool)
+def get_host_id(name, zone_name)
+    get_entity_id_from_zone(name, zone_name, 'HOSTS/HOST')
 end
 
-# def get_vn_id(name)
-#     get_entity_id(name, RenkeiVPE::VirtualNetworkPool)
-# end
+def get_vn_id(name, zone_name)
+    get_entity_id_from_zone(name, zone_name, 'NETWORKS/NETWORK')
+end
 
 def get_user_id(name)
     get_entity_id(name, RenkeiVPE::UserPool)

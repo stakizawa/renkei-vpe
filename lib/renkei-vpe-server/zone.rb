@@ -400,8 +400,13 @@ module RenkeiVPE
                                                          hid)
         raise rc[1] unless rc[0]
 
+        hid_e = REXML::Element.new('ID')
+        hid_e.add(REXML::Document.new(rc[1]).get_text('HOST/ID'))
+        hname_e = REXML::Element.new('NAME')
+        hname_e.add(REXML::Document.new(rc[1]).get_text('HOST/NAME'))
         host_e = REXML::Element.new('HOST')
-        host_e.add(REXML::Document.new(rc[1]).get_text('HOST/NAME'))
+        host_e.add(hid_e)
+        host_e.add(hname_e)
         hosts_e.add(host_e)
       end
 
