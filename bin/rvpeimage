@@ -29,10 +29,11 @@ CMD_NAME = 'rvpeimage'
 
 client = RenkeiVPE::Client.new()
 xml_output = false
+verbose    = false
 list_columns = {
-  # :id      => { :name => 'ID',
-  #               :size => 4,
-  #               :proc => lambda {|d,e| d.id} },
+  :id      => { :name => 'ID',
+                :size => 4,
+                :proc => lambda {|d,e| d.id} },
   :user    => { :name => 'OWNER',
                 :size => 10,
                 :proc => lambda {|d,e| d["USERNAME"]} },
@@ -48,7 +49,7 @@ list_columns = {
                 :size => 4,
                 :proc => lambda {|d,e| d.short_state_str} },
 
-  :default => [:user, :name, :regtime, :state]
+  :default => [:id, :user, :name, :regtime, :state]
 }
 
 ##############################################################################
@@ -92,10 +93,10 @@ Commands:
         $ #{CMD_NAME} unpublish centos5.5_virtio
         $ #{CMD_NAME} unpublish centos5.5_virtio 'ttylinux sample'
 
-    list <-x>
+    list <-x> <-v>
         list registered images you can use.
 
-    show <-x> image_names
+    show <-x> <-v> image_names
         show information about specified images. image_names can be names
         of images.
 
@@ -110,6 +111,10 @@ EOT
 
   parser.on('-x', '--xml', ': xml output mode') do
     xml_output = true
+  end
+
+  parser.on('-v', ': verbose output mode') do
+    verbose = true
   end
 
   parser.parse!(ARGV)
@@ -236,7 +241,7 @@ when 'list'
   if xml_output
     puts img_pool.to_xml
   else
-    print_xml_friendly(list_columns, img_pool)
+    print_xml_friendly(list_columns, img_pool, verbose)
   end
 
 #######################################
@@ -258,8 +263,8 @@ when 'show'
         # print header
         print_header("%-80s", "IMAGE INFORMATION", true)
 
-#        # print ID
-#        puts str % ["ID", image.id.to_s]
+        # print ID
+        puts str % ["ID", image.id.to_s]  if verbose
         # print Name
         puts str % ["NAME", image.name]
         # print Register time

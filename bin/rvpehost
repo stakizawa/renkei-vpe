@@ -28,7 +28,7 @@ CMD_NAME = 'rvpehost'
 
 client = RenkeiVPE::Client.new()
 xml_output = false
-verbose = false
+verbose    = false
 
 ##############################################################################
 # main

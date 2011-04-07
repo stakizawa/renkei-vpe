@@ -212,7 +212,13 @@ class ShowTable
 
 end
 
-def print_xml_friendly(list_columns, xml)
+def print_xml_friendly(list_columns, xml, show_id=false)
+  unless show_id
+    # remove :id from list_columns
+    list_columns.delete(:id)
+    list_columns[:default].delete(:id)
+  end
+
   table = ShowTable.new(list_columns)
 
   scr_bold
@@ -262,6 +268,11 @@ def get_entity_id(name, pool_class)
     # TODO: get vm's from the actual user
     pool=pool_class.new(get_rvpe_client)
     result=pool.info
+
+    if RenkeiVPE.is_error?(result)
+        puts result.message
+        exit -1
+    end
 
     # TODO: Check for errors
 

@@ -28,27 +28,44 @@ CMD_NAME = 'rvpezone'
 
 client = RenkeiVPE::Client.new()
 xml_output = false
+verbose    = false
 list_columns = {
-  # :id      => { :name => 'ID',
-  #               :size => 4,
-  #               :proc => lambda {|d,e| d.id} },
-  :user    => { :name => 'OWNER',
-                :size => 10,
-                :proc => lambda {|d,e| d["USERNAME"]} },
+  :id      => { :name => 'ID',
+                :size => 4,
+                :proc => lambda {|d,e| d.id} },
   :name    => { :name => 'NAME',
                 :size => 30,
-                :proc => lambda {|d,e|
-                           if d["PUBLIC"].to_i == 1 then d.name
-                           else "- " + d.name end} },
-  :regtime => { :name => 'REGTIME',
-                :size => 20,
-                :proc => lambda {|d,e| str_register_time(d)} },
-  :state   => { :name => 'STAT',
-                :size => 4,
-                :proc => lambda {|d,e| d.short_state_str} },
+                :proc => lambda {|d,e| d.name} },
 
-  :default => [:user, :name, :regtime, :state]
+  :default => [:id, :name]
 }
+
+##############################################################################
+# Functions
+##############################################################################
+def print_hosts(zone, print_zone_name=false)
+  msg = 'HOSTS' + ((print_zone_name)? " - #{zone.name}" : '')
+  print_header("%-80s", msg, true)
+  if zone.has_elements?('HOSTS/HOST')
+    zone.each('HOSTS/HOST') do |h|
+      puts h.text
+    end
+  else
+    puts 'no hosts'
+  end
+end
+
+def print_networks(zone, print_zone_name=false)
+  msg = 'NETWORKS' + ((print_zone_name)? " - #{zone.name}" : '')
+  print_header("%-80s", msg, true)
+  if zone.has_elements?('NETWORKS/NETWORK')
+    zone.each('NETWORKS/NETWORK') do |h|
+      puts h.text
+    end
+  else
+    puts 'no networks'
+  end
+end
 
 ##############################################################################
 # main
@@ -74,7 +91,7 @@ Commands:
     list <-x>
         list registered zones you can use.
 
-    show <-x> zone_names
+    show <-x> <-v> zone_names
         show information about specified zones. zone_names can be names
         of zones.
 
@@ -93,7 +110,7 @@ Commands:
 
         $ #{CMD_NAME} deletehost 'tokyo tech' rpop-titech.cc.titech.ac.jp
 
-    listhost <-x> zone_name
+    listhost zone_name
         list hosts that belong to the specified zone whose name is
         zone_name.
 
@@ -110,7 +127,7 @@ Commands:
 
         $ #{CMD_NAME} removevnet 'tokyo tech' vnet1
 
-    listvnet <-x> zone_name
+    listvnet zone_name
         list virtual networks which blong to the specified zone.
 
         $ #{CMD_NAME} listvnet 'tokyo tech'
@@ -126,6 +143,10 @@ EOT
 
   parser.on('-x', '--xml', ': xml output mode') do
     xml_output = true
+  end
+
+  parser.on('-v', ': verbose output mode') do
+    verbose = true
   end
 
   parser.parse!(ARGV)
@@ -189,7 +210,7 @@ when 'list'
   if xml_output
     puts zone_pool.to_xml
   else
-#    print_xml_friendly(list_columns, user_pool)
+    print_xml_friendly(list_columns, zone_pool, verbose)
   end
 
 #######################################
@@ -206,7 +227,22 @@ when 'show'
       if xml_output
         puts zone.to_xml
       else
-        # TODO implement
+        str="%-15s: %-30s"
+
+        # print header
+        print_header("%-80s", "ZONE INFORMATION", true)
+
+        # print ID
+        puts str % ['ID', zone.id.to_s]   if verbose
+        # print Name
+        puts str % ['NAME', zone.name]
+        puts
+        # print Hosts
+        print_hosts(zone)
+        puts
+        # print Networks
+        print_networks(zone)
+
       end
     else
       $stderr.puts rc.message
@@ -254,25 +290,45 @@ when 'removehost'
 # list hosts
 when 'listhost'
   check_parameters('listhost', 1)
-  # TODO
+
+  zone_name = ARGV[0]
+  id = get_zone_id(zone_name)
+  zone = RenkeiVPE::Zone.new_with_id(id, client)
+  rc = zone.info
+  if is_successful?(rc)
+    print_hosts(zone, true)
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
 
 #######################################
 # add a virtual network
 when 'addvnet'
-  check_parameters('adddns', 2)
+  check_parameters('addvnet', 2)
   # TODO
 
 #######################################
 # remove virtual networks
 when 'removevnet'
-  check_parameters('removedns', 2)
+  check_parameters('removevnet', 2)
   # TODO
 
 #######################################
 # list virtual networks
 when 'listvnet'
-  check_parameters('listdns', 1)
-  # TODO
+  check_parameters('listvnet', 1)
+
+  zone_name = ARGV[0]
+  id = get_zone_id(zone_name)
+  zone = RenkeiVPE::Zone.new_with_id(id, client)
+  rc = zone.info
+  if is_successful?(rc)
+    print_networks(zone, true)
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
 
 #######################################
 # synchronize probes with remote hosts in all zones
@@ -305,4 +361,3 @@ end
 ### coding: utf-8-unix
 ### indent-tabs-mode: nil
 ### End:
-
