@@ -26,6 +26,7 @@ require 'renkei-vpe/image_pool'
 require 'renkei-vpe/zone'
 require 'renkei-vpe/zone_pool'
 require 'renkei-vpe/host'
+require 'renkei-vpe/virtual_network'
 
 ##############################################################################
 # RenkeiVPE module

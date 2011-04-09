@@ -125,10 +125,16 @@ module RenkeiVPE
         end
 
         # add virtual networks to this zone
-        zone_def['network'].each do |net|
-          # TODO
-          puts "network addition will be implemented"
-          pp net
+        begin
+          zone_def['network'].each do |net|
+            rc = add_vnet_to_zone(session, net, zone)
+            raise rc[1] unless rc[0]
+          end
+        rescue => e
+          # delete this zone
+          delete(session, zone.id)
+          log_fail_exit(method_name, e)
+          return [false, e.message]
         end
 
         log_success_exit(method_name)
@@ -155,14 +161,16 @@ module RenkeiVPE
 
         err_msg = ''
 
-        # delete virtual networks from OpenNebula
-        zone.networks.split(/\s+/).map{ |i| i.to_i }.each do |nid|
-          # TODO implement
-          puts "vnet[#{nid}]"
+        # delete virtual networks
+        zone.networks.strip.split(/\s+/).map{ |i| i.to_i }.each do |nid|
+          rc = remove_vnet_from_zone(session, nid, zone)
+          unless rc[0]
+            err_msg = (err_msg.size == 0)? rc[1] : err_msg + '; ' + rc[1]
+          end
         end
 
-        # delete hosts from OpenNebula
-        zone.hosts.split(/\s+/).map{ |i| i.to_i }.each do |hid|
+        # delete hosts
+        zone.hosts.strip.split(/\s+/).map{ |i| i.to_i }.each do |hid|
           rc = remove_host_from_zone(session, hid, zone)
           unless rc[0]
             err_msg = (err_msg.size == 0)? rc[1] : err_msg + '; ' + rc[1]
@@ -232,27 +240,10 @@ module RenkeiVPE
           return [false, msg]
         end
 
-        # find host id
-        host_id = nil
-        zone.hosts.split(/\s+/).map{ |i| i.to_i }.each do |hid|
-          rc = call_one_xmlrpc('one.host.info', session, hid)
-          doc = REXML::Document.new(rc[1])
-          hn = doc.get_text('HOST/NAME').value
-          if host_name == hn
-            host_id = doc.get_text('HOST/ID').value.to_i
-            break
-          end
-        end
-
-        if host_id
-          rc = remove_host_from_zone(session, host_id, zone)
-          log_result(method_name, rc)
-          return rc
-        else
-          msg = "Host is not found in ZONE[#{zone.name}]: #{host_name}"
-          log_fail_exit(method_name, msg)
-          return [false, msg]
-        end
+        rc = remove_host_from_zone(session, host_name, zone)
+        rc[1] = '' if rc[0]
+        log_result(method_name, rc)
+        return rc
       end
     end
 
@@ -265,8 +256,20 @@ module RenkeiVPE
     #             otherwise it does not exist.
     def add_vnet(session, id, template)
       authenticate(session, true) do
-        # TODO implement
-        raise NotImplementedException
+        method_name = 'rvpe.zone.add_vnet'
+
+        zone = RenkeiVPE::Model::Zone.find_by_id(id)
+        unless zone
+          msg = "Zone[#{id}] does not exist."
+          log_fail_exit(method_name, msg)
+          return [false, msg]
+        end
+
+        vnet_def = YAML.load(template)
+        rc = add_vnet_to_zone(session, vnet_def, zone)
+        rc[1] = '' if rc[0]
+        log_result(method_name, rc)
+        return rc
       end
     end
 
@@ -279,8 +282,19 @@ module RenkeiVPE
     #             otherwise it does not exist.
     def remove_vnet(session, id, vnet_name)
       authenticate(session, true) do
-        # TODO implement
-        raise NotImplementedException
+        method_name = 'rvpe.zone.remove_vnet'
+
+        zone = RenkeiVPE::Model::Zone.find_by_id(id)
+        unless zone
+          msg = "Zone[#{id}] does not exist."
+          log_fail_exit(msg)
+          return [false, msg]
+        end
+
+        rc = remove_vnet_from_zone(session, vnet_name, zone)
+        rc[1] = '' if rc[0]
+        log_result(method_name, rc)
+        return rc
       end
     end
 
@@ -340,13 +354,31 @@ module RenkeiVPE
     end
 
     # It returns [boolean, integer] or [boolean, string] array.
+    # +host+       id of host or name of host
     # +result[0]+  true if successful, otherwise false
     # +result[1]+  '' if successful, othersize a string that represents
     #              error message
-    def remove_host_from_zone(session, host_id, zone)
+    def remove_host_from_zone(session, host, zone)
+      host_id = host
+      if host.kind_of?(String)
+        # host is name of host
+        zone.hosts.strip.split(/\s+/).map{ |i| i.to_i }.each do |hid|
+          rc = call_one_xmlrpc('one.host.info', session, hid)
+          doc = REXML::Document.new(rc[1])
+          if host == doc.get_text('HOST/NAME').value
+            host_id = doc.get_text('HOST/ID').value.to_i
+            break
+          end
+        end
+
+        if host_id.kind_of?(String)
+          return [false, "Host[#{host_id}] is not in ZONE[#{zone.name}]."]
+        end
+      end
+
       # remove host from the zone
       begin
-        old_hosts = zone.hosts.split(/\s+/).map { |i| i.to_i }
+        old_hosts = zone.hosts.strip.split(/\s+/).map { |i| i.to_i }
         new_hosts = old_hosts - [host_id]
         unless old_hosts.size > new_hosts.size
           raise "Host[#{host_id}] is not in Zone[#{zone.name}]."
@@ -375,6 +407,222 @@ module RenkeiVPE
       return [result, err_msg]
     end
 
+    # It returns [boolean, integer] or [boolean, string] array.
+    # +session+    user session
+    # +vnet_def+   a hash that stores vnet configuration
+    # +zone+       zone the vnet belongs to
+    # +result[0]+  true if successful, otherwise false
+    # +result[1]+  vnet id in integer if successful, othersize a string
+    #              that represents error message
+    def add_vnet_to_zone(session, vnet_def, zone)
+      name        = vnet_def['name']
+      vn_unique   = zone.name + '::' + name
+
+      # 0. check if the vnet already exists
+      vnet = RenkeiVPE::Model::VirtualNetwork.find_by_name(vn_unique)
+      if vnet
+        return [false, "Virtual Network already exists: #{vn_unique}"]
+      end
+
+      # 1. allocate vn in OpenNebula
+      # create one vnet template
+      one_vn_template = <<VN_DEF
+NAME   = "#{vn_unique}"
+TYPE   = FIXED
+PUBLIC = YES
+
+BRIDGE = #{vnet_def['interface']}
+VN_DEF
+      vnet_def['vhost'].each do |vh|
+        one_vn_template += "LEASES = [IP=\"#{vh['address']}\"]\n"
+      end
+      # call rpc
+      rc = call_one_xmlrpc('one.vn.allocate', session, one_vn_template)
+      return rc unless rc[0]
+
+      # 2. create a vnet
+      begin
+        vn = RenkeiVPE::Model::VirtualNetwork.new
+        vn.oid = rc[1]
+        vn.name = name
+        vn.description = vnet_def['description']
+        vn.zone_name   = zone.name
+        vn.unique_name = vn_unique
+        vn.address     = vnet_def['network']
+        vn.netmask     = vnet_def['netmask']
+        vn.gateway     = vnet_def['gateway']
+        vn.dns         = vnet_def['dns'].join(' ')
+        vn.ntp         = vnet_def['ntp'].join(' ')
+        vn.vhost_if    = vnet_def['interface']
+        vn.vhosts      = ''
+        vn.create
+      rescue => e
+        # delete vn in OpenNebula
+        call_one_xmlrpc('one.vn.delete', session, vn.oid)
+        return [false, e.message]
+      end
+
+      # 3. create vhosts that belong to the vnet
+      begin
+        vnet_def['vhost'].each do |vh|
+          rc = add_vhost_to_vnet(vh['name'], vh['address'], vn)
+          raise rc[1] unless rc[0]
+        end
+      rescue => e
+        # delete the vnet
+        remove_vnet_from_zone(session, vn, zone)
+        return [false, e.message]
+      end
+
+      # 4. add vnet to the zone
+      begin
+        zone.networks = (zone.networks || '') + "#{vn.id} "
+        zone.update
+      rescue => e
+        # delete the vnet
+        remove_vnet_from_zone(session, vn, zone)
+        return [false, e.message]
+      end
+
+      return [true, vn.id]
+    end
+
+    # It returns [boolean, integer] or [boolean, string] array.
+    # +vnet+       id of vnet, name of vnet or instance of vnet
+    # +result[0]+  true if successful, otherwise false
+    # +result[1]+  '' if successful, othersize a string that represents
+    #              error message
+    def remove_vnet_from_zone(session, vnet, zone)
+      if vnet.kind_of?(Integer)
+        # vnet is id of virtual network
+        id = vnet
+        vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(id)
+        unless vnet
+          return [false, "Virtual Network[#{id}] does not exist."]
+        end
+      elsif vnet.kind_of?(String)
+        # vnet is name of virtual network
+        name = zone.name + '::' + vnet
+        vnet = RenkeiVPE::Model::VirtualNetwork.find_by_name(name)
+        unless vnet
+          return [false, "Virtual Network[#{name}] does not exist."]
+        end
+      end
+
+      err_msg = ''
+
+      # 1. remove vnet from the zone
+      old_nets = zone.networks.strip.split(/\s+/).map { |i| i }
+      new_nets = old_nets - [vnet.id]
+      if old_nets.size > new_nets.size
+        zone.networks = new_nets.join(' ') + ' '
+        zone.update
+      else
+        err_msg = "VirtualNetwork[#{vnet.unique_name}] is not in Zone[#{zone.name}]."
+      end
+
+      # 2. remove vhosts that belong to the vnet
+      vhids = vnet.vhosts.strip.split(/\s+/).map { |i| i.to_i }
+      vhids.each do |vhid|
+        rc = remove_vhost_from_vnet(vhid, vnet)
+        unless rc[0]
+          err_msg = (err_msg.size == 0)? rc[1] : err_msg + '; ' + rc[1]
+        end
+      end
+
+      # 3. delete the vnet record
+      begin
+        vnet.delete
+      rescue => e
+        err_msg = (err_msg.size == 0)? e.message : err_msg + '; ' + e.message
+      end
+
+      # 4. delete vn in OpenNebula
+      rc = call_one_xmlrpc('one.vn.delete', session, vnet.oid)
+      unless rc[0]
+        err_msg = (err_msg.size == 0)? rc[1] : err_msg + '; ' + rc[1]
+      end
+
+      result = (err_msg.size == 0)? true : false
+      return [result, err_msg]
+    end
+
+    # It returns [boolean, integer] or [boolean, string] array.
+    # TODO should be placed in virtual_network.rb
+    # +vhost_name+  name of vhost
+    # +vhost_addr+  address of vhost
+    # +vnet+        vnet where the vhost belongs
+    # +result[0]+   true if successful, otherwise false
+    # +result[1]+   vhost id in integer if successful, othersize a string
+    #               that represents error message
+    def add_vhost_to_vnet(vhost_name, vhost_addr, vnet)
+      vh = RenkeiVPE::Model::VirtualHost.find_by_name(vhost_name)
+      if vh
+        return [false, "VirtualHost[#{vhost_name}] already exists."]
+      end
+
+      # create a virtual host record
+      begin
+        vh = RenkeiVPE::Model::VirtualHost.new
+        vh.name      = vhost_name
+        vh.address   = vhost_addr
+        vh.allocated = 0
+        vh.vnetid    = vnet.id
+        vh.create
+      rescue => e
+        return [false, e.message]
+      end
+
+      # update the virtual network record
+      begin
+        vnet.vhosts = (vnet.vhosts || '') + "#{vh.id} "
+        vnet.update
+      rescue => e
+        # delete vhost
+        begin; vh.delete; rescue; end
+        return [false, e.message]
+      end
+
+      return [true, vh.id]
+    end
+
+    # It returns [boolean, integer] or [boolean, string] array.
+    # TODO should be placed in virtual_network.rb
+    # +vhost_id+    id of vhost
+    # +vnet+        vnet where the vhost belongs
+    # +result[0]+   true if successful, otherwise false
+    # +result[1]+   vhost id in integer if successful, othersize a string
+    #               that represents error message
+    def remove_vhost_from_vnet(vhost_id, vnet)
+      vh = RenkeiVPE::Model::VirtualHost.find_by_id(vhost_id)
+      unless vh
+        return [false, "VirtualHost[#{vhost_id}] does not exist."]
+      end
+
+      # remove vhost from the vnet record
+      begin
+        old_vhosts = vnet.vhosts.strip.split(/\s+/).map { |i| i.to_i }
+        new_vhosts = old_vhosts - [vhost_id]
+        unless old_vhosts.size > new_vhosts.size
+          vnet_un = vnet.zone_name + '::' + vnet.name
+          raise "VirtualHost[#{vhost_id}] is not in VirtualNetwork[#{vnet_un}]."
+        end
+        vnet.vhosts = new_vhosts.join(' ') + ' '
+        vnet.update
+      rescue => e
+        return [false, e.message]
+      end
+
+      # remove vhost record
+      begin
+        vh.delete
+      rescue => e
+        return [false, e.message]
+      end
+
+      return [true, vh.id]
+    end
+
 
     # It raises an exception when access to one fail
     def self.to_xml_element(zone, one_session)
@@ -394,7 +642,7 @@ module RenkeiVPE
       # set hosts
       hosts_e = REXML::Element.new('HOSTS')
       zone_e.add(hosts_e)
-      zone.hosts.split(/\s+/).map{ |i| i.to_i }.each do |hid|
+      zone.hosts.strip.split(/\s+/).map{ |i| i.to_i }.each do |hid|
         rc = RenkeiVPE::OpenNebulaClient.call_one_xmlrpc('one.host.info',
                                                          one_session,
                                                          hid)
@@ -411,10 +659,22 @@ module RenkeiVPE
       end
 
       # set networks
-      # TODO implement
       nets_e = REXML::Element.new('NETWORKS')
-      nets_e.add(REXML::Text.new('To be implemented'))
       zone_e.add(nets_e)
+      zone.networks.strip.split(/\+s/).map{ |i| i.to_i }.each do |nid|
+        pp nid
+        vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(nid)
+        raise "VirtualNetwork[#{nid}] is not found." unless vnet
+
+        nid_e = REXML::Element.new('ID')
+        nid_e.add(REXML::Text.new(nid.to_s))
+        nname_e = REXML::Element.new('NAME')
+        nname_e.add(REXML::Text.new(vnet.name))
+        net_e = REXML::Element.new('NETWORK')
+        net_e.add(nid_e)
+        net_e.add(nname_e)
+        nets_e.add(net_e)
+      end
 
       return zone_e
     end

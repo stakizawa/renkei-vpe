@@ -70,8 +70,8 @@ module RenkeiVPE
     end
 
     # Add a new virtual network to this Zone
-    def addvnet(vn_name)
-      call_rpc_for_target(ZONE_METHODS[:addvnet], vn_name)
+    def addvnet(vn_description)
+      call_rpc_for_target(ZONE_METHODS[:addvnet], vn_description)
     end
 
     # Remove a virtual network from this Zone

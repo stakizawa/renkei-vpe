@@ -7,8 +7,6 @@ module RenkeiVPE
     #######################################################################
     VN_METHODS = {
       :info     => 'vn.info',
-      :allocate => 'vn.allocate',
-      :delete   => 'vn.delete',
       :adddns   => 'vn.add_dns',
       :rmdns    => 'vn.remove_dns',
       :addntp   => 'vn.add_ntp',
@@ -48,18 +46,6 @@ module RenkeiVPE
       super(VN_METHODS[:info], 'VNET')
     end
 
-    # Allocates a new VirtualNetwork
-    #
-    # +description+ A string containing the template of the VirtualNetwork.
-    def allocate(description)
-      super(VN_METHODS[:allocate],description)
-    end
-
-    # Deletes the VirtualNetwork
-    def delete()
-      super(VN_METHODS[:delete])
-    end
-
     # Adds dns servers
     def adddns(servers_str)
       call_rpc_for_target(VN_METHODS[:adddns], servers_str)
@@ -83,18 +69,6 @@ module RenkeiVPE
     ##########################################################################
     # Helpers
     ##########################################################################
-
-    # Register a new vn
-    def register(description)
-      rc = allocate(description)
-      return rc if RenkeiVPE.is_error?(rc)
-
-      rc = self.info
-      rc = nil if !RenkeiVPE.is_error?(rc)
-
-      return rc
-    end
-
 
     private
 

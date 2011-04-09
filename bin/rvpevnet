@@ -62,16 +62,6 @@ Usage:
     #{CMD_NAME} command <options>
 
 Commands:
-    create zone_name definition_file
-        create a virtual network under the specified zone.
-
-        $ #{CMD_NAME} create 'tokyo tech' titech_net1.vpe
-
-    delete zone_name vnet_name
-        delete a virtual network from the specified zone.
-
-        $ #{CMD_NAME} delete 'tokyo tech' csi_grid
-
     show <-x> <-v> zone_name <vnet_names>
         show information about virtual networks under the specified zone.
         If vnet_names, which can be names of virtual networks' are given,
@@ -149,48 +139,6 @@ end
 
 command = ARGV.shift
 case command
-#######################################
-# create a vn
-when 'create'
-  check_parameters('create', 2)
-
-  zone_name = ARGV[0]
-  def_file  = ARGV[1]
-  begin
-    definition = File.read(def_file)
-  rescue
-    $stderr.puts "Can't read definition file: #{ARGV[0]}"
-    exit 1
-  end
-
-  vnet = RenkeiVPE::VirtualNetwork.new(RenkeiVPE::VirtualNetwork.build_xml,
-                                       client)
-  rc = vnet.register(definition)
-  if is_successful?(rc)
-    puts "VirtualNetwork created: #{vnet.name}"
-  else
-    $stderr.puts rc.message
-    exit 1
-  end
-
-#######################################
-# delete a vn
-when 'delete'
-  check_parameters('delete', 2)
-
-  zone_name = ARGV[0]
-  vnet_name = ARGV[1]
-  id = get_vn_id(vnet_name, zone_name)
-  vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
-  rc = vnet.delete
-  if is_successful?(rc)
-    puts "VirtualNetwork deleted: " + vnet_name
-  else
-    $stderr.puts rc.message
-    exit 1
-  end
-
-
 #######################################
 # show vns
 when 'show'

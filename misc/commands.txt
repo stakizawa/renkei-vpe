@@ -30,7 +30,7 @@ rvpezone
   removehost  zone_name host_names
   listhost    zone_name
 
-  addvnet     zone_name definition_file
+  addvnet     zone_name definition_files
   removevnet  zone_name vnet_names
   listvnet    zone_name
 
@@ -39,8 +39,6 @@ rvpezone
 
 
 rvpevnet
-  create       zone_name definition_file
-  delete       zone_name vnet_name
   show         zone_name vnet_names
 
   adddns       zone_name vnet_name dns_server_names

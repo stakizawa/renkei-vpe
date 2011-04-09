@@ -1,6 +1,8 @@
 # yaml file format
-# All fields are mandatory.
+# All fields except 'description' are mandatory.
+# Characters in attributes must be downcase.
 name:    test
+description: test network
 network: 192.168.0.0
 netmask: 255.255.255.0
 gateway: 192.168.0.1

@@ -20,6 +20,7 @@ $: << RUBY_LIB_LOCATION
 require 'renkei-vpe'
 require 'client_utilities'
 require 'optparse'
+require 'yaml'
 
 ##############################################################################
 # Global variables
@@ -305,13 +306,45 @@ when 'listhost'
 # add a virtual network
 when 'addvnet'
   check_parameters('addvnet', 2)
-  # TODO
+
+  zone_name = ARGV.shift
+  id = get_zone_id(zone_name)
+  zone = RenkeiVPE::Zone.new_with_id(id, client)
+  ARGV.each do |vnet_file|
+    begin
+      vn_definition = File.read(ARGV[0])
+    rescue
+      $stderr.puts "Can't read definition file: #{vn_definition}"
+      exit 1
+    end
+
+    rc = zone.addvnet(vn_definition)
+    if is_successful?(rc)
+      name = zone_name + '::' + YAML.load(vn_definition)['name']
+      puts "VirtualNetwork[#{name}] is added to ZONE[#{zone_name}]."
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
 
 #######################################
 # remove virtual networks
 when 'removevnet'
   check_parameters('removevnet', 2)
-  # TODO
+
+  zone_name = ARGV.shift
+  id = get_zone_id(zone_name)
+  zone = RenkeiVPE::Zone.new_with_id(id, client)
+  ARGV.each do |vnet_name|
+    rc = zone.rmvnet(vnet_name)
+    if is_successful?(rc)
+      puts "VirtualNetwork[#{vnet_name}] is removed from ZONE[#{zone_name}]."
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
 
 #######################################
 # list virtual networks

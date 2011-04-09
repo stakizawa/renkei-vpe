@@ -1,5 +1,4 @@
 require 'renkei-vpe-server/logger'
-
 require 'rubygems'
 require 'sqlite3'
 
@@ -57,6 +56,8 @@ module RenkeiVPE
 
       Model::User.create_table_if_necessary
       Model::Zone.create_table_if_necessary
+      Model::VirtualNetwork.create_table_if_necessary
+      Model::VirtualHost.create_table_if_necessary
     end
 
     module_function :file=, :file, :execute, :transaction, :init
@@ -75,6 +76,9 @@ module RenkeiVPE
       # name and schema of a table that stores instance of this model
       @table_name   = nil
       @table_schema = nil
+
+      # table field name used in self.find_by_name
+      @field_for_find_by_name = nil
 
       # id of instance of this model
       attr_reader :id
@@ -113,6 +117,27 @@ module RenkeiVPE
 
       def table
         self.class.table_name
+      end
+
+      def raise_if_nil(obj, obj_name)
+        unless obj
+          raise "'#{obj_name}' must not be nil."
+        end
+      end
+
+      def raise_if_nil_and_not_class(obj, obj_name, cls)
+        unless obj
+          raise "'#{obj_name}' must not be nil."
+        end
+        unless obj.kind_of?(cls)
+          raise "'#{obj_name}' must be an #{cls.name}"
+        end
+      end
+
+      def raise_if_nil_or_not_class(obj, obj_name, cls)
+        unless obj == nil || obj.kind_of?(cls)
+          raise "'#{obj_name}' must be nil or a #{cls.name}"
+        end
       end
 
       # It checks all fields.
@@ -173,9 +198,15 @@ module RenkeiVPE
       # It finds and returns a record whose name is +name+.
       # It returns nil if not found.
       def self.find_by_name(name)
-        vals = find("name='#{name}'")
+        # vals = find("name='#{name}'") TODO remove
+        vals = find(to_find_by_name_cond_str(name))
         return nil unless vals
         return gen_instance(vals)
+      end
+
+      # It returns a string used in self.find_by_name.
+      def self.to_find_by_name_cond_str(name)
+        return @field_for_find_by_name + '=' + "'#{name}'"
       end
 
       # It iterates all records stored in db.
@@ -203,49 +234,44 @@ module RenkeiVPE
       @table_schema = <<SQL
 CREATE TABLE #{@table_name} (
   id      INTEGER PRIMARY KEY AUTOINCREMENT,
-  oid     INTEGER,
-  name    VARCHAR(256),
+  oid     INTEGER UNIQUE,
+  name    VARCHAR(256) UNIQUE,
   enabled INTEGER,
-  zones   TEXT,
-
-  UNIQUE(name)
+  zones   TEXT
 );
 SQL
 
-      attr_accessor :oid, :name, :enabled, :zones
+      @field_for_find_by_name = 'name'
+
+      attr_accessor :oid      # id of the accosiated one user
+      attr_accessor :name     # name of the user
+      attr_accessor :enabled  # a flag is the user is enabled(1) or not(0)
+      attr_accessor :zones    # names of zones the user can use
 
       def to_s
-        "User<id=#{@id},oid=#{@oid},name=#{@name},enabled=#{@enabled},zones=#{@zones}>"
+        "User<"                  +
+          "id=#{@id},"           +
+          "oid=#{@oid},"         +
+          "name=#{@name},"       +
+          "enabled=#{@enabled}," +
+          "zones=#{@zones}"      +
+          ">"
       end
 
       protected
 
       def check_fields
-        unless @oid
-          raise "'oid' field must not be nil."
-        end
-        unless @oid.kind_of?(Integer)
-          raise "'oid' must be an integer"
-        end
-        unless @name
-          raise "'name' field must not be nil."
-        end
-        unless @name.instance_of?(String)
-          raise "'name' must be a string"
-        end
-        unless @enabled
-          raise "'enabled' field must not be nil."
-        end
-        unless @enabled.kind_of?(Integer)
-          raise "'enabled' must be an integer"
-        end
-        unless @zones == nil || @zones.instance_of?(String)
-          raise "'zones' must be nil or a string"
-        end
+        raise_if_nil_and_not_class(@oid,     'oid',     Integer)
+        raise_if_nil_and_not_class(@name,    'name',    String)
+        raise_if_nil_and_not_class(@enabled, 'enabled', Integer)
+        raise_if_nil_or_not_class( @zones,   'zones',   String)
       end
 
       def to_create_record_str
-        "#{@oid},'#{@name}',#{@enabled},'#{@zones}'"
+        "#{@oid},"       +
+          "'#{@name}',"  +
+          "#{@enabled}," +
+          "'#{@zones}'"
       end
 
       def to_find_id_str
@@ -253,7 +279,10 @@ SQL
       end
 
       def to_update_record_str
-        "oid=#{@oid},name='#{@name}',enabled=#{@enabled},zones='#{@zones}'"
+        "oid=#{@oid},"           +
+          "name='#{@name}',"     +
+          "enabled=#{@enabled}," +
+          "zones='#{@zones}'"
       end
 
 
@@ -280,46 +309,44 @@ SQL
       @table_schema = <<SQL
 CREATE TABLE #{@table_name} (
   id       INTEGER PRIMARY KEY AUTOINCREMENT,
-  oid      INTEGER,
-  name     VARCHAR(256),
+  oid      INTEGER UNIQUE,
+  name     VARCHAR(256) UNIQUE,
   hosts   TEXT,
   networks TEXT,
-
-  UNIQUE(name)
 );
 SQL
 
-      attr_accessor :oid, :name, :hosts, :networks
+      @field_for_find_by_name = 'name'
+
+      attr_accessor :oid       # id of the accosiated one cluster
+      attr_accessor :name      # name of the zone
+      attr_accessor :hosts     # hosts that host VMs and belong to the zone
+      attr_accessor :networks  # networks belong to the zone
 
       def to_s
-        "Zone<id=#{@id},oid=#{@oid},name=#{@name},hosts=#{@hosts},networks=#{@networks}>"
+        "Zone<"                   +
+          "id=#{@id},"            +
+          "oid=#{@oid},"          +
+          "name=#{@name},"        +
+          "hosts=#{@hosts},"      +
+          "networks=#{@networks}" +
+          ">"
       end
 
       protected
 
       def check_fields
-        unless @oid
-          raise "'oid' field must not be nil."
-        end
-        unless @oid.kind_of?(Integer)
-          raise "'oid' must be an integer"
-        end
-        unless @name
-          raise "'name' field must not be nil."
-        end
-        unless @name.instance_of?(String)
-          raise "'name' must be a string"
-        end
-        unless @hosts == nil || @hosts.instance_of?(String)
-          raise "'hosts' must be nil or a string"
-        end
-        unless @networks == nil || @networks.instance_of?(String)
-          raise "'networks' must be nil or a string"
-        end
+        raise_if_nil_and_not_class(@oid,      'oid',      Integer)
+        raise_if_nil_and_not_class(@name,     'name',     String)
+        raise_if_nil_or_not_class( @hosts,    'hosts',    String)
+        raise_if_nil_or_not_class( @networks, 'networks', String)
       end
 
       def to_create_record_str
-        "#{@oid},'#{@name}','#{@hosts}','#{@networks}'"
+        "#{@oid},"       +
+          "'#{@name}',"  +
+          "'#{@hosts}'," +
+          "'#{@networks}'"
       end
 
       def to_find_id_str
@@ -327,7 +354,10 @@ SQL
       end
 
       def to_update_record_str
-        "oid=#{@oid},name='#{@name}',hosts='#{@hosts}',networks='#{@networks}'"
+        "oid=#{@oid},"         +
+          "name='#{@name}',"   +
+          "hosts='#{@hosts}'," +
+          "networks='#{@networks}'"
       end
 
 
@@ -345,6 +375,213 @@ SQL
 
     end
 
+    ##########################################################################
+    # Model for Virtual Network
+    ##########################################################################
+    class VirtualNetwork < BaseModel
+      @table_name = 'virtual_networks'
+
+      @table_schema = <<SQL
+CREATE TABLE #{@table_name} (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  oid         INTEGER UNIQUE,
+  name        VARCHAR(256),
+  description TEXT,
+  zone_name   VARCHAR(256),
+  unique_name VARCHAR(256) UNIQUE,
+  address     VARCHAR(256),
+  netmask     VARCHAR(256),
+  gateway     VARCHAR(256),
+  dns         TEXT,
+  ntp         TEXT,
+  vhost_if    VARCHAR(256),
+  vhosts      TEXT
+);
+SQL
+
+      @field_for_find_by_name = 'unique_name'
+
+      attr_accessor :oid          # id of one network
+      attr_accessor :name         # name of the network
+      attr_accessor :description  # description of the network
+      attr_accessor :zone_name    # name of zone where the network belongs
+      attr_accessor :unique_name  # global unique name of the network
+      attr_accessor :address      # network address
+      attr_accessor :netmask      # netmask of the network
+      attr_accessor :gateway      # gateway of the network
+      attr_accessor :dns          # dns servers of the network, splitted by ' '
+      attr_accessor :ntp          # ntp servers of the network, splitted by ' '
+      attr_accessor :vhost_if     # interface on virtual host
+      attr_accessor :vhosts       # ids of virtual hosts, splitted by ' '
+
+
+      def to_s
+        "VirtualNetwork<"                +
+          "id=#{@id},"                   +
+          "oid=#{@oid},"                 +
+          "name=#{@name},"               +
+          "description=#{@description}," +
+          "zone_name=#{@zone_name},"     +
+          "unique_name=#{@unique_name}," +
+          "address=#{@address},"         +
+          "netmask=#{@netmask},"         +
+          "gateway=#{@gateway},"         +
+          "dns=#{@dns},"                 +
+          "ntp=#{@ntp},"                 +
+          "vhost_if=#{@vhost_if},"       +
+          "vhosts=#{@vhosts}"            +
+          ">"
+      end
+
+      protected
+
+      def check_fields
+        raise_if_nil_and_not_class(@oid,         'oid',         Integer)
+        raise_if_nil_and_not_class(@name,        'name',        String)
+        raise_if_nil_or_not_class( @description, 'description', String)
+        raise_if_nil_and_not_class(@zone_name,   'zone_name',   String)
+        raise_if_nil_and_not_class(@unique_name, 'unique_name', String)
+        raise_if_nil_and_not_class(@address,     'address',     String)
+        raise_if_nil_and_not_class(@netmask,     'netmask',     String)
+        raise_if_nil_and_not_class(@gateway,     'gateway',     String)
+        raise_if_nil_and_not_class(@dns,         'dns',         String)
+        raise_if_nil_and_not_class(@ntp,         'ntp',         String)
+        raise_if_nil_and_not_class(@vhost_if,    'vhost_if',    String)
+        raise_if_nil_and_not_class(@vhosts,      'vhosts',      String)
+      end
+
+      def to_create_record_str
+        "#{@oid},"             +
+          "'#{@name}',"        +
+          "'#{@description}'," +
+          "'#{@zone_name}',"   +
+          "'#{@unique_name}'," +
+          "'#{@address}',"     +
+          "'#{@netmask}',"     +
+          "'#{@gateway}',"     +
+          "'#{@dns}',"         +
+          "'#{@ntp}',"         +
+          "'#{@vhost_if}',"    +
+          "'#{@vhosts}'"
+      end
+
+      def to_find_id_str
+        "unique_name='#{@unique_name}'"
+      end
+
+      def to_update_record_str
+        "oid=#{@oid},"                     +
+          "name='#{@name}',"               +
+          "description='#{@description}'," +
+          "zone_name='#{@zone_name}',"     +
+          "unique_name='#{@unique_name}'," +
+          "address='#{@address}',"         +
+          "netmask='#{@netmask}',"         +
+          "gateway='#{@gateway}',"         +
+          "dns='#{@dns}',"                 +
+          "ntp='#{@ntp}',"                 +
+          "vhost_if='#{@vhost_if}',"       +
+          "vhosts='#{@vhosts}'"
+      end
+
+
+      def self.gen_instance(attr)
+        vn = VirtualNetwork.new
+        vn.instance_eval do
+          @id          = attr[0]
+          @oid         = attr[1].to_i
+          @name        = attr[2]
+          @description = attr[3]
+          @zone_name   = attr[4]
+          @unique_name = attr[5]
+          @address     = attr[6]
+          @netmask     = attr[7]
+          @gateway     = attr[8]
+          @dns         = attr[9]
+          @ntp         = attr[10]
+          @vhost_if    = attr[11]
+          @vhosts      = attr[12]
+        end
+        return vn
+      end
+
+    end
+
+    ##########################################################################
+    # Model for Virtual Host that belongs to a specific Virtual Network
+    ##########################################################################
+    class VirtualHost < BaseModel
+      @table_name = 'virtual_hosts'
+
+      @table_schema = <<SQL
+CREATE TABLE #{@table_name} (
+  id        INTEGER PRIMARY KEY AUTOINCREMENT,
+  name      VARCHAR(256),
+  address   VARCHAR(256),
+  allocated INTEGER,
+  vnetid    INTEGER
+);
+SQL
+
+      @field_for_find_by_name = 'name'
+
+      attr_accessor :name      # name of the vhost must be an FQDN
+      attr_accessor :address   # IP address of the vhost
+      attr_accessor :allocated # 1 when it is allocated, othersize 0
+      attr_accessor :vnetid    # id of the vnet the vhost belongs to
+
+      def to_s
+        "VirtualHost<"               +
+          "id=#{@id},"               +
+          "name=#{@name},"           +
+          "address=#{@address},"     +
+          "allocated=#{@allocated}," +
+          "vnetid=#{@vnetid}"        +
+          ">"
+      end
+
+      protected
+
+      def check_fields
+        raise_if_nil_and_not_class(@name,      'name',      String)
+        raise_if_nil_and_not_class(@address,   'address',   String)
+        raise_if_nil_and_not_class(@allocated, 'allocated', Integer)
+        raise_if_nil(@vnetid, 'vnetid')
+      end
+
+      def to_create_record_str
+        "'#{@name}',"      +
+          "'#{@address}'," +
+          "#{@allocated}," +
+          "#{@vnetid}"
+      end
+
+      def to_find_id_str
+        "name='#{@name}'"
+      end
+
+      def to_update_record_str
+        "name='#{@name}',"           +
+          "address='#{@address}',"   +
+          "allocated=#{@allocated}," +
+          "vnetid=#{@vnetid}"
+      end
+
+
+      def self.gen_instance(attr)
+        vh = VirtualHost.new
+        vh.instance_eval do
+          @id        = attr[0]
+          @name      = attr[1]
+          @address   = attr[2]
+          @allocated = attr[3].to_i
+          @vnetid    = attr[4].to_i
+        end
+        return vh
+      end
+
+    end
+
   end
 end
 
@@ -354,6 +591,8 @@ if __FILE__ == $0
   require 'pp'
   require 'fileutils'
   require 'test/unit'
+
+  RenkeiVPE::Logger.init('rvped.log')
 
   class DatabaseTest < Test::Unit::TestCase
     include RenkeiVPE
