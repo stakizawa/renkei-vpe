@@ -218,7 +218,7 @@ module RenkeiVPE
       # 1. replace user id
       e.delete_element('ID')
       id_e = REXML::Element.new('ID')
-      id_e.add(REXML::Text.new(user.id))
+      id_e.add(REXML::Text.new(user.id.to_s))
       e.add(id_e)
 
       # 2. replace enabled

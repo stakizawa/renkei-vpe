@@ -289,7 +289,7 @@ SQL
       def self.gen_instance(attr)
         u = User.new
         u.instance_eval do
-          @id      = attr[0]
+          @id      = attr[0].to_i
           @oid     = attr[1].to_i
           @name    = attr[2]
           @enabled = attr[3].to_i
@@ -364,7 +364,7 @@ SQL
       def self.gen_instance(attr)
         z = Zone.new
         z.instance_eval do
-          @id       = attr[0]
+          @id       = attr[0].to_i
           @oid      = attr[1].to_i
           @name     = attr[2]
           @hosts    = attr[3]
@@ -488,7 +488,7 @@ SQL
       def self.gen_instance(attr)
         vn = VirtualNetwork.new
         vn.instance_eval do
-          @id          = attr[0]
+          @id          = attr[0].to_i
           @oid         = attr[1].to_i
           @name        = attr[2]
           @description = attr[3]
@@ -571,7 +571,7 @@ SQL
       def self.gen_instance(attr)
         vh = VirtualHost.new
         vh.instance_eval do
-          @id        = attr[0]
+          @id        = attr[0].to_i
           @name      = attr[1]
           @address   = attr[2]
           @allocated = attr[3].to_i

@@ -294,8 +294,6 @@ def get_entity_id(name, pool_class)
 end
 
 def get_entity_id_from_zone(name, zone_name, search_str)
-    return name if name.match(/^[0123456789]+$/)
-
     pool = RenkeiVPE::ZonePool.new(get_rvpe_client)
     result = pool.info
     if RenkeiVPE.is_error?(result)
@@ -303,7 +301,12 @@ def get_entity_id_from_zone(name, zone_name, search_str)
         exit -1
     end
 
-    zones = pool.select { |z| z.name == zone_name }
+    if zone_name.match(/^[0123456789]+$/)
+        zones = pool.select { |z| z.id == zone_name.to_i }
+    else
+        zones = pool.select { |z| z.name == zone_name }
+    end
+
     if zones.size == 1
         zone = zones[0]
         zone.each(search_str) do |h|

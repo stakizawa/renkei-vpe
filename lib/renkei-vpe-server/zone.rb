@@ -361,13 +361,17 @@ module RenkeiVPE
     def remove_host_from_zone(session, host, zone)
       host_id = host
       if host.kind_of?(String)
-        # host is name of host
-        zone.hosts.strip.split(/\s+/).map{ |i| i.to_i }.each do |hid|
-          rc = call_one_xmlrpc('one.host.info', session, hid)
-          doc = REXML::Document.new(rc[1])
-          if host == doc.get_text('HOST/NAME').value
-            host_id = doc.get_text('HOST/ID').value.to_i
-            break
+        if host.match(/^[0123456789]+$/)
+          host_id = host.to_i
+        else
+          # host is name of host
+          zone.hosts.strip.split(/\s+/).map{ |i| i.to_i }.each do |hid|
+            rc = call_one_xmlrpc('one.host.info', session, hid)
+            doc = REXML::Document.new(rc[1])
+            if host == doc.get_text('HOST/NAME').value
+              host_id = doc.get_text('HOST/ID').value.to_i
+              break
+            end
           end
         end
 
@@ -512,7 +516,7 @@ VN_DEF
       err_msg = ''
 
       # 1. remove vnet from the zone
-      old_nets = zone.networks.strip.split(/\s+/).map { |i| i }
+      old_nets = zone.networks.strip.split(/\s+/).map { |i| i.to_i }
       new_nets = old_nets - [vnet.id]
       if old_nets.size > new_nets.size
         zone.networks = new_nets.join(' ') + ' '
@@ -631,7 +635,7 @@ VN_DEF
 
       # set id
       id_e = REXML::Element.new('ID')
-      id_e.add(REXML::Text.new(zone.id))
+      id_e.add(REXML::Text.new(zone.id.to_s))
       zone_e.add(id_e)
 
       # set name
