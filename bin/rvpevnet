@@ -153,7 +153,7 @@ Usage:
 Commands:
     show <-x> <-v> zone_name <vnet_names>
         show information about virtual networks under the specified zone.
-        If vnet_names, which can be names of virtual networks' are given,
+        If vnet_names, which can be names of virtual networks, are given,
         show information about given VNs.
 
         $ #{CMD_NAME} show 'tokyo tech' csi_grid
