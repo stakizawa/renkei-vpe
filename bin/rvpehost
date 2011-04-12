@@ -41,9 +41,10 @@ Usage:
     #{CMD_NAME} command <options>
 
 Commands:
-    show <-v> <-x> zone_name host_names
+    show <-v> <-x> zone_name <host_names>
         show information abount specified hosts in the specified zone.
-        host_names can be names of hosts.
+        If host_names, which can be names of hosts, are given, it shows
+        information about given hosts.
 
         $ #{CMD_NAME} show 'tokyo tech' rpop-titech.cc.titech.ac.jp
 
@@ -88,11 +89,20 @@ case command
 #######################################
 # show sites
 when 'show'
-  check_parameters('show', 2)
+  check_parameters('show', 1)
 
   zone_name = ARGV.shift
-  ARGV.each do |host_name|
-    id = get_host_id(host_name, zone_name)
+
+  if ARGV.empty?
+    targets = get_host_ids(zone_name)
+  else
+    targets = []
+    ARGV.each do |host_name|
+      targets << get_host_id(host_name, zone_name)
+    end
+  end
+
+  targets.each do |id|
     host = RenkeiVPE::Host.new_with_id(id, client)
     rc = host.info
 
@@ -129,6 +139,8 @@ when 'show'
           print_header(str_h1, "MONITORING INFORMATION", false)
           puts host.template_str
         end
+
+        puts; puts
       end
     else
       $stderr.puts rc.message

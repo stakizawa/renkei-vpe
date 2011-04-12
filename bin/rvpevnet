@@ -29,27 +29,116 @@ CMD_NAME = 'rvpevnet'
 client = RenkeiVPE::Client.new()
 xml_output = false
 verbose    = false
-list_columns = {
-  :id      => { :name => 'ID',
-                :size => 4,
-                :proc => lambda {|d,e| d.id} },
-  :user    => { :name => 'OWNER',
-                :size => 10,
-                :proc => lambda {|d,e| d["USERNAME"]} },
-  :name    => { :name => 'NAME',
-                :size => 30,
-                :proc => lambda {|d,e|
-                           if d["PUBLIC"].to_i == 1 then d.name
-                           else "- " + d.name end} },
-  :regtime => { :name => 'REGTIME',
-                :size => 20,
-                :proc => lambda {|d,e| str_register_time(d)} },
-  :state   => { :name => 'STAT',
-                :size => 4,
-                :proc => lambda {|d,e| d.short_state_str} },
 
-  :default => [:user, :name, :regtime, :state]
-}
+##############################################################################
+# Functions
+##############################################################################
+def send_vnet(args, method, client)
+  zone_name = args.shift
+  vnet_name = args.shift
+  servers   = args.join(' ')
+  id = get_vn_id(vnet_name, zone_name)
+  vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
+  rc = vnet.send(method, servers)
+
+  if is_successful?(rc)
+    vn_uqname = "VirtualNetwork[#{zone_name}::#{vnet_name}]"
+    servers_name = "Server[#{servers}]"
+    yield(vn_uqname, servers_name)
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+end
+
+def add_servers(args, method, client)
+  send_vnet(args, method, client) do |vn_name, servers|
+    puts "#{servers} added to #{vn_name}."
+  end
+end
+
+def remove_servers(args, method, client)
+  send_vnet(args, method, client) do |vn_name, servers|
+    puts "#{servers} removed from #{vn_name}."
+  end
+end
+
+def print_servers(xml_obj, server_name)
+  str='%-15s: %-30s'
+
+  list = xml_obj[server_name].split
+  if list.size > 1
+    puts str % [server_name + ' SERVERS', list.shift]
+    list.each do |s|
+      puts str % ['', s]
+    end
+  else
+    puts str % [server_name + ' SERVER', list[0]]
+  end
+end
+
+def print_leases(xml_obj, verbose=false, print_name_on_header=false)
+  # print header
+  print_header('%-80s',
+               'VIRTUAL HOST LEASES' +
+               ((print_name_on_header)? " - #{xml_obj.name}" : ''),
+               true)
+
+  # print header for leases
+  if verbose
+    str = '%4s %30s %15s %17s %4s %4s'
+    hmsg = %w{ID NAME IP MAC USED VID}
+  else
+    str = '%30s %15s %17s'
+    hmsg = %w{NAME IP MAC}
+  end
+  print_header(str, hmsg, true)
+  xml_obj.each('LEASES/LEASE') do |l|
+    if verbose
+      msg = [ l['ID'], l['NAME'], l['IP'], l['MAC'],
+              l['ALLOCATED'], l['VID'] ]
+    else
+      msg = [ l['NAME'], l['IP'], l['MAC'] ]
+    end
+    puts str % msg
+  end
+end
+
+def each_vnets_in_zone(args, client)
+  zone_name = args.shift
+  if args.empty?
+    targets = get_vn_ids(zone_name)
+  else
+    targets = []
+    args.each do |vnet_name|
+      targets << get_vn_id(vnet_name, zone_name)
+    end
+  end
+
+  targets.each do |id|
+    vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
+    rc = vnet.info
+    if is_successful?(rc)
+      yield vnet
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
+end
+
+def list_servers(args, type, client)
+  each_vnets_in_zone(args, client) do |vnet|
+    print_header('%-80s', "NETWORK - #{vnet.name}", true)
+    print_servers(vnet, type)
+  end
+end
+
+def list_leases(args, verbose, client)
+  each_vnets_in_zone(args, client) do |vnet|
+    print_leases(vnet, verbose, true)
+  end
+end
 
 ##############################################################################
 # main
@@ -85,10 +174,12 @@ Commands:
 
         $ #{CMD_NAME} removedns 'tokyo tech' csi_grid 131.112.5.20
 
-    listdns zone_name vnet_names
+    listdns zone_name <vnet_names>
         list dns servers referred by VMs that belong to the specified
         virtual networks and run on hosts in the specified zone.
-        vnet_names can be names of virtual networks.
+        vnet_names can be names of virtual networks. If vnet_names are
+        not given, it lists dns servers in all virtual networks in the
+        zone.
 
         $ #{CMD_NAME} listdns 'tokyo tech' csi_grid
         $ #{CMD_NAME} listdns 'tokyo tech' csi_grid 'campus net1'
@@ -108,13 +199,26 @@ Commands:
 
         $ #{CMD_NAME} removentp 'tokyo tech' csi_grid 131.112.5.20
 
-    listntp zone_name vnet_names
+    listntp zone_name <vnet_names>
         list ntp servers referred by VMs that belong to the specified
         virtual networks and run on hosts in the specified zone.
-        vnet_names can be names of virtual networks.
+        vnet_names can be names of virtual networks. If vnet_names are
+        not given, it lists ntp servers in all virtual networks in the
+        zone.
 
         $ #{CMD_NAME} listntp 'tokyo tech' csi_grid
         $ #{CMD_NAME} listntp 'tokyo tech' csi_grid 'campus net1'
+
+
+    leases zone_name <vnet_names>
+        list virtual host leases that belong to the specified virtual
+        networks in the specified zone.
+        vnet_names can be names of virtual networks. If vnet_names are
+        not given, it lists all leases in all virtual networks in the
+        zone.
+
+        $ #{CMD_NAME} leases 'tokyo tech' csi_grid
+        $ #{CMD_NAME} leases 'tokyo tech' csi_grid 'campus net1'
 
 
     help
@@ -122,6 +226,10 @@ Commands:
 
 Options:
 EOT
+
+  parser.on('-v', ': verbose output mode') do
+    verbose = true
+  end
 
   parser.on('-x', '--xml', ': xml output mode') do
     xml_output = true
@@ -142,23 +250,45 @@ case command
 #######################################
 # show vns
 when 'show'
-  check_parameters('show', 2)
+  check_parameters('show', 1)
 
-  zone_name = ARGV.shift
-  ARGV.each do |vnet_name|
-    id = get_vn_id(vnet_name, zone_name)
-    vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
-    rc = vnet.info
-
-    if is_successful?(rc)
-      if xml_output
-        puts vnet.to_xml
-      else
-        # TODO
-      end
+  each_vnets_in_zone(ARGV, client) do |vnet|
+    if xml_output
+      puts vnet.to_xml
     else
-      $stderr.puts rc.message
-      exit 1
+      str="%-15s: %-30s"
+
+      # print header
+      print_header("%-80s", "VIRTUAL NETWORK INFORMATION", true)
+
+      # print ID
+      puts str % ['ID', vnet.id.to_s]   if verbose
+      # print Name
+      if verbose
+        puts str % ['NAME', vnet.name]
+        puts str % ['ZONE NAME', vnet['ZONE']]
+        puts str % ['UNIQUE NAME', vnet['UNIQUE_NAME']]
+      else
+        puts str % ['NAME', vnet['UNIQUE_NAME']]
+      end
+      puts str % ['DESCRIPTION', vnet['DESCRIPTION']]
+      puts
+
+      # print header
+      print_header("%-80s", "NETWORK PARAMETERS", true)
+
+      puts str % ['ADDRESS', vnet['ADDRESS']]
+      puts str % ['NETMASK', vnet['NETMASK']]
+      puts str % ['GATEWAY', vnet['GATEWAY']]
+      # print dns
+      print_servers(vnet, 'DNS')
+      # print ntp
+      print_servers(vnet, 'NTP')
+      puts str % ['HOST IF', vnet['HOST_INTERFACE']] if verbose
+      puts
+
+      print_leases(vnet, verbose)
+      puts; puts
     end
   end
 
@@ -167,114 +297,52 @@ when 'show'
 when 'adddns'
   check_parameters('adddns', 3)
 
-  zone_name = ARGV.shift
-  vnet_name = ARGV.shift
-  servers   = ARGV.join(' ')
-  id = get_vn_id(vnet_name, zone_name)
-  vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
-  rc = vnet.adddns(servers)
-
-  if is_successful?(rc)
-    puts "Server[#{host_name}] added to VirtualNetwork[#{zone_name}::#{vnet_name}]."
-  else
-    $stderr.puts rc.message
-    exit 1
-  end
+  add_servers(ARGV, :adddns, client)
 
 #######################################
 # remove dns servers
 when 'removedns'
   check_parameters('removedns', 3)
 
-  zone_name = ARGV.shift
-  vnet_name = ARGV.shift
-  servers   = ARGV.join(' ')
-  id = get_vn_id(vnet_name, zone_name)
-  vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
-  rc = vnet.rmdns(servers)
-
-  if is_successful?(rc)
-    puts "Server[#{host_name}] removed from VirtualNetwork[#{zone_name}::#{vnet_name}]."
-  else
-    $stderr.puts rc.message
-    exit 1
-  end
+  remove_servers(ARGV, :rmdns, client)
 
 #######################################
 # list dns servers
 when 'listdns'
-  check_parameters('listdns', 2)
+  check_parameters('listdns', 1)
 
-  zone_name = ARGV.shift
-  ARGV.each do |vnet_name|
-    id = get_vn_id(vnet_name, zone_name)
-    vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
-    rc = vnet.info
-    if is_successful?(rc)
-      # print_dnss(vnet, true) TODO
-    else
-      $stderr.puts rc.message
-      exit 1
-    end
-  end
+  list_servers(ARGV, 'DNS', client)
+  puts
 
 #######################################
 # add ntp servers
 when 'addntp'
   check_parameters('addntp', 3)
 
-  # TODO the same method as adddns
-  zone_name = ARGV.shift
-  vnet_name = ARGV.shift
-  servers   = ARGV.join(' ')
-  id = get_vn_id(vnet_name, zone_name)
-  vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
-  rc = vnet.addntp(servers)
-
-  if is_successful?(rc)
-    puts "Server[#{host_name}] added to VirtualNetwork[#{zone_name}::#{vnet_name}]."
-  else
-    $stderr.puts rc.message
-    exit 1
-  end
+  add_servers(ARGV, :addntp, client)
 
 #######################################
 # remove ntp servers
 when 'removentp'
   check_parameters('removentp', 3)
 
-  # TODO the same method as rmdns
-  zone_name = ARGV.shift
-  vnet_name = ARGV.shift
-  servers   = ARGV.join(' ')
-  id = get_vn_id(vnet_name, zone_name)
-  vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
-  rc = vnet.rmntp(servers)
-
-  if is_successful?(rc)
-    puts "Server[#{host_name}] removed from VirtualNetwork[#{zone_name}::#{vnet_name}]."
-  else
-    $stderr.puts rc.message
-    exit 1
-  end
+  remove_servers(ARGV, :rmntp, client)
 
 #######################################
 # list ntp servers
 when 'listntp'
-  check_parameters('listntp', 2)
+  check_parameters('listntp', 1)
 
-  zone_name = ARGV.shift
-  ARGV.each do |vnet_name|
-    id = get_vn_id(vnet_name, zone_name)
-    vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
-    rc = vnet.info
-    if is_successful?(rc)
-      # print_ntps(vnet, true) TODO
-    else
-      $stderr.puts rc.message
-      exit 1
-    end
-  end
+  list_servers(ARGV, 'NTP', client)
+  puts
+
+#######################################
+# list virtual host leases
+when 'leases'
+  check_parameters('leases', 1)
+
+  list_leases(ARGV, verbose, client)
+  puts
 
 #######################################
 # show help

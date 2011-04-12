@@ -53,7 +53,7 @@ module RenkeiVPE
 
         zone = RenkeiVPE::Model::Zone.find_by_id(id)
         unless zone
-          msg = "Zone[#{id}] is not found"
+          msg = "Zone[#{id}] is not found."
           log_fail_exit(method_name, msg)
           return [false, msg]
         end
@@ -552,7 +552,6 @@ VN_DEF
     end
 
     # It returns [boolean, integer] or [boolean, string] array.
-    # TODO should be placed in virtual_network.rb
     # +vhost_name+  name of vhost
     # +vhost_addr+  address of vhost
     # +vnet+        vnet where the vhost belongs
@@ -591,7 +590,6 @@ VN_DEF
     end
 
     # It returns [boolean, integer] or [boolean, string] array.
-    # TODO should be placed in virtual_network.rb
     # +vhost_id+    id of vhost
     # +vnet+        vnet where the vhost belongs
     # +result[0]+   true if successful, otherwise false
@@ -666,7 +664,6 @@ VN_DEF
       nets_e = REXML::Element.new('NETWORKS')
       zone_e.add(nets_e)
       zone.networks.strip.split(/\+s/).map{ |i| i.to_i }.each do |nid|
-        pp nid
         vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(nid)
         raise "VirtualNetwork[#{nid}] is not found." unless vnet
 

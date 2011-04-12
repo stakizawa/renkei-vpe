@@ -198,7 +198,6 @@ module RenkeiVPE
       # It finds and returns a record whose name is +name+.
       # It returns nil if not found.
       def self.find_by_name(name)
-        # vals = find("name='#{name}'") TODO remove
         vals = find(to_find_by_name_cond_str(name))
         return nil unless vals
         return gen_instance(vals)
@@ -546,7 +545,7 @@ SQL
         raise_if_nil_and_not_class(@name,      'name',      String)
         raise_if_nil_and_not_class(@address,   'address',   String)
         raise_if_nil_and_not_class(@allocated, 'allocated', Integer)
-        raise_if_nil(@vnetid, 'vnetid')
+        raise_if_nil_and_not_class(@vnetid,    'vnetid',    Integer)
       end
 
       def to_create_record_str
