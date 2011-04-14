@@ -251,9 +251,9 @@ SQL
         "User<"                  +
           "id=#{@id},"           +
           "oid=#{@oid},"         +
-          "name=#{@name},"       +
+          "name='#{@name}',"     +
           "enabled=#{@enabled}," +
-          "zones=#{@zones}"      +
+          "zones='#{@zones}'"    +
           ">"
       end
 
@@ -307,44 +307,49 @@ SQL
 
       @table_schema = <<SQL
 CREATE TABLE #{@table_name} (
-  id       INTEGER PRIMARY KEY AUTOINCREMENT,
-  oid      INTEGER UNIQUE,
-  name     VARCHAR(256) UNIQUE,
-  hosts   TEXT,
-  networks TEXT,
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  oid         INTEGER UNIQUE,
+  name        VARCHAR(256) UNIQUE,
+  description TEXT,
+  hosts       TEXT,
+  networks    TEXT
 );
 SQL
 
       @field_for_find_by_name = 'name'
 
-      attr_accessor :oid       # id of the accosiated one cluster
-      attr_accessor :name      # name of the zone
-      attr_accessor :hosts     # hosts that host VMs and belong to the zone
-      attr_accessor :networks  # networks belong to the zone
+      attr_accessor :oid         # id of the accosiated one cluster
+      attr_accessor :name        # name of the zone
+      attr_accessor :description # description of the zone
+      attr_accessor :hosts       # hosts that host VMs and belong to the zone
+      attr_accessor :networks    # networks belong to the zone
 
       def to_s
-        "Zone<"                   +
-          "id=#{@id},"            +
-          "oid=#{@oid},"          +
-          "name=#{@name},"        +
-          "hosts=#{@hosts},"      +
-          "networks=#{@networks}" +
+        "Zone<"                            +
+          "id=#{@id},"                     +
+          "oid=#{@oid},"                   +
+          "name='#{@name}',"               +
+          "description='#{@description}'," +
+          "hosts='#{@hosts}',"             +
+          "networks='#{@networks}'"        +
           ">"
       end
 
       protected
 
       def check_fields
-        raise_if_nil_and_not_class(@oid,      'oid',      Integer)
-        raise_if_nil_and_not_class(@name,     'name',     String)
-        raise_if_nil_or_not_class( @hosts,    'hosts',    String)
-        raise_if_nil_or_not_class( @networks, 'networks', String)
+        raise_if_nil_and_not_class(@oid,         'oid',         Integer)
+        raise_if_nil_and_not_class(@name,        'name',        String)
+        raise_if_nil_or_not_class( @description, 'description', String)
+        raise_if_nil_or_not_class( @hosts,       'hosts',       String)
+        raise_if_nil_or_not_class( @networks,    'networks',    String)
       end
 
       def to_create_record_str
-        "#{@oid},"       +
-          "'#{@name}',"  +
-          "'#{@hosts}'," +
+        "#{@oid},"             +
+          "'#{@name}',"        +
+          "'#{@description}'," +
+          "'#{@hosts}',"       +
           "'#{@networks}'"
       end
 
@@ -353,9 +358,10 @@ SQL
       end
 
       def to_update_record_str
-        "oid=#{@oid},"         +
-          "name='#{@name}',"   +
-          "hosts='#{@hosts}'," +
+        "oid=#{@oid},"                     +
+          "name='#{@name}',"               +
+          "description='#{@description}'," +
+          "hosts='#{@hosts}',"             +
           "networks='#{@networks}'"
       end
 
@@ -363,11 +369,12 @@ SQL
       def self.gen_instance(attr)
         z = Zone.new
         z.instance_eval do
-          @id       = attr[0].to_i
-          @oid      = attr[1].to_i
-          @name     = attr[2]
-          @hosts    = attr[3]
-          @networks = attr[4]
+          @id          = attr[0].to_i
+          @oid         = attr[1].to_i
+          @name        = attr[2]
+          @description = attr[3]
+          @hosts       = attr[4]
+          @networks    = attr[5]
         end
         return z
       end
@@ -393,7 +400,6 @@ CREATE TABLE #{@table_name} (
   gateway     VARCHAR(256),
   dns         TEXT,
   ntp         TEXT,
-  vhost_if    VARCHAR(256),
   vhosts      TEXT
 );
 SQL
@@ -410,25 +416,23 @@ SQL
       attr_accessor :gateway      # gateway of the network
       attr_accessor :dns          # dns servers of the network, splitted by ' '
       attr_accessor :ntp          # ntp servers of the network, splitted by ' '
-      attr_accessor :vhost_if     # interface on virtual host
       attr_accessor :vhosts       # ids of virtual hosts, splitted by ' '
 
 
       def to_s
-        "VirtualNetwork<"                +
-          "id=#{@id},"                   +
-          "oid=#{@oid},"                 +
-          "name=#{@name},"               +
-          "description=#{@description}," +
-          "zone_name=#{@zone_name},"     +
-          "unique_name=#{@unique_name}," +
-          "address=#{@address},"         +
-          "netmask=#{@netmask},"         +
-          "gateway=#{@gateway},"         +
-          "dns=#{@dns},"                 +
-          "ntp=#{@ntp},"                 +
-          "vhost_if=#{@vhost_if},"       +
-          "vhosts=#{@vhosts}"            +
+        "VirtualNetwork<"                  +
+          "id=#{@id},"                     +
+          "oid=#{@oid},"                   +
+          "name='#{@name}',"               +
+          "description='#{@description}'," +
+          "zone_name='#{@zone_name}',"     +
+          "unique_name='#{@unique_name}'," +
+          "address='#{@address}',"         +
+          "netmask='#{@netmask}',"         +
+          "gateway='#{@gateway}',"         +
+          "dns='#{@dns}',"                 +
+          "ntp='#{@ntp}',"                 +
+          "vhosts='#{@vhosts}'"            +
           ">"
       end
 
@@ -445,7 +449,6 @@ SQL
         raise_if_nil_and_not_class(@gateway,     'gateway',     String)
         raise_if_nil_and_not_class(@dns,         'dns',         String)
         raise_if_nil_and_not_class(@ntp,         'ntp',         String)
-        raise_if_nil_and_not_class(@vhost_if,    'vhost_if',    String)
         raise_if_nil_and_not_class(@vhosts,      'vhosts',      String)
       end
 
@@ -460,7 +463,6 @@ SQL
           "'#{@gateway}',"     +
           "'#{@dns}',"         +
           "'#{@ntp}',"         +
-          "'#{@vhost_if}',"    +
           "'#{@vhosts}'"
       end
 
@@ -479,7 +481,6 @@ SQL
           "gateway='#{@gateway}',"         +
           "dns='#{@dns}',"                 +
           "ntp='#{@ntp}',"                 +
-          "vhost_if='#{@vhost_if}',"       +
           "vhosts='#{@vhosts}'"
       end
 
@@ -498,8 +499,7 @@ SQL
           @gateway     = attr[8]
           @dns         = attr[9]
           @ntp         = attr[10]
-          @vhost_if    = attr[11]
-          @vhosts      = attr[12]
+          @vhosts      = attr[11]
         end
         return vn
       end
@@ -532,8 +532,8 @@ SQL
       def to_s
         "VirtualHost<"               +
           "id=#{@id},"               +
-          "name=#{@name},"           +
-          "address=#{@address},"     +
+          "name='#{@name}',"         +
+          "address='#{@address}',"   +
           "allocated=#{@allocated}," +
           "vnetid=#{@vnetid}"        +
           ">"

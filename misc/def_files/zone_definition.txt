@@ -3,6 +3,7 @@
 # However, if you specify 'network', all network fields are mandatory.
 # Characters in attributes must be downcase.
 name: tokyo tech
+description: tokyo institute of technology
 host:
   - 192.168.0.2
   - 192.168.0.3

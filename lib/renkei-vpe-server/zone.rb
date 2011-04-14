@@ -103,8 +103,12 @@ module RenkeiVPE
         # create a zone record
         begin
           zone = RenkeiVPE::Model::Zone.new
-          zone.name = name
-          zone.oid  = osite_id
+          # TODO make a method
+          zone.name        = name
+          zone.oid         = osite_id
+          zone.description = zone_def['description']
+          zone.hosts       = ''
+          zone.networks    = ''
           zone.create
         rescue => e
           log_fail_exit(method_name, e)
@@ -457,7 +461,6 @@ VN_DEF
         vn.gateway     = vnet_def['gateway']
         vn.dns         = vnet_def['dns'].join(' ')
         vn.ntp         = vnet_def['ntp'].join(' ')
-        vn.vhost_if    = vnet_def['interface']
         vn.vhosts      = ''
         vn.create
       rescue => e
@@ -567,10 +570,11 @@ VN_DEF
       # create a virtual host record
       begin
         vh = RenkeiVPE::Model::VirtualHost.new
+        # TODO make a method
         vh.name      = vhost_name
         vh.address   = vhost_addr
         vh.allocated = 0
-        vh.vnetid    = vnet.id
+        vh.vnetid    = vnet.id.to_i
         vh.create
       rescue => e
         return [false, e.message]
