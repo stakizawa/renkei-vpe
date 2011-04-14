@@ -32,7 +32,9 @@ require 'renkei-vpe-server/image_pool'
 require 'renkei-vpe-server/zone'
 require 'renkei-vpe-server/zone_pool'
 require 'renkei-vpe-server/host'
+require 'renkei-vpe-server/host_pool'
 require 'renkei-vpe-server/virtual_network'
+require 'renkei-vpe-server/virtual_network_pool'
 
 ##############################################################################
 # RenkeiVPE module for the server
@@ -65,14 +67,16 @@ module RenkeiVPE
 
       # setup xml rpc methods
       rpcms = [
-               [User::INTERFACE,           User.new],
-               [UserPool::INTERFACE,       UserPool.new],
-               [Image::INTERFACE,          Image.new],
-               [ImagePool::INTERFACE,      ImagePool.new],
-               [Zone::INTERFACE,           Zone.new],
-               [ZonePool::INTERFACE,       ZonePool.new],
-               [Host::INTERFACE,           Host.new],
-               [VirtualNetwork::INTERFACE, VirtualNetwork.new],
+               [User::INTERFACE,               User.new],
+               [UserPool::INTERFACE,           UserPool.new],
+               [Image::INTERFACE,              Image.new],
+               [ImagePool::INTERFACE,          ImagePool.new],
+               [Zone::INTERFACE,               Zone.new],
+               [ZonePool::INTERFACE,           ZonePool.new],
+               [Host::INTERFACE,               Host.new],
+               [HostPool::INTERFACE,           HostPool.new],
+               [VirtualNetwork::INTERFACE,     VirtualNetwork.new],
+               [VirtualNetworkPool::INTERFACE, VirtualNetworkPool.new],
               ]
 
       # setup xml rpc server
