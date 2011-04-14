@@ -6,11 +6,12 @@ module RenkeiVPE
         # Constants and Class Methods
         #######################################################################
         USER_METHODS = {
-            :info     => "user.info",
-            :allocate => "user.allocate",
-            :enable   => "user.enable",
-            :delete   => "user.delete",
-            :passwd   => "user.passwd"
+            :info          => "user.info",
+            :allocate      => "user.allocate",
+            :delete        => "user.delete",
+            :passwd        => "user.passwd",
+            :enable        => "user.enable",
+            :enable_zone   => "user.enable_zone",
         }
 
         # Creates a User description with just its identifier
@@ -90,12 +91,31 @@ module RenkeiVPE
             return rc
         end
 
+        # Enables the User to use the Zone
+        def enable_zone(zone)
+            set_zone_enabled(true, zone)
+        end
+
+        # Disables the User to use the Zone
+        def disable_zone(zone)
+            set_zone_enabled(false, zone)
+        end
+
     private
 
         def set_enabled(enabled)
             return Error.new('ID not defined') if !@pe_id
 
             rc = @client.call(USER_METHODS[:enable], @pe_id, enabled)
+            rc = nil if !RenkeiVPE.is_error?(rc)
+
+            return rc
+        end
+
+        def set_zone_enabled(enabled, zone)
+            return Error.new('ID not defined') if !@pe_id
+
+            rc = @client.call(USER_METHODS[:enable_zone], @pe_id, enabled, zone)
             rc = nil if !RenkeiVPE.is_error?(rc)
 
             return rc

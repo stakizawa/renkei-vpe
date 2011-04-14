@@ -22,6 +22,9 @@ module RenkeiVPE
       meth('val passwd(string, int, string)',
            'Changes password for the given user',
            'passwd')
+      meth('val enable_zone(string, int, bool, string)',
+           'Enables or disables a user to use a zone',
+           'enable_zone')
     end
 
 
@@ -89,9 +92,10 @@ module RenkeiVPE
 
         begin
           user = RenkeiVPE::Model::User.new
+          user.oid = rc[1]
           user.name = name
           user.enabled = 1
-          user.oid = rc[1]
+          user.zone = ''
           user.create
         rescue => e
           log_fail_exit(method_name, e)
@@ -197,9 +201,59 @@ module RenkeiVPE
       end
     end
 
-    def update_zones(session, id, zones)
-      # TODO
-      raise NotImplementedError
+    # enables/disables a user to use a zone
+    # +session+   string that represents user session
+    # +id+        id for the user
+    # +enabled+   enable to use zone if true, otherwise disable to use
+    # +zone_name+ name of zone
+    # +return[0]+ true or false whenever is successful or not
+    # +return[1]+ if an error occurs this is error message,
+    #             otherwise it does not exist.
+    def enable_zone(session, id, enabled, zone_name)
+      authenticate(session, true) do
+        method_name = 'rvpe.user.enable_zone'
+
+        user = RenkeiVPE::Model::User.find_by_id(id)
+        unless user
+          msg = "User[#{id}] does not exist."
+          log_fail_exit(method_name, msg)
+          return [false, msg]
+        end
+
+        if zone_name.match(/^[0123456789]+$/)
+          zone_id = zone_name
+        else
+          zone = RenkeiVPE::Model::Zone.find_by_name(zone_name)
+          unless zone
+            msg = "Zone[#{zone_name}] does not exist."
+            log_fail_exit(method_name, msg)
+            return [false, msg]
+          end
+          zone_id = zone.id
+        end
+
+        zids = user.zones.strip.split('/\s+/').map { |i| i.to_i }
+        if enabled
+          unless zids.include? zone_id
+            zids << zone_id
+          end
+        else
+          if zids.include? zone_id
+            zids.delete(zone_id)
+          end
+        end
+        user.zones = zids.join(' ')
+
+        begin
+          user.update
+        rescue => e
+          log_fail_exit(method_name, e.message)
+          return [false, e.message]
+        end
+
+        log_result(method_name, '')
+        return [true, '']
+      end
     end
 
 

@@ -1,5 +1,4 @@
 #! /bin/env ruby
-# TODO implement zone management
 
 ##############################################################################
 # Environment Configuration
@@ -61,6 +60,20 @@ Commands:
 
         $ #{CMD_NAME} create user1 password1
 
+    delete user_name
+        delete a user from the system. site_name can be name or id of
+        the user.
+
+        $ #{CMD_NAME} delete user1
+        $ #{CMD_NAME} delete 1
+
+    passwd user_name password
+        change password of the user. user_name can be name or id of the
+        user.
+
+        $ #{CMD_NAME} passwd user1 password1
+
+
     enable user_names
         enable users. An enabled user can use the system. user_names can
         be names or ids of users.
@@ -75,12 +88,20 @@ Commands:
         $ #{CMD_NAME} disable user1 user2
         $ #{CMD_NAME} disable 1
 
-    delete user_name
-        delete a user from the system. site_name can be name or id of
-        the user.
 
-        $ #{CMD_NAME} delete user1
-        $ #{CMD_NAME} delete 1
+    enable_zone user_name zone_names
+        allow the specified user to use the zone. When a user is enaled,
+        the user can run VMs in the zone. zone_names can be names of zones.
+
+        $ #{CMD_NAME} enable_zone user1 'tokyo tech'
+
+    disable_zone user_name zone_names
+        prohibit the specified user to use the zone. When a user is
+        prohibited, the user can not run VMs in the zone.
+        zone_names can be names of zones.
+
+        $ #{CMD_NAME} disable_zone user1 'tokyo tech'
+
 
     list <-x>
         list registered users.
@@ -91,12 +112,6 @@ Commands:
 
         $ #{CMD_NAME} show user1 user2
         $ #{CMD_NAME} show 1 2
-
-    passwd user_name password
-        change password of the user. user_name can be name or id of the
-        user.
-
-        $ #{CMD_NAME} passwd user1 password1
 
     help
         show this message.
@@ -137,6 +152,39 @@ when 'create'
   end
 
 #######################################
+# delete a user
+when 'delete'
+  check_parameters('delete', 1)
+
+  name = ARGV[0]
+  id = get_user_id(name)
+  user = RenkeiVPE::User.new_with_id(id, client)
+  rc = user.delete
+  if is_successful?(rc)
+    puts "NAME deleted: " + name
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+
+#######################################
+# change user password
+when 'passwd'
+  check_parameters('passwd', 2)
+
+  name = ARGV[0]
+  pass = ARGV[1]
+  id = get_user_id(name)
+  user = RenkeiVPE::User.new_with_id(id, client)
+  rc = user.passwd(pass)
+  if is_successful?(rc)
+    puts "Password for the user is changed: " + name
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+
+#######################################
 # enable a user
 when 'enable'
   check_parameters('enable', 1)
@@ -171,19 +219,39 @@ when 'disable'
   end
 
 #######################################
-# delete a user
-when 'delete'
-  check_parameters('delete', 1)
+# enable a user to use zones
+when 'enable_zone'
+  check_parameters('enable_zone', 2)
 
-  name = ARGV[0]
-  id = get_user_id(name)
+  user_name = ARGV.shift
+  id = get_user_id(user_name)
   user = RenkeiVPE::User.new_with_id(id, client)
-  rc = user.delete
-  if is_successful?(rc)
-    puts "NAME deleted: " + name
-  else
-    $stderr.puts rc.message
-    exit 1
+  ARGV.each do |zone_name|
+    rc = user.enable_zone zone_name
+    if is_successful?(rc)
+      puts "User[#{user_name}] enabled to use Zone[#{zone_name}]"
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
+
+#######################################
+# disable a user to use zones
+when 'disable_zone'
+  check_parameters('disable_zone', 2)
+
+  user_name = ARGV.shift
+  id = get_user_id(user_name)
+  user = RenkeiVPE::User.new_with_id(id, client)
+  ARGV.each do |zone_name|
+    rc = user.disable_zone zone_name
+    if is_successful?(rc)
+      puts "User[#{user_name}] disabled to use Zone[#{zone_name}]"
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
   end
 
 #######################################
@@ -203,7 +271,7 @@ when 'list'
   end
 
 #######################################
-# show sites
+# show users
 when 'show'
   check_parameters('show', 1)
 
@@ -241,23 +309,6 @@ when 'show'
       $stderr.puts rc.message
       exit 1
     end
-  end
-
-#######################################
-# change user password
-when 'passwd'
-  check_parameters('passwd', 2)
-
-  name = ARGV[0]
-  pass = ARGV[1]
-  id = get_user_id(name)
-  user = RenkeiVPE::User.new_with_id(id, client)
-  rc = user.passwd(pass)
-  if is_successful?(rc)
-    puts "Password for the user is changed: " + name
-  else
-    $stderr.puts rc.message
-    exit 1
   end
 
 #######################################
