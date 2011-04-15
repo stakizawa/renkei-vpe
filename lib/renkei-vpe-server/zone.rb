@@ -667,7 +667,7 @@ VN_DEF
       # set networks
       nets_e = REXML::Element.new('NETWORKS')
       zone_e.add(nets_e)
-      zone.networks.strip.split(/\+s/).map{ |i| i.to_i }.each do |nid|
+      zone.networks.strip.split(/\s+/).map{ |i| i.to_i }.each do |nid|
         vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(nid)
         raise "VirtualNetwork[#{nid}] is not found." unless vnet
 

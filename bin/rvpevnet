@@ -151,15 +151,6 @@ Usage:
     #{CMD_NAME} command <options>
 
 Commands:
-    show <-x> <-v> zone_name <vnet_names>
-        show information about virtual networks under the specified zone.
-        If vnet_names, which can be names of virtual networks, are given,
-        show information about given VNs.
-
-        $ #{CMD_NAME} show 'tokyo tech' csi_grid
-        $ #{CMD_NAME} show 'tokyo tech' csi_grid 'campus net1'
-
-
     adddns zone_name vnet_name dns_server_names
         add dns servers referred by VMs that belong to the specified
         virtual network and run on hosts in the specified zone.
@@ -221,6 +212,15 @@ Commands:
         $ #{CMD_NAME} leases 'tokyo tech' csi_grid 'campus net1'
 
 
+    show <-x> <-v> zone_name <vnet_names>
+        show information about virtual networks under the specified zone.
+        If vnet_names, which can be names of virtual networks, are given,
+        show information about given VNs.
+
+        $ #{CMD_NAME} show 'tokyo tech' csi_grid
+        $ #{CMD_NAME} show 'tokyo tech' csi_grid 'campus net1'
+
+
     help
         show this message.
 
@@ -247,51 +247,6 @@ end
 
 command = ARGV.shift
 case command
-#######################################
-# show vns
-when 'show'
-  check_parameters('show', 1)
-
-  each_vnets_in_zone(ARGV, client) do |vnet|
-    if xml_output
-      puts vnet.to_xml
-    else
-      str="%-15s: %-30s"
-
-      # print header
-      print_header("%-80s", "VIRTUAL NETWORK INFORMATION", true)
-
-      # print ID
-      puts str % ['ID', vnet.id.to_s]   if verbose
-      # print Name
-      if verbose
-        puts str % ['NAME', vnet.name]
-        puts str % ['ZONE NAME', vnet['ZONE']]
-        puts str % ['UNIQUE NAME', vnet['UNIQUE_NAME']]
-      else
-        puts str % ['NAME', vnet['UNIQUE_NAME']]
-      end
-      puts str % ['DESCRIPTION', vnet['DESCRIPTION']]
-      puts
-
-      # print header
-      print_header("%-80s", "NETWORK PARAMETERS", true)
-
-      puts str % ['ADDRESS', vnet['ADDRESS']]
-      puts str % ['NETMASK', vnet['NETMASK']]
-      puts str % ['GATEWAY', vnet['GATEWAY']]
-      # print dns
-      print_servers(vnet, 'DNS')
-      # print ntp
-      print_servers(vnet, 'NTP')
-      puts str % ['HOST IF', vnet['HOST_INTERFACE']] if verbose
-      puts
-
-      print_leases(vnet, verbose)
-      puts; puts
-    end
-  end
-
 #######################################
 # add dns servers
 when 'adddns'
@@ -343,6 +298,51 @@ when 'leases'
 
   list_leases(ARGV, verbose, client)
   puts
+
+#######################################
+# show vns
+when 'show'
+  check_parameters('show', 1)
+
+  each_vnets_in_zone(ARGV, client) do |vnet|
+    if xml_output
+      puts vnet.to_xml
+    else
+      str="%-15s: %-30s"
+
+      # print header
+      print_header("%-80s", "VIRTUAL NETWORK INFORMATION", true)
+
+      # print ID
+      puts str % ['ID', vnet.id.to_s]   if verbose
+      # print Name
+      if verbose
+        puts str % ['NAME', vnet.name]
+        puts str % ['ZONE NAME', vnet['ZONE']]
+        puts str % ['UNIQUE NAME', vnet['UNIQUE_NAME']]
+      else
+        puts str % ['NAME', vnet['UNIQUE_NAME']]
+      end
+      puts str % ['DESCRIPTION', vnet['DESCRIPTION']]
+      puts
+
+      # print header
+      print_header("%-80s", "NETWORK PARAMETERS", true)
+
+      puts str % ['ADDRESS', vnet['ADDRESS']]
+      puts str % ['NETMASK', vnet['NETMASK']]
+      puts str % ['GATEWAY', vnet['GATEWAY']]
+      # print dns
+      print_servers(vnet, 'DNS')
+      # print ntp
+      print_servers(vnet, 'NTP')
+      puts str % ['HOST IF', vnet['HOST_INTERFACE']] if verbose
+      puts
+
+      print_leases(vnet, verbose)
+      puts; puts
+    end
+  end
 
 #######################################
 # show help

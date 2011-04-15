@@ -81,6 +81,7 @@ Commands:
         $ #{CMD_NAME} delete centos5.5_virtio
         $ #{CMD_NAME} delete centos5.5_virtio 'ttylinux sample'
 
+
     publish image_names
         publish specified images. image_names can be names of images.
 
@@ -93,6 +94,7 @@ Commands:
         $ #{CMD_NAME} unpublish centos5.5_virtio
         $ #{CMD_NAME} unpublish centos5.5_virtio 'ttylinux sample'
 
+
     list <-x> <-v>
         list registered images you can use.
 
@@ -102,6 +104,7 @@ Commands:
 
         $ #{CMD_NAME} show centos5.5_virtio
         $ #{CMD_NAME} show centos5.5_virtio 'ttylinux sample'
+
 
     help
         show this message.

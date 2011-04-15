@@ -4,14 +4,11 @@
     elementFormDefault="qualified"
     targetNamespace="http://www.e-sciren.org/sub5/XMLSchema"
     xmlns="http://www.e-sciren.org/sub5/XMLSchema">
-  <xs:element name="USER">
+  <xs:include schemaLocation="vnet.xsd"/>
+  <xs:element name="VNET_POOL">
     <xs:complexType>
-      <xs:sequence>
-        <xs:element name="NAME" type="xs:string"/>
-        <xs:element name="PASSWORD" type="xs:string"/>
-        <xs:element name="ID" type="xs:integer"/>
-        <xs:element name="ENABLED" type="xs:integer"/>
-        <xs:element name="ZONES" type="xs:string"/>
+      <xs:sequence maxOccurs="1" minOccurs="1">
+        <xs:element ref="VNET" maxOccurs="unbounded" minOccurs="0"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>

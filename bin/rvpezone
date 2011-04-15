@@ -88,15 +88,6 @@ Commands:
 
         $ #{CMD_NAME} delete 'tokyo tech'
 
-    list <-x>
-        list registered zones you can use.
-
-    show <-x> <-v> zone_names
-        show information about specified zones. zone_names can be names
-        of zones.
-
-        $ #{CMD_NAME} show 'tokyo tech'
-        $ #{CMD_NAME} show 'tokyo tech' nii
 
     addhost zone_name host_names
         add specified hosts which run VMs to the specified zone.
@@ -116,6 +107,7 @@ Commands:
 
         $ #{CMD_NAME} listhost 'tokyo tech'
 
+
     addvnet zone_name definition_file
         add a virtual network to the specified zone.
 
@@ -132,8 +124,21 @@ Commands:
 
         $ #{CMD_NAME} listvnet 'tokyo tech'
 
+
     sync
         synchronizes probes with remote hosts in all zones.
+
+
+    list <-x>
+        list registered zones you can use.
+
+    show <-x> <-v> zone_names
+        show information about specified zones. zone_names can be names
+        of zones.
+
+        $ #{CMD_NAME} show 'tokyo tech'
+        $ #{CMD_NAME} show 'tokyo tech' nii
+
 
     help
         show this message.
@@ -195,59 +200,6 @@ when 'delete'
   else
     $stderr.puts rc.message
     exit 1
-  end
-
-#######################################
-# list zones
-when 'list'
-  zone_pool = RenkeiVPE::ZonePool.new(client)
-  rc = zone_pool.info
-  if is_error?(rc)
-    $stderr.puts rc.message
-    exit 1
-  end
-
-  if xml_output
-    puts zone_pool.to_xml
-  else
-    print_xml_friendly(list_columns, zone_pool, verbose)
-  end
-
-#######################################
-# show zones
-when 'show'
-  check_parameters('show', 1)
-
-  ARGV.each do |zone_name|
-    id = get_zone_id(zone_name)
-    zone = RenkeiVPE::Zone.new_with_id(id, client)
-    rc = zone.info
-
-    if is_successful?(rc)
-      if xml_output
-        puts zone.to_xml
-      else
-        str="%-15s: %-30s"
-
-        # print header
-        print_header("%-80s", "ZONE INFORMATION", true)
-
-        # print ID
-        puts str % ['ID', zone.id.to_s]   if verbose
-        # print Name
-        puts str % ['NAME', zone.name]
-        puts
-        # print Hosts
-        print_hosts(zone)
-        puts
-        # print Networks
-        print_networks(zone)
-
-      end
-    else
-      $stderr.puts rc.message
-      exit 1
-    end
   end
 
 #######################################
@@ -374,6 +326,59 @@ when 'sync'
   else
     $stderr.puts rc.message
     exit 1
+  end
+
+#######################################
+# list zones
+when 'list'
+  zone_pool = RenkeiVPE::ZonePool.new(client)
+  rc = zone_pool.info
+  if is_error?(rc)
+    $stderr.puts rc.message
+    exit 1
+  end
+
+  if xml_output
+    puts zone_pool.to_xml
+  else
+    print_xml_friendly(list_columns, zone_pool, verbose)
+  end
+
+#######################################
+# show zones
+when 'show'
+  check_parameters('show', 1)
+
+  ARGV.each do |zone_name|
+    id = get_zone_id(zone_name)
+    zone = RenkeiVPE::Zone.new_with_id(id, client)
+    rc = zone.info
+
+    if is_successful?(rc)
+      if xml_output
+        puts zone.to_xml
+      else
+        str="%-15s: %-30s"
+
+        # print header
+        print_header("%-80s", "ZONE INFORMATION", true)
+
+        # print ID
+        puts str % ['ID', zone.id.to_s]   if verbose
+        # print Name
+        puts str % ['NAME', zone.name]
+        puts
+        # print Hosts
+        print_hosts(zone)
+        puts
+        # print Networks
+        print_networks(zone)
+
+      end
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
   end
 
 #######################################

@@ -41,13 +41,6 @@ Usage:
     #{CMD_NAME} command <options>
 
 Commands:
-    show <-v> <-x> zone_name <host_names>
-        show information abount specified hosts in the specified zone.
-        If host_names, which can be names of hosts, are given, it shows
-        information about given hosts.
-
-        $ #{CMD_NAME} show 'tokyo tech' rpop-titech.cc.titech.ac.jp
-
     enable zone_name host_names
         enable hosts. An enabled host can run VMs on it. host_names can
         be names of hosts.
@@ -59,6 +52,15 @@ Commands:
         be names of hosts.
 
         $ #{CMD_NAME} disable 'tokyo tech' rpop-titech.cc.titech.ac.jp
+
+
+    show <-v> <-x> zone_name <host_names>
+        show information abount specified hosts in the specified zone.
+        If host_names, which can be names of hosts, are given, it shows
+        information about given hosts.
+
+        $ #{CMD_NAME} show 'tokyo tech' rpop-titech.cc.titech.ac.jp
+
 
     help
         show this message.
@@ -86,6 +88,42 @@ end
 
 command = ARGV.shift
 case command
+#######################################
+# enable hosts
+when 'enable'
+  check_parameters('enable', 2)
+
+  zone_name = ARGV.shift
+  ARGV.each do |host_name|
+    id = get_host_id(host_name, zone_name)
+    host = RenkeiVPE::Host.new_with_id(id, client)
+    rc = host.enable
+    if is_successful?(rc)
+      puts "Host enabled: #{host_name}"
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
+
+#######################################
+# disable hosts
+when 'disable'
+  check_parameters('disable', 2)
+
+  zone_name = ARGV.shift
+  ARGV.each do |host_name|
+    id = get_host_id(host_name, zone_name)
+    host = RenkeiVPE::Host.new_with_id(id, client)
+    rc = host.disable
+    if is_successful?(rc)
+      puts "Host disabled: #{host_name}"
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
+
 #######################################
 # show sites
 when 'show'
@@ -142,42 +180,6 @@ when 'show'
 
         puts; puts
       end
-    else
-      $stderr.puts rc.message
-      exit 1
-    end
-  end
-
-#######################################
-# enable hosts
-when 'enable'
-  check_parameters('enable', 2)
-
-  zone_name = ARGV.shift
-  ARGV.each do |host_name|
-    id = get_host_id(host_name, zone_name)
-    host = RenkeiVPE::Host.new_with_id(id, client)
-    rc = host.enable
-    if is_successful?(rc)
-      puts "Host enabled: #{host_name}"
-    else
-      $stderr.puts rc.message
-      exit 1
-    end
-  end
-
-#######################################
-# disable hosts
-when 'disable'
-  check_parameters('disable', 2)
-
-  zone_name = ARGV.shift
-  ARGV.each do |host_name|
-    id = get_host_id(host_name, zone_name)
-    host = RenkeiVPE::Host.new_with_id(id, client)
-    rc = host.disable
-    if is_successful?(rc)
-      puts "Host disabled: #{host_name}"
     else
       $stderr.puts rc.message
       exit 1

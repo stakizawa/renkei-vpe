@@ -1,11 +1,16 @@
 rvpeuser
-  create   user_name  password
-  enable   user_names
-  disable  user_names
-  delete   user_name
+  create        user_name  password
+  delete        user_name
+  passwd        user_name  password
+
+  enable        user_names
+  disable       user_names
+
+  enable_zone   user_name  zone_names
+  disable_zone  user_name  zone_names
+
   list
-  show     user_names
-  passwd   user_name  password
+  show          user_names
 
 
 
@@ -13,8 +18,10 @@ rvpeimage
   import     definition_file
   export     image_name  file_name
   delete     image_names
+
   publish    image_names
   unpublish  image_names
+
   list
   show       image_names
 
@@ -23,8 +30,6 @@ rvpeimage
 rvpezone
   create      definition_file
   delete      zone_name
-  list
-  show        zone_names
 
   addhost     zone_name host_names
   removehost  zone_name host_names
@@ -36,11 +41,12 @@ rvpezone
 
   sync
 
+  list
+  show        zone_names
+
 
 
 rvpevnet
-  show         zone_name <vnet_names>
-
   adddns       zone_name vnet_name dns_server_names
   removedns    zone_name vnet_name dns_server_names
   listdns      zone_name <vnet_names>
@@ -49,17 +55,19 @@ rvpevnet
   removentp    zone_name vnet_name ntp_server_names
   listntp      zone_name <vnet_names>
 
+#  addlease     zone_name vnet_name vhost_name vhost_addr
+#  removelease  zone_name vnet_name vhost_name
   leases       zone_name <vnet_names>
 
-#  addvhost     zone_name vnet_name vhost_name vhost_addr
-#  removevhost  zone_name vnet_name vhost_name
+  show         zone_name <vnet_names>
 
 
 
 rvpehost
-  show     zone_name <host_names>
   enable   zone_name host_names
   disable  zone_name host_names
+
+  show     zone_name <host_names>
 
 
 
