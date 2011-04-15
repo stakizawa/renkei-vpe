@@ -103,7 +103,6 @@ module RenkeiVPE
         # create a zone record
         begin
           zone = RenkeiVPE::Model::Zone.new
-          # TODO make a method
           zone.name        = name
           zone.oid         = osite_id
           zone.description = zone_def['description']
@@ -570,7 +569,6 @@ VN_DEF
       # create a virtual host record
       begin
         vh = RenkeiVPE::Model::VirtualHost.new
-        # TODO make a method
         vh.name      = vhost_name
         vh.address   = vhost_addr
         vh.allocated = 0
