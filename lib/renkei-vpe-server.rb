@@ -35,6 +35,8 @@ require 'renkei-vpe-server/host'
 require 'renkei-vpe-server/host_pool'
 require 'renkei-vpe-server/virtual_network'
 require 'renkei-vpe-server/virtual_network_pool'
+require 'renkei-vpe-server/vm_type'
+require 'renkei-vpe-server/vm_type_pool'
 
 ##############################################################################
 # RenkeiVPE module for the server
@@ -77,6 +79,8 @@ module RenkeiVPE
                [HostPool::INTERFACE,           HostPool.new],
                [VirtualNetwork::INTERFACE,     VirtualNetwork.new],
                [VirtualNetworkPool::INTERFACE, VirtualNetworkPool.new],
+               [VMType::INTERFACE,             VMType.new],
+               [VMTypePool::INTERFACE,         VMTypePool.new],
               ]
 
       # setup xml rpc server

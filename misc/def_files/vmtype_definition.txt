@@ -1,0 +1,8 @@
+# yaml file format
+# All fields except 'description' are mandatory.
+# Memory is size of memory in MB.
+# Characters in attributes must be downcase.
+name:        small
+cpu:         1
+memory:      1024
+description: small size VM

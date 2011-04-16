@@ -29,6 +29,8 @@ require 'renkei-vpe/host'
 require 'renkei-vpe/host_pool'
 require 'renkei-vpe/virtual_network'
 require 'renkei-vpe/virtual_network_pool'
+require 'renkei-vpe/vm_type'
+require 'renkei-vpe/vm_type_pool'
 
 ##############################################################################
 # RenkeiVPE module

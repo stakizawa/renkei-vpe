@@ -58,6 +58,7 @@ module RenkeiVPE
       Model::Zone.create_table_if_necessary
       Model::VirtualNetwork.create_table_if_necessary
       Model::VirtualHost.create_table_if_necessary
+      Model::VMType.create_table_if_necessary
     end
 
     module_function :file=, :file, :execute, :transaction, :init
@@ -577,6 +578,81 @@ SQL
           @vnetid    = attr[4].to_i
         end
         return vh
+      end
+
+    end
+
+    ##########################################################################
+    # Model for Virtual Machine type
+    ##########################################################################
+    class VMType < BaseModel
+      @table_name = 'vm_types'
+
+      @table_schema = <<SQL
+CREATE TABLE #{@table_name} (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  name        VARCHAR(256),
+  cpu         INTEGER,
+  memory      INTEGER,
+  description TEXT
+);
+SQL
+
+      @field_for_find_by_name = 'name'
+
+      attr_accessor :name        # name of the VM type
+      attr_accessor :cpu         # number of cpus
+      attr_accessor :memory      # amount of memory in MB
+      attr_accessor :description # description of the VM type
+
+      def to_s
+        "VMType<"                         +
+          "id=#{@id},"                    +
+          "name='#{@name}',"              +
+          "cpu=#{@cpu},"                  +
+          "memory=#{@memory}"             +
+          "description='#{@description}'" +
+          ">"
+      end
+
+      protected
+
+      def check_fields
+        raise_if_nil_and_not_class(@name,        'name',        String)
+        raise_if_nil_and_not_class(@cpu,         'cpu',         Integer)
+        raise_if_nil_and_not_class(@memory,      'memory',      Integer)
+        raise_if_nil_or_not_class( @description, 'description', String)
+      end
+
+      def to_create_record_str
+        "'#{@name}',"  +
+          "#{@cpu},"   +
+          "#{@memory}," +
+          "'#{@description}'"
+      end
+
+      def to_find_id_str
+        "name='#{@name}'"
+      end
+
+      def to_update_record_str
+        "name='#{@name}',"    +
+          "cpu=#{@cpu},"      +
+          "memory=#{@memory}," +
+          "description='#{@description}'"
+      end
+
+
+      def self.gen_instance(attr)
+        type = VMType.new
+        type.instance_eval do
+          @id          = attr[0].to_i
+          @name        = attr[1]
+          @cpu         = attr[2].to_i
+          @memory      = attr[3].to_i
+          @description = attr[4]
+        end
+        return type
       end
 
     end

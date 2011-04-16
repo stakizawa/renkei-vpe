@@ -355,6 +355,10 @@ end
 #     get_entity_id(name, RenkeiVPE::VirtualMachinePool)
 # end
 
+def get_vmtype_id(name)
+    get_entity_id(name, RenkeiVPE::VMTypePool)
+end
+
 def get_host_id(name, zone_name)
     get_entity_id_from_zone(name, zone_name, 'HOSTS/HOST')
 end

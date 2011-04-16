@@ -1,0 +1,222 @@
+#! /bin/env ruby
+
+##############################################################################
+# Environment Configuration
+##############################################################################
+RVPE_LOCATION = ENV['RVPE_LOCATION']
+
+if !RVPE_LOCATION
+  $stderr.puts 'set "RVPE_LOCATION" valiable.'
+  exit 1
+else
+  RUBY_LIB_LOCATION = RVPE_LOCATION + '/lib'
+end
+
+$: << RUBY_LIB_LOCATION
+
+##############################################################################
+# Required libraries
+##############################################################################
+require 'renkei-vpe'
+require 'client_utilities'
+require 'optparse'
+
+##############################################################################
+# Global variables
+##############################################################################
+CMD_NAME = 'rvpevmtype'
+
+client = RenkeiVPE::Client.new()
+xml_output = false
+verbose    = false
+
+list_columns = {
+  :id      => { :name => 'ID',
+                :size => 4,
+                :proc => lambda {|d,e| d.id} },
+  :user    => { :name => 'NAME',
+                :size => 15,
+                :left => true,
+                :proc => lambda {|d,e| d['NAME']} },
+  :desc    => { :name => 'DESCRIPTION',
+                :size => 40,
+                :proc => lambda {|d,e| d['DESCRIPTION']} },
+  :cpu     => { :name => 'CPU',
+                :size => 4,
+                :proc => lambda {|d,e| d['CPU']} },
+  :mem     => { :name => 'MEM(MB)',
+                :size => 8,
+                :proc => lambda {|d,e| d['MEMORY']} },
+
+  :default => [:id, :user, :desc, :cpu, :mem]
+}
+
+##############################################################################
+# main
+##############################################################################
+
+begin
+  parser = OptionParser.new
+  parser.banner = <<EOT
+Usage:
+    #{CMD_NAME} command <options>
+
+Notes:
+    This command can be used only by administrator.
+
+Commands:
+    create definition_file
+        create a new VM type
+
+        $ #{CMD_NAME} create definition_file
+
+    delete type_name
+        delete a VM type from the system. type_name can be name or id
+        of VM type.
+
+        $ #{CMD_NAME} delete small
+        $ #{CMD_NAME} delete 1
+
+
+    list <-x> <-v>
+        list registered VM types.
+
+    show <-x> <-v> type_names
+        show information about specified VM types. type_names can be
+        names or ids of VM types.
+
+        $ #{CMD_NAME} show small large
+        $ #{CMD_NAME} show 1 2
+
+
+    help
+        show this message.
+
+Options:
+EOT
+
+  parser.on('-v', ': verbose output mode') do
+    verbose = true
+  end
+
+  parser.on('-x', '--xml', ': xml output mode') do
+    xml_output = true
+  end
+
+  parser.parse!(ARGV)
+rescue OptionParser::ParseError
+  $stderr.puts parser.help
+  exit 1
+rescue => e
+  $stderr.puts e.message + "\n\n"
+  $stderr.puts parser.help
+  exit 1
+end
+
+command = ARGV.shift
+case command
+#######################################
+# create a VM type
+when 'create'
+  check_parameters('create', 1)
+  begin
+    template = File.read(ARGV[0])
+  rescue
+    $stderr.puts "Can't read definition file: #{ARGV[0]}"
+    exit 1
+  end
+
+  type = RenkeiVPE::VMType.new(RenkeiVPE::VMType.build_xml, client)
+  rc = type.allocate(template)
+  if is_successful?(rc)
+    puts "VM type registered: " + type.name
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+
+#######################################
+# delete a VM type
+when 'delete'
+  check_parameters('delete', 1)
+
+  name = ARGV[0]
+  id = get_vmtype_id(name)
+  type = RenkeiVPE::VMType.new_with_id(id, client)
+  rc = type.delete
+  if is_successful?(rc)
+    puts "VM type deleted: " + name
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+
+#######################################
+# list VM types
+when 'list'
+  vmtype_pool = RenkeiVPE::VMTypePool.new(client)
+  rc = vmtype_pool.info
+  if is_error?(rc)
+    $stderr.puts rc.message
+    exit 1
+  end
+
+  if xml_output
+    puts vmtype_pool.to_xml
+  else
+    print_xml_friendly(list_columns, vmtype_pool, verbose)
+  end
+
+#######################################
+# show VM types
+when 'show'
+  check_parameters('show', 1)
+
+  ARGV.each do |type_name|
+    id = get_vmtype_id(type_name)
+    type = RenkeiVPE::VMType.new_with_id(id, client)
+    rc = type.info
+
+    if is_successful?(rc)
+      if xml_output
+        puts type.to_xml
+      else
+        str="%-15s: %-30s"
+
+        # print header
+        print_header("%-80s", "VM TYPE INFORMATION", true)
+
+        # print ID
+        puts str % ['ID', type.id.to_s]  if verbose
+        # print Name
+        puts str % ['NAME', type.name]
+        # print CPU
+        puts str % ['CPU', type['CPU']]
+        # print Memory
+        puts str % ['MEMORY(MB)', type['MEMORY']]
+        # print Description
+        puts str % ['DESCRIPTION', type['DESCRIPTION']]
+      end
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
+
+#######################################
+# show help
+when 'help'
+  puts parser.help
+
+else
+  $stderr.puts "Unknown command: #{command}"
+  $stderr.puts parser.help
+
+end
+
+
+### Local variables:
+### mode: Ruby
+### coding: utf-8-unix
+### indent-tabs-mode: nil
+### End:

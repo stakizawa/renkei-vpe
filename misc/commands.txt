@@ -71,8 +71,17 @@ rvpehost
 
 
 
+rvpevmtype
+  create definition_file
+  delete type_name
+
+  list
+  show   type_names
+
+
+
 rvpevm
-  create type site
+  create type zone
   shutdown name
   suspend name
   resume name
