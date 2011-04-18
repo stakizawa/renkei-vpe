@@ -1,6 +1,6 @@
 require 'renkei-vpe-server/server_role'
+require 'renkei-vpe-server/resource_file'
 require 'rexml/document'
-require 'yaml'
 
 module RenkeiVPE
   class VMType < ServerRole
@@ -62,21 +62,22 @@ module RenkeiVPE
       authenticate(session, true) do
         method_name = 'rvpe.vmtype.allocate'
 
-        type_def = YAML.load(template)
+        type_def = ResourceFile::Parser.load_yaml(template)
 
-        type = RenkeiVPE::Model::VMType.find_by_name(type_def['name'])
+        name = type_def[ResourceFile::VMType::NAME]
+        type = RenkeiVPE::Model::VMType.find_by_name(name)
         if type
-          msg = "VM Type already exists: #{type_def['name']}"
+          msg = "VM Type already exists: #{name}"
           log_fail_exit(method_name, msg)
           return [false, msg]
         end
 
         begin
           type = RenkeiVPE::Model::VMType.new
-          type.name        = type_def['name']
-          type.cpu         = type_def['cpu'].to_i
-          type.memory      = type_def['memory'].to_i
-          type.description = type_def['description']
+          type.name        = type_def[ResourceFile::VMType::NAME]
+          type.cpu         = type_def[ResourceFile::VMType::CPU].to_i
+          type.memory      = type_def[ResourceFile::VMType::MEMORY].to_i
+          type.description = type_def[ResourceFile::VMType::DESCRIPTION]
           type.create
         rescue => e
           log_fail_exit(method_name, e)

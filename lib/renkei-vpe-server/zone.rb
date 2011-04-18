@@ -1,7 +1,7 @@
 require 'renkei-vpe-server/server_role'
+require 'renkei-vpe-server/resource_file'
 require 'fileutils'
 require 'rexml/document'
-require 'yaml'
 
 module RenkeiVPE
   class Zone < ServerRole
@@ -83,10 +83,10 @@ module RenkeiVPE
       authenticate(session, true) do
         method_name = 'rvpe.zone.allocate'
 
-        zone_def = YAML.load(template)
+        zone_def = ResourceFile::Parser.load_yaml(template)
 
         # create a zone
-        name = zone_def['name']
+        name = zone_def[ResourceFile::Zone::NAME]
         zone = RenkeiVPE::Model::Zone.find_by_name(name)
         if zone
           msg = "Zone already exists: #{name}"
@@ -105,7 +105,7 @@ module RenkeiVPE
           zone = RenkeiVPE::Model::Zone.new
           zone.name        = name
           zone.oid         = osite_id
-          zone.description = zone_def['description']
+          zone.description = zone_def[ResourceFile::Zone::DESCRIPTION]
           zone.hosts       = ''
           zone.networks    = ''
           zone.create
@@ -116,7 +116,7 @@ module RenkeiVPE
 
         # add hosts to this zone
         begin
-          zone_def['host'].each do |host|
+          zone_def[ResourceFile::Zone::HOST].each do |host|
             rc = add_host_to_zone(session, host, zone)
             raise rc[1] unless rc[0]
           end
@@ -129,7 +129,7 @@ module RenkeiVPE
 
         # add virtual networks to this zone
         begin
-          zone_def['network'].each do |net|
+          zone_def[ResourceFile::Zone::NETWORK].each do |net|
             rc = add_vnet_to_zone(session, net, zone)
             raise rc[1] unless rc[0]
           end
@@ -268,7 +268,7 @@ module RenkeiVPE
           return [false, msg]
         end
 
-        vnet_def = YAML.load(template)
+        vnet_def = ResourceFile::Parser.load_yaml(template)
         rc = add_vnet_to_zone(session, vnet_def, zone)
         rc[1] = '' if rc[0]
         log_result(method_name, rc)
@@ -422,7 +422,7 @@ module RenkeiVPE
     # +result[1]+  vnet id in integer if successful, othersize a string
     #              that represents error message
     def add_vnet_to_zone(session, vnet_def, zone)
-      name        = vnet_def['name']
+      name        = vnet_def[ResourceFile::VirtualNetwork::NAME]
       vn_unique   = zone.name + '::' + name
 
       # 0. check if the vnet already exists
@@ -438,10 +438,11 @@ NAME   = "#{vn_unique}"
 TYPE   = FIXED
 PUBLIC = YES
 
-BRIDGE = #{vnet_def['interface']}
+BRIDGE = #{vnet_def[ResourceFile::VirtualNetwork::INTERFACE]}
 VN_DEF
-      vnet_def['vhost'].each do |vh|
-        one_vn_template += "LEASES = [IP=\"#{vh['address']}\"]\n"
+      vnet_def[ResourceFile::VirtualNetwork::VHOST].each do |vh|
+        one_vn_template +=
+          "LEASES = [IP=\"#{vh[ResourceFile::VirtualNetwork::VHOST_ADDRESS]}\"]\n"
       end
       # call rpc
       rc = call_one_xmlrpc('one.vn.allocate', session, one_vn_template)
@@ -452,14 +453,14 @@ VN_DEF
         vn = RenkeiVPE::Model::VirtualNetwork.new
         vn.oid = rc[1]
         vn.name = name
-        vn.description = vnet_def['description']
+        vn.description = vnet_def[ResourceFile::VirtualNetwork::DESCRIPTION]
         vn.zone_name   = zone.name
         vn.unique_name = vn_unique
-        vn.address     = vnet_def['network']
-        vn.netmask     = vnet_def['netmask']
-        vn.gateway     = vnet_def['gateway']
-        vn.dns         = vnet_def['dns'].join(' ')
-        vn.ntp         = vnet_def['ntp'].join(' ')
+        vn.address     = vnet_def[ResourceFile::VirtualNetwork::ADDRESS]
+        vn.netmask     = vnet_def[ResourceFile::VirtualNetwork::NETMASK]
+        vn.gateway     = vnet_def[ResourceFile::VirtualNetwork::GATEWAY]
+        vn.dns         = vnet_def[ResourceFile::VirtualNetwork::DNS].join(' ')
+        vn.ntp         = vnet_def[ResourceFile::VirtualNetwork::NTP].join(' ')
         vn.vhosts      = ''
         vn.create
       rescue => e
@@ -470,8 +471,11 @@ VN_DEF
 
       # 3. create vhosts that belong to the vnet
       begin
-        vnet_def['vhost'].each do |vh|
-          rc = add_vhost_to_vnet(vh['name'], vh['address'], vn)
+        vnet_def[ResourceFile::VirtualNetwork::VHOST].each do |vh|
+          rc =
+            add_vhost_to_vnet(vh[ResourceFile::VirtualNetwork::VHOST_NAME],
+                              vh[ResourceFile::VirtualNetwork::VHOST_ADDRESS],
+                              vn)
           raise rc[1] unless rc[0]
         end
       rescue => e

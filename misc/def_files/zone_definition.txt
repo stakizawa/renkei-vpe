@@ -9,7 +9,7 @@ host:
   - 192.168.0.3
 network:
   - name:    test
-    network: 192.168.0.0
+    address: 192.168.0.0
     netmask: 255.255.255.0
     gateway: 192.168.0.1
     dns:

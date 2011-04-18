@@ -81,11 +81,13 @@ rvpevmtype
 
 
 rvpevm
-  create type zone
-  shutdown name
-  suspend name
-  resume name
-  mark_save name
-  restart name
+  create    vm_type zone definition_file
+  shutdown  vm_name
+  suspend   vm_name
+  resume    vm_name
+  mark_save vm_name
+  restart   vm_name
+
   list
-  show name
+  show      vm_names
+
