@@ -1,6 +1,5 @@
 # yaml file format
 # All fields except 'description' are mandatory.
-# Characters in attributes must be downcase.
 name:        test
 description: test network
 address:     192.168.0.0
