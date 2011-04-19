@@ -6,7 +6,7 @@ module RenkeiVPE
         # Constants and Class attribute accessors
         #######################################################################
 
-        HOST_POOL_METHODS = {
+        VN_POOL_METHODS = {
             :info => "vnpool.info"
         }
 
@@ -19,18 +19,18 @@ module RenkeiVPE
             super('VNET_POOL','VNET',client)
         end
 
-        # Factory Method for the Host Pool
+        # Factory Method for the VirtualNetwork Pool
         def factory(element_xml)
-            RenkeiVPE::Host.new(element_xml,@client)
+            RenkeiVPE::VirtualNetwork.new(element_xml,@client)
         end
 
         #######################################################################
-        # XML-RPC Methods for the Host Pool
+        # XML-RPC Methods for the VirtualNetwork Pool
         #######################################################################
 
-        # Retrieves all the Hosts in the pool.
+        # Retrieves all the VNETs in the pool.
         def info()
-            super(HOST_POOL_METHODS[:info])
+            super(VN_POOL_METHODS[:info])
         end
     end
 end

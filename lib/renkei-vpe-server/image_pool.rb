@@ -23,12 +23,16 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             if successful this is the information string
     def info(session, flag)
-      authenticate(session) do
-        rc = call_one_xmlrpc('one.imagepool.info', session, flag)
-        log_result('rvpe.imagepool.info', rc)
-        return rc
+      task('rvpe.imagepool.info', session) do
+        if flag <= -2 || flag >= 0
+          admin_session(session) do; end
+        else # flag == -1
+        end
+
+        call_one_xmlrpc('one.imagepool.info', session, flag)
       end
     end
+
   end
 end
 

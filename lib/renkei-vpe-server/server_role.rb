@@ -40,6 +40,10 @@ module RenkeiVPE
       end
     end
 
+    def get_user_from_session(session)
+      return session.split(':')[0]
+    end
+
     def call_one_xmlrpc_nolog(method, session, *args)
       unless @@client
         msg = 'RenkeiVPE::OpenNebulaClient.init is not called!'
@@ -65,9 +69,9 @@ module RenkeiVPE
 
     # It authenticate user session.
     # +session+    string that represents user session
-    # +return[0]+  0 if authentication succeeded.
+    # +return[0]+  0 if user is the administrator.
     #              1 if authentication failed.
-    #              2 if user is not the administrator
+    #              2 if user is not the administrator.
     # +return[1]+  string that represents message
     def __authenticate(session)
       result = call_one_xmlrpc_nolog(ONE_AUTH_METHOD, session)
@@ -98,10 +102,10 @@ module RenkeiVPE
       @log = RenkeiVPE::Logger.get_logger
     end
 
+    # TODO make it a private method
     def authenticate(session, admin_auth=false, &block)
       # 1. get user name
-      # it assumes that session string equals to one session string
-      username = session.split(':')[0]
+      username = get_user_from_session(session)
 
       # 2. check if user is registered in Renkei VPE
       u = RenkeiVPE::Model::User.find_by_name(username)
@@ -120,6 +124,30 @@ module RenkeiVPE
 
       # 4. do one authentication
       one_auth(session, admin_auth, &block)
+    end
+
+    def task(task_name, session, admin_auth=false, &block)
+      begin
+        rc = authenticate(session, admin_auth, &block)
+        log_msg = rc
+      rescue => e
+        rc = [false, e.message]
+        log_msg = [false, e]
+      end
+      log_result(task_name, log_msg)
+      return rc
+    end
+
+    def admin_session(session, will_raise=true)
+      rc = __authenticate(session)
+      if rc[0] != 0
+        msg = 'The operation requires the admin privilege.'
+        @log.warn msg
+        raise msg if will_raise
+        return
+      end
+
+      yield
     end
 
     def log_success_exit(method_name)
