@@ -95,8 +95,16 @@ Commands:
         $ #{CMD_NAME} unpublish centos5.5_virtio 'ttylinux sample'
 
 
-    list <-x> <-v>
+    list <-x> <-v> <all|mine|user_name>
         list registered images you can use.
+        If one of all(a), mine(m) and user_name is specified, it lists,
+           all(a)    : all public images and user's images
+           mine(m)   : user's images
+           user_name : images belong to the user
+
+        If none of them are specified, it assumes that 'mine' is specified.
+        'all' and user_name can be specified only by the administrator.
+        'user_name' can be name or id of a user.
 
     show <-x> <-v> image_names
         show information about specified images. image_names can be names
@@ -234,7 +242,23 @@ when 'unpublish'
 #######################################
 # show image list
 when 'list'
-  img_pool = RenkeiVPE::ImagePool.new(client, -1)
+  filter = -1
+  if ARGV.size == 1
+    case ARGV[0]
+    when 'all'
+      filter = -2
+    when 'a'
+      filter = -2
+    when 'mine'
+      filter = -1
+    when 'm'
+      filter = -1
+    else # name or id of a user
+      filter = get_user_id(ARGV[0])
+    end
+  end
+
+  img_pool = RenkeiVPE::ImagePool.new(client, filter)
   rc = img_pool.info
   if is_error?(rc)
     $stderr.puts rc.message
