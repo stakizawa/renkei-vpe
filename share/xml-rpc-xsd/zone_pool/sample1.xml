@@ -1,0 +1,26 @@
+<ZONE_POOL>
+  <ZONE>
+    <ID>1</ID>
+    <NAME>tokyo tech</NAME>
+    <HOSTS>
+      <HOST>
+        <ID>20</ID>
+        <NAME>192.168.0.2</NAME>
+      </HOST>
+      <HOST>
+        <ID>21</ID>
+        <NAME>192.168.0.3</NAME>
+      </HOST>
+    </HOSTS>
+    <NETWORKS>
+      <NETWORK>
+        <ID>1</ID>
+        <NAME>test</NAME>
+      </NETWORK>
+      <NETWORK>
+        <ID>2</ID>
+        <NAME>test2</NAME>
+      </NETWORK>
+    </NETWORKS>
+  </ZONE>
+</ZONE_POOL>

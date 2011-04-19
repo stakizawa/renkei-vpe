@@ -1,0 +1,31 @@
+<VNET>
+  <ID>1</ID>
+  <NAME>test</NAME>
+  <ZONE>tokyo tech</ZONE>
+  <UNIQUE_NAME>tokyo tech::test</UNIQUE_NAME>
+  <DESCRIPTION/>
+  <ADDRESS>192.168.0.0</ADDRESS>
+  <NETMASK>255.255.255.0</NETMASK>
+  <GATEWAY>192.168.0.1</GATEWAY>
+  <DNS>192.168.0.1 131.112.125.58</DNS>
+  <NTP>192.168.0.1 ntp1.noc.titech.ac.jp ntp2.noc.titech.ac.jp</NTP>
+  <HOST_INTERFACE>br0</HOST_INTERFACE>
+  <LEASES>
+    <LEASE>
+      <ID>1</ID>
+      <NAME>vm00.vhost.net</NAME>
+      <IP>192.168.0.10</IP>
+      <MAC>02:00:c0:a8:00:0a</MAC>
+      <ALLOCATED>0</ALLOCATED>
+      <VID>-1</VID>
+    </LEASE>
+    <LEASE>
+      <ID>2</ID>
+      <NAME>vm01.vhost.net</NAME>
+      <IP>192.168.0.11</IP>
+      <MAC>02:00:c0:a8:00:0b</MAC>
+      <ALLOCATED>0</ALLOCATED>
+      <VID>-1</VID>
+    </LEASE>
+  </LEASES>
+</VNET>

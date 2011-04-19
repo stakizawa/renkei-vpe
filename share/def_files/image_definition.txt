@@ -1,0 +1,9 @@
+# The format is the same as one in OpenNebula
+NAME        = "centos5.5_virtio"
+DESCRIPTION = "CentOS 5.5 master (using virtio)"
+TYPE        = OS
+PUBLIC      = YES
+DEV_PREFIX  = vd
+BUS         = virtio
+PATH        = /work/vms/one-masters/centos5.5-x86_64-virtio/disk.img
+

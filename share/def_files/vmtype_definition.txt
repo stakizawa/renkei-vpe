@@ -1,0 +1,7 @@
+# yaml file format
+# All fields except 'description' are mandatory.
+# Memory is size of memory in MB.
+name:        small
+cpu:         1
+memory:      1024
+description: small size VM
