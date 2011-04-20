@@ -1,0 +1,7 @@
+<VMTYPE>
+  <ID>5</ID>
+  <NAME>small</NAME>
+  <CPU>1</CPU>
+  <MEMORY>1024</MEMORY>
+  <DESCRIPTION>small size VM</DESCRIPTION>
+</VMTYPE>

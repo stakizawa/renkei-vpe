@@ -85,9 +85,10 @@ rvpevm
   shutdown  vm_name
   suspend   vm_name
   resume    vm_name
-  restart   vm_name
+
   mark_save vm_name
 
   list
+  history
   show      vm_names
 
