@@ -251,7 +251,7 @@ module RenkeiVPE
           return [false, e.message]
         end
 
-        log_result(method_name, '')
+        log_result(method_name, '') # TODO this always logs fail
         return [true, '']
       end
     end

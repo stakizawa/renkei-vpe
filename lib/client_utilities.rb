@@ -351,9 +351,9 @@ def get_entity_ids_from_zone(zone_name, search_str)
     end
 end
 
-# def get_vm_id(name)
-#     get_entity_id(name, RenkeiVPE::VirtualMachinePool)
-# end
+def get_vm_id(name)
+    get_entity_id(name, RenkeiVPE::VirtualMachinePool)
+end
 
 def get_vmtype_id(name)
     get_entity_id(name, RenkeiVPE::VMTypePool)
@@ -452,4 +452,3 @@ end
 ### coding: utf-8-unix
 ### indent-tabs-mode: nil
 ### End:
-

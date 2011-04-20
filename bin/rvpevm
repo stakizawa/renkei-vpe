@@ -1,0 +1,429 @@
+#! /bin/env ruby
+
+##############################################################################
+# Environment Configuration
+##############################################################################
+RVPE_LOCATION = ENV['RVPE_LOCATION']
+
+if !RVPE_LOCATION
+  $stderr.puts 'set "RVPE_LOCATION" valiable.'
+  exit 1
+else
+  RUBY_LIB_LOCATION = RVPE_LOCATION + '/lib'
+end
+
+$: << RUBY_LIB_LOCATION
+
+##############################################################################
+# Required libraries
+##############################################################################
+require 'renkei-vpe'
+require 'client_utilities'
+require 'optparse'
+
+##############################################################################
+# Global variables
+##############################################################################
+CMD_NAME = 'rvpevm'
+
+client = RenkeiVPE::Client.new()
+xml_output = false
+verbose    = false
+list_columns = {
+  :id      => { :name => 'ID',
+                :size => 4,
+                :proc => lambda {|d,e| d.id} },
+  :name    => { :name => 'NAME',
+                :size => 30,
+                :proc => lambda {|d,e| d.name} },
+  :user    => { :name => 'OWNER',
+                :size => 10,
+                :proc => lambda {|d,e| d['USER_NAME']} },
+  :zone    => { :name => 'ZONE',
+                :size => 15,
+                :proc => lambda {|d,e| d['ZONE_NAME']} },
+  :type    => { :name => 'TYPE',
+                :size => 10,
+                :proc => lambda {|d,e| d['TYPE_NAME']} },
+  :state   => { :name => 'STAT',
+                :size => 4,
+                :proc => lambda {|d,e| d.status} },
+
+  :default => [:id, :name, :user, :zone, :type, :state]
+}
+
+##############################################################################
+# main
+##############################################################################
+
+begin
+  parser = OptionParser.new
+  parser.banner = <<EOT
+Usage:
+    #{CMD_NAME} command <options>
+
+Commands:
+    create vm_type zone_name image_name root_key_file
+        create a VM with the specified vm_type in the specified zone.
+        The VM uses an OS image whose name is image_name and a user can
+        log in the VM with a ssh key whose public key is root_key_file.
+        vm_type can be name or id of a VM type.
+        zone_name can be name or id of a zone.
+        image_name can be name or id of an OS image.
+
+        $ #{CMD_NAME} create small 'tokyo tech' centos5.5 ./ssh_pubkey
+
+    shutdown vm_name
+        shutdown the specified VM. If a VM shutdowns all its files are
+        deleted.
+        vm_name can be name or id of a VM.
+
+        $ #{CMD_NAME} shutdown vm00-nii
+
+    delete vm_name
+        delete the specified VM. It stops and unregister the VM from
+        Renkei VPE. Information about accounting still remains.
+        This command should be used only when the status of VM is
+        'unknown'.
+
+        $ #{CMD_NAME} delete vm00-nii
+
+
+    suspend vm_name
+        suspend the specified VM. A suspended VM can be resumed.
+        vm_name can be name or id of a VM.
+
+        $ #{CMD_NAME} suspend vm00-nii
+
+    resume vm_name
+        resume the specified VM.
+        vm_name can be name or id of a VM.
+
+        $ #{CMD_NAME} resume vm00-nii
+
+
+    mark_save vm_name
+        mark a running VM to be seved on its shutdown. It just marks as
+        to save the OS image the specified VM uses, not actually saves.
+        vm_name can be name or id of a VM.
+
+        $ #{CMD_NAME} mark_save vm00-nii
+
+
+    list <-x> <-v> <all|mine|user_name>
+        list VMs.
+        If one of all(a), mine(m) and user_name is specified, it lists,
+           all(a)    : all VMs
+           mine(m)   : user's VMs
+           user_name : VMs belong to the user
+
+        If none of them are specified, it assumes that 'mine' is specified.
+        'all' and user_name can be specified only by the administrator.
+        'user_name' can be name or id of a user.
+
+    history <-x> <-v> <all|mine|user_name>
+        list VMs including previously executed and finished ones.
+        If one of all(a), mine(m) and user_name is specified, it lists,
+           all(a)    : all VMs
+           mine(m)   : user's VMs
+           user_name : VMs belong to the user
+
+        If none of them are specified, it assumes that 'mine' is specified.
+        'all' and user_name can be specified only by the administrator.
+        'user_name' can be name or id of a user.
+
+
+    show <-x> <-v> vm_names
+        show information about specified VMs. vm_names can be names or
+        ids of VMs.
+
+        $ #{CMD_NAME} show vm00-nii
+        $ #{CMD_NAME} show vm00-nii vm00-titech
+
+
+    help
+        show this message.
+
+Options:
+EOT
+
+  parser.on('-x', '--xml', ': xml output mode') do
+    xml_output = true
+  end
+
+  parser.on('-v', ': verbose output mode') do
+    verbose = true
+  end
+
+  parser.parse!(ARGV)
+rescue OptionParser::ParseError
+  $stderr.puts parser.help
+  exit 1
+rescue => e
+  $stderr.puts e.message + "\n\n"
+  $stderr.puts parser.help
+  exit 1
+end
+
+command = ARGV.shift
+case command
+#######################################
+# create a VM
+when 'create'
+  check_parameters('create', 4)
+
+  vmtype_id = get_vmtype_id(ARGV[0])
+  zone_id   = get_zone_id(ARGV[1])
+  image_id  = get_image_id(ARGV[2])
+  begin
+    root_pubkey = File.read(ARGV[3])
+  rescue
+    $stderr.puts "Can't read root ssh public key file: #{ARGV[3]}"
+    exit 1
+  end
+
+  vm = RenkeiVPE::VirtualMachine.new(RenkeiVPE::VirtualMachine.build_xml,
+                                     client)
+  rc = vm.create(vmtype_id, zone_id, image_id, root_pubkey)
+  if is_successful?(rc)
+    puts "VM: " + vm.name
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+
+#######################################
+# shutdown a VM
+when 'shutdown'
+  # TODO implement a function that use action
+  check_parameters('shutdown', 1)
+
+  vm_name = ARGV[0]
+  id = get_vm_id(vm_name)
+  vm = RenkeiVPE::VirtualMachine.new_with_id(id, client)
+  rc = vm.shutdown
+
+  if is_successful?(rc)
+    puts "VM shutdowned: #{vm_name}"
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+
+#######################################
+# delete a VM
+when 'delete'
+  check_parameters('delete', 1)
+
+  vm_name = ARGV[0]
+  id = get_vm_id(vm_name)
+  vm = RenkeiVPE::VirtualMachine.new_with_id(id, client)
+  rc = vm.delete
+
+  if is_successful?(rc)
+    puts "VM deleted: #{vm_name}"
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+
+#######################################
+# subpend a VM
+when 'suspend'
+  check_parameters('suspend', 1)
+
+  vm_name = ARGV[0]
+  id = get_vm_id(vm_name)
+  vm = RenkeiVPE::VirtualMachine.new_with_id(id, client)
+  rc = vm.suspend
+
+  if is_successful?(rc)
+    puts "VM suspended: #{vm_name}"
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+
+#######################################
+# resume a VM
+when 'resume'
+  check_parameters('resume', 1)
+
+  vm_name = ARGV[0]
+  id = get_vm_id(vm_name)
+  vm = RenkeiVPE::VirtualMachine.new_with_id(id, client)
+  rc = vm.resume
+
+  if is_successful?(rc)
+    puts "VM resumeed: #{vm_name}"
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+
+##############################################
+# mark a VM to save its OS image on shutdown
+when 'mark_save'
+  check_parameters('mark_save', 1)
+
+  vm_name = ARGV[0]
+  id = get_vm_id(vm_name)
+  vm = RenkeiVPE::VirtualMachine.new_with_id(id, client)
+  rc = vm.mark_save
+
+  if is_successful?(rc)
+    puts "VM marked to save its image: #{vm_name}"
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+
+#######################################
+# show VM list
+when 'list'
+  filter = -1
+  if ARGV.size == 1
+    case ARGV[0]
+    when 'all'
+      filter = -2
+    when 'a'
+      filter = -2
+    when 'mine'
+      filter = -1
+    when 'm'
+      filter = -1
+    else # name or id of a user
+      filter = get_user_id(ARGV[0]).to_i
+    end
+  end
+
+  vm_pool = RenkeiVPE::VirtualMachinePool.new(client, filter)
+  rc = vm_pool.info
+  if is_error?(rc)
+    $stderr.puts rc.message
+    exit 1
+  end
+
+  if xml_output
+    puts vm_pool.to_xml
+  else
+    print_xml_friendly(list_columns, vm_pool, verbose)
+  end
+
+#######################################
+# show VM history
+when 'history'
+  filter = -1
+  if ARGV.size == 1
+    case ARGV[0]
+    when 'all'
+      filter = -2
+    when 'a'
+      filter = -2
+    when 'mine'
+      filter = -1
+    when 'm'
+      filter = -1
+    else # name or id of a user
+      filter = get_user_id(ARGV[0]).to_i
+    end
+  end
+
+  vm_pool = RenkeiVPE::VirtualMachinePool.new(client, filter, 1)
+  rc = vm_pool.info
+  if is_error?(rc)
+    $stderr.puts rc.message
+    exit 1
+  end
+
+  if xml_output
+    puts vm_pool.to_xml
+  else
+    print_xml_friendly(list_columns, vm_pool, verbose)
+  end
+
+#######################################
+# show VM info
+when 'show'
+  check_parameters('show', 1)
+
+  ARGV.each do |vm_name|
+    id = get_vm_id(vm_name)
+    vm = RenkeiVPE::VirtualMachine.new_with_id(id, client)
+    rc = vm.info
+
+    if is_successful?(rc)
+      if xml_output
+        puts vm.to_xml
+      else
+        # TODO
+  #       str="%-15s: %-30s"
+
+  #       # print header
+  #       print_header("%-80s", "IMAGE INFORMATION", true)
+
+
+
+
+
+
+
+
+  # :regtime => { :name => 'REGTIME',
+  #               :size => 20,
+  #               :proc => lambda {|d,e| str_register_time(d)} },
+
+
+
+
+  #       # print ID
+  #       puts str % ["ID", image.id.to_s]  if verbose
+  #       # print Name
+  #       puts str % ["NAME", image.name]
+  #       # print Register time
+  #       value = image['REGTIME'].to_i
+  #       if value == 0
+  #         value = '-'
+  #       else
+  #         value = Time.at(value).strftime("%m/%d %H:%M:%S")
+  #       end
+  #       puts str % ["REGISTER TIME", value]
+  #       # print Public flag
+  #       if image['PUBLIC'].to_i == 1
+  #         public_str = "Yes"
+  #       else
+  #         public_str = "No"
+  #       end
+  #       puts str % ["PUBLIC", public_str]
+  #       # print State
+  #       puts str % ["STATE", image.state_str]
+  #       # print Description
+  #       image.template_str.each_line do |line|
+  #         if /^(DESCRIPTION)\s*=\s*(.+)/ =~ line
+  #           puts str % [$1, $2]
+  #         end
+  #       end
+      end
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
+
+#######################################
+# show help
+when 'help'
+  puts parser.help
+
+else
+  $stderr.puts "Unknown command: #{command}"
+  $stderr.puts parser.help
+
+end
+
+
+### Local variables:
+### mode: Ruby
+### coding: utf-8-unix
+### indent-tabs-mode: nil
+### End:

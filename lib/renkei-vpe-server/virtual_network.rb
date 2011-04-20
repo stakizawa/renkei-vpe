@@ -259,7 +259,7 @@ module RenkeiVPE
       name_e.add(REXML::Text.new(vnet.zone_name))
       vnet_e.add(name_e)
 
-      # set zone name
+      # set unique name
       name_e = REXML::Element.new('UNIQUE_NAME')
       name_e.add(REXML::Text.new(vnet.unique_name))
       vnet_e.add(name_e)

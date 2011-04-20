@@ -31,6 +31,8 @@ require 'renkei-vpe/virtual_network'
 require 'renkei-vpe/virtual_network_pool'
 require 'renkei-vpe/vm_type'
 require 'renkei-vpe/vm_type_pool'
+require 'renkei-vpe/virtual_machine'
+require 'renkei-vpe/virtual_machine_pool'
 
 ##############################################################################
 # RenkeiVPE module

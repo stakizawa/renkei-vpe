@@ -59,6 +59,7 @@ module RenkeiVPE
       Model::VirtualNetwork.create_table_if_necessary
       Model::VirtualHost.create_table_if_necessary
       Model::VMType.create_table_if_necessary
+      Model::VirtualMachine.create_table_if_necessary
     end
 
     module_function :file=, :file, :execute, :transaction, :init
@@ -84,7 +85,7 @@ module RenkeiVPE
       # id of instance of this model
       attr_reader :id
 
-      def initialize
+      def initialize(*args)
         @log = RenkeiVPE::Logger.get_logger
       end
 
@@ -182,26 +183,24 @@ module RenkeiVPE
       end
 
       # It finds and returns records that match the given +condition+.
-      # It return Array if found, otherwise return nil.
+      # It returns nil if not found.
       def self.find(condition)
         sql = "SELECT * FROM #{@table_name} WHERE #{condition};"
-        return Database.execute(sql)
+        vals = Database.execute(sql)
+        return nil unless vals
+        return gen_instance(vals)
       end
 
       # It finds and returns a record whose id is +id+.
       # It returns nil if not found.
       def self.find_by_id(id)
-        vals = find("id=#{id}")
-        return nil unless vals
-        return gen_instance(vals)
+        find("id=#{id}")
       end
 
       # It finds and returns a record whose name is +name+.
       # It returns nil if not found.
       def self.find_by_name(name)
-        vals = find(to_find_by_name_cond_str(name))
-        return nil unless vals
-        return gen_instance(vals)
+        find(to_find_by_name_cond_str(name))
       end
 
       # It returns a string used in self.find_by_name.
@@ -510,7 +509,7 @@ SQL
     ##########################################################################
     # Model for Virtual Host that belongs to a specific Virtual Network
     ##########################################################################
-    class VirtualHost < BaseModel
+    class VirtualHost < BaseModel  # TODO rename to VMLease
       @table_name = 'virtual_hosts'
 
       @table_schema = <<SQL
@@ -653,6 +652,106 @@ SQL
           @description = attr[4]
         end
         return type
+      end
+
+    end
+
+    ##########################################################################
+    # Model for Virtual Machine
+    ##########################################################################
+    class VirtualMachine < BaseModel
+      @table_name = 'virtual_machines'
+
+      @table_schema = <<SQL
+CREATE TABLE #{@table_name} (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  oid         INTEGER UNIQUE,
+  user_id     INTEGER,
+  zone_id     INTEGER,
+  lease_id    INTEGER,
+  type_id     INTEGER,
+  image_id    INTEGER
+);
+SQL
+
+      @field_for_find_by_name = 'name'
+
+      attr_accessor :oid        # id of one VM
+      attr_accessor :user_id    # id of the VM user
+      attr_accessor :zone_id    # id of a zone the VM is located
+      attr_accessor :lease_id   # id of virtual machine lease
+      attr_accessor :type_id    # id of the VM type
+      attr_accessor :image_id   # id of OS image the VM use
+
+      def initialize(*args)
+        super
+
+        self.class.setup_attrs(self, args) # TODO move to super class
+      end
+
+      def to_s
+        "VirtualMachine<"          +
+          "id=#{@id},"             +
+          "oid=#{@oid},"           +
+          "user_id=#{@user_id},"   +
+          "zone_id=#{@zone_id},"   +
+          "lease_id=#{@lease_id}," +
+          "type_id=#{@type_id},"   +
+          "image_id=#{@image_id}," +
+          ">"
+      end
+
+      protected
+
+      def check_fields
+        raise_if_nil_and_not_class(@oid,      'oid',      Integer)
+        raise_if_nil_and_not_class(@user_id,  'user_id',  Integer)
+        raise_if_nil_and_not_class(@zone_id,  'zone_id',  Integer)
+        raise_if_nil_and_not_class(@lease_id, 'lease_id', Integer)
+        raise_if_nil_and_not_class(@type_id,  'type_id',  Integer)
+        raise_if_nil_and_not_class(@image_id, 'image_id', Integer)
+      end
+
+      def to_create_record_str
+        "#{@oid},"        +
+          "#{@user_id},"  +
+          "#{@zone_id},"  +
+          "#{@lease_id}," +
+          "#{@type_id},"  +
+          "#{@image_id}"
+      end
+
+      def to_find_id_str
+        "oid=#{@oid}"
+      end
+
+      def to_update_record_str
+        "oid=#{@oid},"             +
+          "user_id=#{@user_id},"   +
+          "zone_id=#{@zone_id},"   +
+          "lease_id=#{@lease_id}," +
+          "type_id=#{@type_id},"   +
+          "image_id=#{@image_id}"
+      end
+
+
+      # TODO also implement in other class
+      def self.setup_attrs(vm, attrs)
+        vm.instance_eval do
+          @id       = attrs[0].to_i
+          @oid      = attrs[1].to_i
+          @user_id  = attrs[2].to_i
+          @zone_id  = attrs[3].to_i
+          @lease_id = attrs[4].to_i
+          @type_id  = attrs[5].to_i
+          @image_id = attrs[6].to_i
+        end
+        return vm
+      end
+
+      # TODO move to BaseModel
+      def self.gen_instance(attrs)
+        return setup_attrs(self.new, attrs)
       end
 
     end
