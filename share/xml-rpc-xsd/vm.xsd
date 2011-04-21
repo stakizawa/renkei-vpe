@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    elementFormDefault="qualified"
+    targetNamespace="http://www.e-sciren.org/sub5/XMLSchema"
+    xmlns="http://www.e-sciren.org/sub5/XMLSchema">
+  <xs:element name="VM">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="ID" type="xs:integer"/>
+        <xs:element name="NAME" type="xs:string"/>
+        <xs:element name="ADDRESS" type="xs:string"/>
+        <xs:element name="USER_ID" type="xs:integer"/>
+        <xs:element name="USER_NAME" type="xs:string"/>
+        <xs:element name="ZONE_ID" type="xs:integer"/>
+        <xs:element name="ZONE_NAME" type="xs:string"/>
+        <xs:element name="TYPE_ID" type="xs:integer"/>
+        <xs:element name="TYPE_NAME" type="xs:string"/>
+        <xs:element name="IMAGE_ID" type="xs:integer"/>
+        <xs:element name="IMAGE_NAME" type="xs:string"/>
+        <xs:element name="LAST_POLL" type="xs:integer"/>
+        <xs:element name="STATE" type="xs:integer"/>
+        <xs:element name="LCM_STATE" type="xs:integer"/>
+        <xs:element name="STIME" type="xs:integer"/>
+        <xs:element name="ETIME" type="xs:integer"/>
+        <xs:element name="MEMORY" type="xs:integer"/>
+        <xs:element name="CPU" type="xs:integer"/>
+        <xs:element name="NET_TX" type="xs:integer"/>
+        <xs:element name="NET_RX" type="xs:integer"/>
+        <xs:element name="LAST_SEQ" type="xs:integer"/>
+        <xs:element name="TEMPLATE" type="xs:anyType"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
