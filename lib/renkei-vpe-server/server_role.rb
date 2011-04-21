@@ -1,6 +1,7 @@
 require 'renkei-vpe-server/model'
 require 'renkei-vpe-server/logger'
 require 'xmlrpc/client'
+require 'thread'
 
 module RenkeiVPE
 
@@ -99,19 +100,22 @@ module RenkeiVPE
     include RenkeiVPE::OpenNebulaClient
 
     def initialize
+      @lock = Mutex.new
       @log = RenkeiVPE::Logger.get_logger
     end
 
     def task(task_name, session, admin_auth=false, &block)
-      begin
-        rc = authenticate(session, admin_auth, &block)
-        log_msg = rc
-      rescue => e
-        rc = [false, e.message]
-        log_msg = [false, e]
+      @lock.synchronize do
+        begin
+          rc = authenticate(session, admin_auth, &block)
+          log_msg = rc
+        rescue => e
+          rc = [false, e.message]
+          log_msg = [false, e]
+        end
+        log_result(task_name, log_msg)
+        return rc
       end
-      log_result(task_name, log_msg)
-      return rc
     end
 
     def authenticate(session, admin_auth=false, &block)
