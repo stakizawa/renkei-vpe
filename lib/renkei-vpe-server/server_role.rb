@@ -102,7 +102,18 @@ module RenkeiVPE
       @log = RenkeiVPE::Logger.get_logger
     end
 
-    # TODO make it a private method
+    def task(task_name, session, admin_auth=false, &block)
+      begin
+        rc = authenticate(session, admin_auth, &block)
+        log_msg = rc
+      rescue => e
+        rc = [false, e.message]
+        log_msg = [false, e]
+      end
+      log_result(task_name, log_msg)
+      return rc
+    end
+
     def authenticate(session, admin_auth=false, &block)
       # 1. get user name
       username = get_user_from_session(session)
@@ -126,18 +137,6 @@ module RenkeiVPE
       one_auth(session, admin_auth, &block)
     end
 
-    def task(task_name, session, admin_auth=false, &block)
-      begin
-        rc = authenticate(session, admin_auth, &block)
-        log_msg = rc
-      rescue => e
-        rc = [false, e.message]
-        log_msg = [false, e]
-      end
-      log_result(task_name, log_msg)
-      return rc
-    end
-
     def admin_session(session, will_raise=true)
       rc = __authenticate(session)
       if rc[0] != 0
@@ -150,11 +149,24 @@ module RenkeiVPE
       yield
     end
 
-    def log_success_exit(method_name)
-      @log.info "'#{method_name}' is successfully executed."
+    # It log rpc call result.
+    # +task_name+  name of called method
+    # +result[0]+  true or false
+    # +result[1]+  a string representing error if result[0] is false,
+    #              otherwise undefined
+    def log_result(task_name, result)
+      if result[0]
+        log_success(task_name)
+      else
+        log_fail(task_name, result[1])
+      end
     end
 
-    def log_fail_exit(method_name, msg)
+    def log_success(task_name)
+      @log.info "'#{task_name}' is successfully executed."
+    end
+
+    def log_fail(task_name, msg)
       newmsg = ''
       case msg
       when ::String
@@ -165,21 +177,9 @@ module RenkeiVPE
       else
         newmsg = msg.inspect
       end
-      @log.error "'#{method_name}' is failed.\n" + newmsg
+      @log.error "'#{task_name}' is failed.\n" + newmsg
     end
 
-    # It log rpc call result.
-    # +method_name+  name of called method
-    # +result[0]+    true or false
-    # +result[1]+    a string representing error if result[0] is false,
-    #                otherwise undefined
-    def log_result(method_name, result)
-      if result[0]
-        log_success_exit(method_name)
-      else
-        log_fail_exit(method_name, result[1])
-      end
-    end
   end
 
 end

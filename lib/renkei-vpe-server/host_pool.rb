@@ -22,10 +22,8 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             if successful this is the information string
     def info(session)
-      authenticate(session) do
-        rc = call_one_xmlrpc('one.hostpool.info', session)
-        log_result('rvpe.hostpool.info', rc)
-        return rc
+      task('rvpe.hostpool.info', session) do
+        call_one_xmlrpc('one.hostpool.info', session)
       end
     end
   end

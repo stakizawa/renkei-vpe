@@ -23,20 +23,16 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             if successful this is the information string
     def info(session)
-      authenticate(session, true) do
+      task('rvpe.userpool.info', session, true) do
         rc = call_one_xmlrpc('one.userpool.info', session)
-        unless rc[0]
-          log_fail_exit('rvpe.userpool.info', rc[1])
-          return rc
-        end
+        raise rc[1] unless rc[0]
 
         doc = REXML::Document.new(rc[1])
         doc.each_element('/USER_POOL/USER') do |e|
           User.modify_onexml(e)
         end
 
-        log_success_exit('rvpe.userpool.info')
-        return [true, doc.to_s]
+        [true, doc.to_s]
       end
     end
   end

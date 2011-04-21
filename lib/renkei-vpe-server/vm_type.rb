@@ -32,22 +32,15 @@ module RenkeiVPE
     #             if successful this is the string with the information
     #             about the user
     def info(session, id)
-      authenticate(session) do
-        method_name = 'rvpe.vmtype.info'
-
+      task('rvpe.vmtype.info', session) do
         type = RenkeiVPE::Model::VMType.find_by_id(id)
-        unless type
-          msg = "VMType[#{id}] is not found"
-          log_fail_exit(method_name, msg)
-          return [false, msg]
-        end
+        raise "VMType[#{id}] is not found." unless type
 
         type_e = VMType.to_xml_element(type)
         doc = REXML::Document.new
         doc.add(type_e)
 
-        log_success_exit(method_name)
-        return [true, doc.to_s]
+        [true, doc.to_s]
       end
     end
 
@@ -59,33 +52,21 @@ module RenkeiVPE
     #             if successful this is the associated id (int uid)
     #             generated for this vm type
     def allocate(session, template)
-      authenticate(session, true) do
-        method_name = 'rvpe.vmtype.allocate'
-
+      task('rvpe.vmtype.allocate', session, true) do
         type_def = ResourceFile::Parser.load_yaml(template)
 
         name = type_def[ResourceFile::VMType::NAME]
         type = RenkeiVPE::Model::VMType.find_by_name(name)
-        if type
-          msg = "VM Type already exists: #{name}"
-          log_fail_exit(method_name, msg)
-          return [false, msg]
-        end
+        raise "VMType[#{name}] already exists." if type
 
-        begin
-          type = RenkeiVPE::Model::VMType.new
-          type.name        = type_def[ResourceFile::VMType::NAME]
-          type.cpu         = type_def[ResourceFile::VMType::CPU].to_i
-          type.memory      = type_def[ResourceFile::VMType::MEMORY].to_i
-          type.description = type_def[ResourceFile::VMType::DESCRIPTION]
-          type.create
-        rescue => e
-          log_fail_exit(method_name, e)
-          return [false, e.message]
-        end
+        type = RenkeiVPE::Model::VMType.new(-1,
+                                            type_def[ResourceFile::VMType::NAME],
+                                            type_def[ResourceFile::VMType::CPU],
+                                            type_def[ResourceFile::VMType::MEMORY],
+                                            type_def[ResourceFile::VMType::DESCRIPTION])
+        type.create
 
-        log_success_exit(method_name)
-        return [true, type.id]
+        [true, type.id]
       end
     end
 
@@ -96,25 +77,12 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             otherwise it does not exist.
     def delete(session, id)
-      authenticate(session, true) do
-        method_name = 'rvpe.vmtype.delete'
-
+      task('rvpe.vmtype.delete', session, true) do
         type = RenkeiVPE::Model::VMType.find_by_id(id)
-        unless type
-          msg = "VMType[#{id}] does not exist."
-          log_fail_exit(method_name, msg)
-          return [false, msg]
-        end
+        raise "VMType[#{id}] does not exist." unless type
 
-        begin
-          type.delete
-        rescue => e
-          log_fail_exit(method_name, e)
-          return [false, e.message]
-        end
-
-        log_success_exit(method_name)
-        return [true, '']
+        type.delete
+        [true, '']
       end
     end
 

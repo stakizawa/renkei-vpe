@@ -23,24 +23,16 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             if successful this is the information string
     def info(session)
-      authenticate(session) do
-        method_name = 'rvpe.zonepool.info'
-
+      task('rvpe.zonepool.info', session) do
         doc = REXML::Document.new
         pool_e = REXML::Element.new('ZONE_POOL')
         doc.add(pool_e)
 
-        begin
-          RenkeiVPE::Model::Zone.each do |z|
-            zone_e = Zone.to_xml_element(z, session)
-            pool_e.add(zone_e)
-          end
-        rescue => e
-          log_fail_exit(method_name, e)
-          return [false, e.message]
+        RenkeiVPE::Model::Zone.each do |z|
+          zone_e = Zone.to_xml_element(z, session)
+          pool_e.add(zone_e)
         end
 
-        log_success_exit(method_name)
         return [true, doc.to_s]
       end
     end

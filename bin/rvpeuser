@@ -228,7 +228,8 @@ when 'enable_zone'
   id = get_user_id(user_name)
   user = RenkeiVPE::User.new_with_id(id, client)
   ARGV.each do |zone_name|
-    rc = user.enable_zone zone_name
+    zone_id = get_zone_id(zone_name)
+    rc = user.enable_zone zone_id
     if is_successful?(rc)
       puts "User[#{user_name}] enabled to use Zone[#{zone_name}]"
     else
@@ -246,7 +247,8 @@ when 'disable_zone'
   id = get_user_id(user_name)
   user = RenkeiVPE::User.new_with_id(id, client)
   ARGV.each do |zone_name|
-    rc = user.disable_zone zone_name
+    zone_id = get_zone_id(zone_name)
+    rc = user.disable_zone zone_id
     if is_successful?(rc)
       puts "User[#{user_name}] disabled to use Zone[#{zone_name}]"
     else

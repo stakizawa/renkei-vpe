@@ -23,22 +23,15 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             if successful this is the information string
     def info(session)
-      authenticate(session) do
-        begin
-          pool_e = REXML::Element.new('VMTYPE_POOL')
-          RenkeiVPE::Model::VMType.each do |type|
-            type_e = VMType.to_xml_element(type)
-            pool_e.add(type_e)
-          end
-          doc = REXML::Document.new
-          doc.add(pool_e)
-          rc = [true, doc.to_s]
-        rescue => e
-          rc = [false, e.message]
+      task('rvpe.vmtypepool.info', session) do
+        pool_e = REXML::Element.new('VMTYPE_POOL')
+        RenkeiVPE::Model::VMType.each do |type|
+          type_e = VMType.to_xml_element(type)
+          pool_e.add(type_e)
         end
-
-        log_result('rvpe.vmtypepool.info', rc)
-        return rc
+        doc = REXML::Document.new
+        doc.add(pool_e)
+        [true, doc.to_s]
       end
     end
   end

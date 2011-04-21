@@ -22,7 +22,7 @@ module RenkeiVPE
       meth('val passwd(string, int, string)',
            'Changes password for the given user',
            'passwd')
-      meth('val enable_zone(string, int, bool, string)',
+      meth('val enable_zone(string, int, bool, int)',
            'Enables or disables a user to use a zone',
            'enable_zone')
     end
@@ -40,28 +40,18 @@ module RenkeiVPE
     #             if successful this is the string with the information
     #             about the user
     def info(session, id)
-      authenticate(session, true) do
-        method_name = 'rvpe.user.info'
-
+      task('rvpe.user.info', session, true) do
         user = RenkeiVPE::Model::User.find_by_id(id)
-        unless user
-          msg = "User[#{id}] is not found"
-          log_fail_exit(method_name, msg)
-          return [false, msg]
-        end
+        raise "User[#{id}] is not found" unless user
         rc = call_one_xmlrpc('one.user.info', session, user.oid)
-        unless rc[0]
-          log_fail_exit(method_name, rc[1])
-          return rc
-        end
+        raise rc[1] unless rc[0]
 
         doc = REXML::Document.new(rc[1])
         doc.each_element('/USER') do |e|
           User.modify_onexml(e, id)
         end
 
-        log_success_exit(method_name)
-        return [true, doc.to_s]
+        [true, doc.to_s]
       end
     end
 
@@ -74,36 +64,22 @@ module RenkeiVPE
     #             if successful this is the associated id (int uid)
     #             generated for this user
     def allocate(session, name, passwd)
-      authenticate(session, true) do
-        method_name = 'rvpe.user.allocate'
-
+      task('rvpe.user.allocate', session, true) do
         user = RenkeiVPE::Model::User.find_by_name(name)
-        if user
-          msg = "User already exists: #{name}"
-          log_fail_exit(method_name, msg)
-          return [false, msg]
-        end
+        raise "User[#{name}] already exists." if user
 
         rc = call_one_xmlrpc('one.user.allocate', session, name, passwd)
-        unless rc[0]
-          log_fail_exit(method_name, rc[1])
-          return rc
-        end
+        raise rc[1] unless rc[0]
 
         begin
-          user = RenkeiVPE::Model::User.new
-          user.oid = rc[1]
-          user.name = name
-          user.enabled = 1
-          user.zone = ''
+          user = RenkeiVPE::Model::User.new(-1, rc[1], name, 1, '')
           user.create
         rescue => e
-          log_fail_exit(method_name, e)
-          return [false, e.message]
+          call_one_xmlrpc('one.user.delete', session, rc[1])
+          raise e
         end
 
-        log_success_exit(method_name)
-        return [true, user.id]
+        [true, user.id]
       end
     end
 
@@ -114,31 +90,15 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             otherwise it does not exist.
     def delete(session, id)
-      authenticate(session, true) do
-        method_name = 'rvpe.user.delete'
-
+      task('rvpe.user.delete', session, true) do
         user = RenkeiVPE::Model::User.find_by_id(id)
-        unless user
-          msg = "User[#{id}] does not exist."
-          log_fail_exit(method_name, msg)
-          return [false, msg]
-        end
+        raise "User[#{id}] does not exist." unless user
 
         rc = call_one_xmlrpc('one.user.delete', session, user.oid)
-        unless rc[0]
-          log_fail_exit(method_name, rc[1])
-          return rc
-        end
+        raise rc[1] unless rc[0]
+        user.delete
 
-        begin
-          user.delete
-        rescue => e
-          log_fail_exit(method_name, e)
-          return [false, e.message]
-        end
-
-        log_success_exit(method_name)
-        return [true, '']
+        [true, '']
       end
     end
 
@@ -150,30 +110,18 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             otherwise it is the user id.
     def enable(session, id, enabled)
-      authenticate(session, true) do
-        method_name = 'rvpe.user.enable'
-
+      task('rvpe.user.enable', session, true) do
         user = RenkeiVPE::Model::User.find_by_id(id)
-        unless user
-          msg = "User[#{id}] does not exist."
-          log_fail_exit(method_name, msg)
-          return [false, msg]
-        end
+        raise "User[#{id}] does not exist." unless user
 
-        begin
-          if enabled
-            user.enabled = 1
-          else
-            user.enabled = 0
-          end
-          user.update
-        rescue => e
-          log_fail_exit(method_name, e)
-          return [false, e.message]
+        if enabled
+          user.enabled = 1
+        else
+          user.enabled = 0
         end
+        user.update
 
-        log_success_exit(method_name)
-        return [true, user.id]
+        [true, user.id]
       end
     end
 
@@ -185,19 +133,11 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             otherwise it does not exist.
     def passwd(session, id, passwd)
-      authenticate(session, true) do
-        method_name = 'rvpe.user.passwd'
-
+      task('rvpe.user.passwd', session, true) do
         user = RenkeiVPE::Model::User.find_by_id(id)
-        unless user
-          msg = "User[#{id}] does not exist."
-          log_fail_exit(method_name, msg)
-          return [false, msg]
-        end
+        raise "User[#{id}] does not exist." unless user
 
-        rc = call_one_xmlrpc('one.user.passwd', session, user.oid, passwd)
-        log_result(method_name, rc)
-        return rc
+        call_one_xmlrpc('one.user.passwd', session, user.oid, passwd)
       end
     end
 
@@ -205,34 +145,16 @@ module RenkeiVPE
     # +session+   string that represents user session
     # +id+        id for the user
     # +enabled+   enable to use zone if true, otherwise disable to use
-    # +zone_name+ name of zone
+    # +zone_id+   id of zone
     # +return[0]+ true or false whenever is successful or not
     # +return[1]+ if an error occurs this is error message,
     #             otherwise it does not exist.
-    def enable_zone(session, id, enabled, zone_name)
-      authenticate(session, true) do
-        method_name = 'rvpe.user.enable_zone'
-
+    def enable_zone(session, id, enabled, zone_id)
+      task('rvpe.user.enable_zone', session, true) do
         user = RenkeiVPE::Model::User.find_by_id(id)
-        unless user
-          msg = "User[#{id}] does not exist."
-          log_fail_exit(method_name, msg)
-          return [false, msg]
-        end
+        raise "User[#{id}] does not exist." unless user
 
-        if zone_name.match(/^[0123456789]+$/)
-          zone_id = zone_name
-        else
-          zone = RenkeiVPE::Model::Zone.find_by_name(zone_name)
-          unless zone
-            msg = "Zone[#{zone_name}] does not exist."
-            log_fail_exit(method_name, msg)
-            return [false, msg]
-          end
-          zone_id = zone.id
-        end
-
-        zids = user.zones.strip.split('/\s+/').map { |i| i.to_i }
+        zids = user.zones.strip.split(/\s+/).map { |i| i.to_i }
         if enabled
           unless zids.include? zone_id
             zids << zone_id
@@ -243,16 +165,9 @@ module RenkeiVPE
           end
         end
         user.zones = zids.join(' ')
+        user.update
 
-        begin
-          user.update
-        rescue => e
-          log_fail_exit(method_name, e.message)
-          return [false, e.message]
-        end
-
-        log_result(method_name, '') # TODO this always logs fail
-        return [true, '']
+        [true, '']
       end
     end
 

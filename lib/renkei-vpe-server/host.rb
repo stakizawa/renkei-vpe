@@ -27,10 +27,8 @@ module RenkeiVPE
     #             if successful this is the string with the information
     #             about the host
     def info(session, id)
-      authenticate(session) do
-        rc = call_one_xmlrpc('one.host.info', session, id)
-        log_result('rvpe.host.info', rc)
-        return rc
+      task('rvpe.host.info', session) do
+        call_one_xmlrpc('one.host.info', session, id)
       end
     end
 
@@ -42,10 +40,8 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             otherwise it does not exist.
     def enable(session, id, enabled)
-      authenticate(session, true) do
-        rc = call_one_xmlrpc('one.host.enable', session, id, enabled)
-        log_result('rvpe.host.enable', rc)
-        return rc
+      task('rvpe.host.enable', session, true) do
+        call_one_xmlrpc('one.host.enable', session, id, enabled)
       end
     end
 

@@ -37,27 +37,15 @@ module RenkeiVPE
     #             if successful this is the string with the information
     #             about the virtual network
     def info(session, id)
-      authenticate(session) do
-        method_name = 'rvpe.vn.info'
-
+      task('rvpe.vn.info', session) do
         vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(id)
-        unless vnet
-          msg = "VirtualNetwork[#{id}] is not found."
-          log_fail_exit(method_name, msg)
-          return [false, msg]
-        end
+        raise "VirtualNetwork[#{id}] is not found." unless vnet
 
-        begin
-          vnet_e = VirtualNetwork.to_xml_element(vnet, session)
-          doc = REXML::Document.new
-          doc.add(vnet_e)
-        rescue => e
-          log_fail_exit(method_name, e)
-          return [false, e.message]
-        end
+        vnet_e = VirtualNetwork.to_xml_element(vnet, session)
+        doc = REXML::Document.new
+        doc.add(vnet_e)
 
-        log_success_exit(method_name)
-        return [true, doc.to_s]
+        [true, doc.to_s]
       end
     end
 
@@ -70,20 +58,11 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             otherwise it does not exist.
     def add_dns(session, id, dnses)
-      authenticate(session, true) do
-        method_name = 'rvpe.vn.add_dns'
-
+      task('rvpe.vn.add_dns', session, true) do
         vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(id)
-        unless vnet
-          msg = "VirtualNetwork[#{id}] is not found."
-          log_fail_exit(method_name, msg)
-          return [false, msg]
-        end
+        raise "VirtualNetwork[#{id}] is not found." unless vnet
 
-        rc = add_servers_to_vnet(vnet, :dns, dnses)
-        rc[1] = '' if rc[0]
-        log_result(method_name, rc)
-        return rc
+        add_servers_to_vnet(vnet, :dns, dnses)
       end
     end
 
@@ -95,20 +74,11 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             otherwise it does not exist.
     def remove_dns(session, id, dnses)
-      authenticate(session, true) do
-        method_name = 'rvpe.vn.remove_dns'
-
+      task('rvpe.vn.remove_dns', session, true) do
         vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(id)
-        unless vnet
-          msg = "VirtualNetwork[#{id}] is not found."
-          log_fail_exit(method_name, msg)
-          return [false, msg]
-        end
+        raise "VirtualNetwork[#{id}] is not found." unless vnet
 
-        rc = remove_servers_from_vnet(vnet, :dns, dnses)
-        rc[1] = '' if rc[0]
-        log_result(method_name, rc)
-        return rc
+        remove_servers_from_vnet(vnet, :dns, dnses)
       end
     end
 
@@ -120,20 +90,11 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             otherwise it does not exist.
     def add_ntp(session, id, ntps)
-      authenticate(session, true) do
-        method_name = 'rvpe.vn.add_ntp'
-
+      task('rvpe.vn.add_ntp', session, true) do
         vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(id)
-        unless vnet
-          msg = "VirtualNetwork[#{id}] is not found."
-          log_fail_exit(method_name, msg)
-          return [false, msg]
-        end
+        raise "VirtualNetwork[#{id}] is not found." unless vnet
 
-        rc = add_servers_to_vnet(vnet, :ntp, ntps)
-        rc[1] = '' if rc[0]
-        log_result(method_name, rc)
-        return rc
+        add_servers_to_vnet(vnet, :ntp, ntps)
       end
     end
 
@@ -145,20 +106,11 @@ module RenkeiVPE
     # +return[1]+ if an error occurs this is error message,
     #             otherwise it does not exist.
     def remove_ntp(session, id, ntps)
-      authenticate(session, true) do
-        method_name = 'rvpe.vn.remove_ntp'
-
+      task('rvpe.vn.remove_ntp', session, true) do
         vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(id)
-        unless vnet
-          msg = "VirtualNetwork[#{id}] is not found."
-          log_fail_exit(method_name, msg)
-          return [false, msg]
-        end
+        raise "VirtualNetwork[#{id}] is not found." unless vnet
 
-        rc = remove_servers_from_vnet(vnet, :ntp, ntps)
-        rc[1] = '' if rc[0]
-        log_result(method_name, rc)
-        return rc
+        remove_servers_from_vnet(vnet, :ntp, ntps)
       end
     end
 
@@ -192,7 +144,7 @@ module RenkeiVPE
       rescue => e
         # assume that update of table is failed.
         vnet.send("#{type}=".to_sym, cur_servers)
-        return [false, e.message]
+        raise e
       end
 
       return [true, '']
@@ -225,7 +177,7 @@ module RenkeiVPE
       rescue => e
         # assume that update of table is failed.
         vnet.send("#{type}=".to_sym, cur_servers)
-        return [false, e.message]
+        raise e
       end
 
       return [true, '']

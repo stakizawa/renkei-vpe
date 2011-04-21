@@ -87,6 +87,7 @@ module RenkeiVPE
 
       def initialize(*args)
         @log = RenkeiVPE::Logger.get_logger
+        self.class.setup_attrs(self, args)
       end
 
       # creates a record that represents this instance on the table.
@@ -219,7 +220,14 @@ module RenkeiVPE
       # It generates instance of this class using attr.
       # +attr+   array of values for instance fields
       # +return+ instance of this class
-      def self.gen_instance(attr)
+      def self.gen_instance(attrs)
+        return setup_attrs(self.new, attrs)
+      end
+
+      # It sets fields(attrs) to an object(obj).
+      # +obj+   an object where fields are set
+      # +attrs+ array of field value
+      def self.setup_attrs(obj, attrs)
         raise NotImplementedException
       end
     end
@@ -285,14 +293,13 @@ SQL
       end
 
 
-      def self.gen_instance(attr)
-        u = User.new
+      def self.setup_attrs(u, attrs)
         u.instance_eval do
-          @id      = attr[0].to_i
-          @oid     = attr[1].to_i
-          @name    = attr[2]
-          @enabled = attr[3].to_i
-          @zones   = attr[4]
+          @id      = attrs[0].to_i
+          @oid     = attrs[1].to_i
+          @name    = attrs[2]
+          @enabled = attrs[3].to_i
+          @zones   = attrs[4]
         end
         return u
       end
@@ -366,15 +373,14 @@ SQL
       end
 
 
-      def self.gen_instance(attr)
-        z = Zone.new
+      def self.setup_attrs(z, attrs)
         z.instance_eval do
-          @id          = attr[0].to_i
-          @oid         = attr[1].to_i
-          @name        = attr[2]
-          @description = attr[3]
-          @hosts       = attr[4]
-          @networks    = attr[5]
+          @id          = attrs[0].to_i
+          @oid         = attrs[1].to_i
+          @name        = attrs[2]
+          @description = attrs[3]
+          @hosts       = attrs[4]
+          @networks    = attrs[5]
         end
         return z
       end
@@ -485,21 +491,20 @@ SQL
       end
 
 
-      def self.gen_instance(attr)
-        vn = VirtualNetwork.new
+      def self.setup_attrs(vn, attrs)
         vn.instance_eval do
-          @id          = attr[0].to_i
-          @oid         = attr[1].to_i
-          @name        = attr[2]
-          @description = attr[3]
-          @zone_name   = attr[4]
-          @unique_name = attr[5]
-          @address     = attr[6]
-          @netmask     = attr[7]
-          @gateway     = attr[8]
-          @dns         = attr[9]
-          @ntp         = attr[10]
-          @vhosts      = attr[11]
+          @id          = attrs[0].to_i
+          @oid         = attrs[1].to_i
+          @name        = attrs[2]
+          @description = attrs[3]
+          @zone_name   = attrs[4]
+          @unique_name = attrs[5]
+          @address     = attrs[6]
+          @netmask     = attrs[7]
+          @gateway     = attrs[8]
+          @dns         = attrs[9]
+          @ntp         = attrs[10]
+          @vhosts      = attrs[11]
         end
         return vn
       end
@@ -567,14 +572,13 @@ SQL
       end
 
 
-      def self.gen_instance(attr)
-        vh = VirtualHost.new
+      def self.setup_attrs(vh, attrs)
         vh.instance_eval do
-          @id        = attr[0].to_i
-          @name      = attr[1]
-          @address   = attr[2]
-          @allocated = attr[3].to_i
-          @vnetid    = attr[4].to_i
+          @id        = attrs[0].to_i
+          @name      = attrs[1]
+          @address   = attrs[2]
+          @allocated = attrs[3].to_i
+          @vnetid    = attrs[4].to_i
         end
         return vh
       end
@@ -642,14 +646,13 @@ SQL
       end
 
 
-      def self.gen_instance(attr)
-        type = VMType.new
+      def self.setup_attrs(type, attrs)
         type.instance_eval do
-          @id          = attr[0].to_i
-          @name        = attr[1]
-          @cpu         = attr[2].to_i
-          @memory      = attr[3].to_i
-          @description = attr[4]
+          @id          = attrs[0].to_i
+          @name        = attrs[1]
+          @cpu         = attrs[2].to_i
+          @memory      = attrs[3].to_i
+          @description = attrs[4]
         end
         return type
       end
@@ -682,12 +685,6 @@ SQL
       attr_accessor :lease_id   # id of virtual machine lease
       attr_accessor :type_id    # id of the VM type
       attr_accessor :image_id   # id of OS image the VM use
-
-      def initialize(*args)
-        super
-
-        self.class.setup_attrs(self, args) # TODO move to super class
-      end
 
       def to_s
         "VirtualMachine<"          +
@@ -735,7 +732,6 @@ SQL
       end
 
 
-      # TODO also implement in other class
       def self.setup_attrs(vm, attrs)
         vm.instance_eval do
           @id       = attrs[0].to_i
@@ -747,11 +743,6 @@ SQL
           @image_id = attrs[6].to_i
         end
         return vm
-      end
-
-      # TODO move to BaseModel
-      def self.gen_instance(attrs)
-        return setup_attrs(self.new, attrs)
       end
 
     end
