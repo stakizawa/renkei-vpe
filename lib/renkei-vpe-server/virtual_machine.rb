@@ -17,7 +17,7 @@ module RenkeiVPE
       meth('val action(string, int, string)',
            'performe a specified action to the virtual machine',
            'action')
-      meth('val mark_save(string, int)',
+      meth('val mark_save(string, int, string)',
            'mark the VM to save its OS image on shutdown',
            'mark_save')
     end
@@ -203,23 +203,48 @@ EOS
     end
 
     # mark this virtual machine to save its OS image on shutdown.
-    # +session+   string that represents user session
-    # +id+        id of the virtual machine
-    # +return[0]+ true or false whenever is successful or not
-    # +return[1]+ if an error occurs this is error message,
-    #             otherwise it does not exist.
-    def mark_save(session, id)
+    # +session+    string that represents user session
+    # +id+         id of the virtual machine
+    # +image_name+ name of image to be saved
+    # +return[0]+  true or false whenever is successful or not
+    # +return[1]+  if an error occurs this is error message,
+    #              otherwise it does not exist.
+    def mark_save(session, id, image_name)
       task('rvpe.vm.mark_save', session) do
         vm = RenkeiVPE::Model::VirtualMachine.find_by_id(id)
         raise "VirtualMachine[#{id}] is not found." unless vm
 
-        # TODO
-        # call_one_xmlrpc('one.vm.savedisk', session, vm.oid)
+        # It always saves Disk whose ID is 0 (OS image).
+        disk_id = 0
+        image_type = 'DISK'
+        template =<<EOS
+NAME="#{image_name}"
+TYPE="OS"
+EOS
 
-        # rc = add_servers_to_vnet(vnet, :ntp, ntps)
-        # rc[1] = '' if rc[0]
-        # log_result(method_name, rc)
-        # return rc
+        # check if the VM is already marked
+        rc = call_one_xmlrpc('one.vm.info', session, vm.oid)
+        raise rc[1] unless rc[0]
+        doc = REXML::Document.new(rc[1])
+        save = doc.elements["/VM/TEMPLATE/DISK[DISK_ID=\"#{disk_id}\"]/SAVE_AS"]
+        if save
+          raise "VM[#{vm.id}] is already marked to save its OS image as Image[#{save.text}]"
+        end
+
+        # allocate ONE image
+        rc = call_one_xmlrpc('one.image.allocate', session, template)
+        raise rc[1] unless rc[0]
+        image_id = rc[1]
+
+        begin
+          rc = call_one_xmlrpc('one.vm.savedisk', session,
+                               vm.oid, disk_id, image_id)
+        rescue => e
+          call_one_xmlrpc('one.image.delete', session, image_id)
+          raise e
+        end
+
+        [true, '']
       end
     end
 
@@ -237,9 +262,13 @@ EOS
       rc = RenkeiVPE::OpenNebulaClient.call_one_xmlrpc('one.image.info',
                                                        one_session,
                                                        vm.image_id)
-      raise rc[1] unless rc[0]
-      oneimg_doc = REXML::Document.new(rc[1])
-      # from Renkei VPE DB
+      if rc[0]
+        oneimg_doc = REXML::Document.new(rc[1])
+        image_name = oneimg_doc.elements['/IMAGE/NAME'].get_text
+      else
+        image_name = 'Missing, manually deleted.'
+      end
+      # from Renkei VPE DB # TODO user zone lease and type can also be nil
       user = RenkeiVPE::Model::User.find_by_id(vm.user_id)
       zone = RenkeiVPE::Model::Zone.find_by_id(vm.zone_id)
       lease = RenkeiVPE::Model::VirtualHost.find_by_id(vm.lease_id)
@@ -300,7 +329,6 @@ EOS
 
       # set image name
       e = REXML::Element.new('IMAGE_NAME')
-      image_name = oneimg_doc.elements['/IMAGE/NAME'].get_text
       e.add(REXML::Text.new(image_name))
       vm_e.add(e)
 

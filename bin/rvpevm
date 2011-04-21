@@ -29,6 +29,7 @@ CMD_NAME = 'rvpevm'
 client = RenkeiVPE::Client.new()
 xml_output = false
 verbose    = false
+super_verbose = false
 list_columns = {
   :id      => { :name => 'ID',
                 :size => 4,
@@ -155,6 +156,10 @@ EOT
     verbose = true
   end
 
+  parser.on('-V', ': super verbose output mode') do
+    super_verbose = true
+  end
+
   parser.parse!(ARGV)
 rescue OptionParser::ParseError
   $stderr.puts parser.help
@@ -164,6 +169,8 @@ rescue => e
   $stderr.puts parser.help
   exit 1
 end
+
+verbose ||= super_verbose
 
 command = ARGV.shift
 case command
@@ -186,7 +193,7 @@ when 'create'
                                      client)
   rc = vm.create(vmtype_id, zone_id, image_id, root_pubkey)
   if is_successful?(rc)
-    puts "VM: " + vm.name
+    puts "Request done: create VM[#{vm.name}]"
   else
     $stderr.puts rc.message
     exit 1
@@ -195,7 +202,6 @@ when 'create'
 #######################################
 # shutdown a VM
 when 'shutdown'
-  # TODO implement a function that use action
   check_parameters('shutdown', 1)
 
   vm_name = ARGV[0]
@@ -204,7 +210,7 @@ when 'shutdown'
   rc = vm.shutdown
 
   if is_successful?(rc)
-    puts "VM shutdowned: #{vm_name}"
+    puts "Request done: shutdown VM[#{vm_name}]"
   else
     $stderr.puts rc.message
     exit 1
@@ -221,7 +227,7 @@ when 'delete'
   rc = vm.delete
 
   if is_successful?(rc)
-    puts "VM deleted: #{vm_name}"
+    puts "Request done: delete VM[#{vm_name}]"
   else
     $stderr.puts rc.message
     exit 1
@@ -238,7 +244,7 @@ when 'suspend'
   rc = vm.suspend
 
   if is_successful?(rc)
-    puts "VM suspended: #{vm_name}"
+    puts "Request done: suspend VM[#{vm_name}]"
   else
     $stderr.puts rc.message
     exit 1
@@ -255,7 +261,7 @@ when 'resume'
   rc = vm.resume
 
   if is_successful?(rc)
-    puts "VM resumeed: #{vm_name}"
+    puts "Request done: resume VM[#{vm_name}]"
   else
     $stderr.puts rc.message
     exit 1
@@ -264,15 +270,16 @@ when 'resume'
 ##############################################
 # mark a VM to save its OS image on shutdown
 when 'mark_save'
-  check_parameters('mark_save', 1)
+  check_parameters('mark_save', 2)
 
   vm_name = ARGV[0]
+  img_name = ARGV[1]
   id = get_vm_id(vm_name)
   vm = RenkeiVPE::VirtualMachine.new_with_id(id, client)
-  rc = vm.mark_save
+  rc = vm.mark_save(img_name)
 
   if is_successful?(rc)
-    puts "VM marked to save its image: #{vm_name}"
+    puts "VM is marked to save its image on shutdown: #{vm_name}"
   else
     $stderr.puts rc.message
     exit 1
@@ -356,53 +363,71 @@ when 'show'
       if xml_output
         puts vm.to_xml
       else
-        # TODO
-  #       str="%-15s: %-30s"
+        str='%-15s: %-30s'
 
-  #       # print header
-  #       print_header("%-80s", "IMAGE INFORMATION", true)
+        # print header
+        print_header('%-80s', 'VM INFORMATION', true)
 
+        # print VM information
+        # print ID
+        puts str % ['ID', vm.id.to_s]  if verbose
+        # print Name
+        puts str % ['NAME', vm.name]
+        # print IP Address
+        puts str % ['IP ADDRESS', vm['ADDRESS']]
+        # print State
+        puts str % ['STATE', vm.state_str]
+        # print Zone ID
+        puts str % ['ZONE ID', vm['ZONE_ID']] if verbose
+        # print Zone Name
+        puts str % ['ZONE', vm['ZONE_NAME']]
+        # print Type ID
+        puts str % ['VM TYPE ID', vm['TYPE_ID']] if verbose
+        # print Type Name
+        puts str % ['VM TYPE', vm['TYPE_NAME']]
+        # print Image ID
+        puts str % ['IMAGE ID', vm['IMAGE_ID']] if verbose
+        # print Image Name
+        puts str % ['IMAGE', vm['IMAGE_NAME']]
+        puts
 
+        # print VM user information
+        print_header('%-80s', 'USER INFORMATION', false)
+        # print User ID
+        puts str % ['USER ID', vm['USER_ID']] if verbose
+        # print User Name
+        puts str % ['USER NAME', vm['USER_NAME']]
+        # print Start Time
+        value = vm['STIME'].to_i
+        if value == 0
+          value = '-'
+        else
+          value = Time.at(value).strftime("%m/%d %H:%M:%S")
+        end
+        puts str % ["START TIME", value]
+        # print END Time
+        value = vm['ETIME'].to_i
+        if value == 0
+          value = '-'
+        else
+          value = Time.at(value).strftime("%m/%d %H:%M:%S")
+        end
+        puts str % ["END TIME", value]
+        puts
 
+        # print VM monitoring information
+        print_header('%-80s', 'MONITORING INFORMATION', false)
+        puts str % ['USED CPU', vm['CPU']]
+        puts str % ['USED MEMORY', vm['MEMORY']]
+        puts str % ['NET_TX', vm['NET_TX']]
+        puts str % ['NET_RX', vm['NET_RX']]
+        puts
 
-
-
-
-
-  # :regtime => { :name => 'REGTIME',
-  #               :size => 20,
-  #               :proc => lambda {|d,e| str_register_time(d)} },
-
-
-
-
-  #       # print ID
-  #       puts str % ["ID", image.id.to_s]  if verbose
-  #       # print Name
-  #       puts str % ["NAME", image.name]
-  #       # print Register time
-  #       value = image['REGTIME'].to_i
-  #       if value == 0
-  #         value = '-'
-  #       else
-  #         value = Time.at(value).strftime("%m/%d %H:%M:%S")
-  #       end
-  #       puts str % ["REGISTER TIME", value]
-  #       # print Public flag
-  #       if image['PUBLIC'].to_i == 1
-  #         public_str = "Yes"
-  #       else
-  #         public_str = "No"
-  #       end
-  #       puts str % ["PUBLIC", public_str]
-  #       # print State
-  #       puts str % ["STATE", image.state_str]
-  #       # print Description
-  #       image.template_str.each_line do |line|
-  #         if /^(DESCRIPTION)\s*=\s*(.+)/ =~ line
-  #           puts str % [$1, $2]
-  #         end
-  #       end
+        if super_verbose
+          # print VM template
+          print_header('%-80s', 'VIRTUAL MACHINE TEMPLATE', false)
+          puts vm.template_str
+        end
       end
     else
       $stderr.puts rc.message
