@@ -279,7 +279,7 @@ when 'mark_save'
   rc = vm.mark_save(img_name)
 
   if is_successful?(rc)
-    puts "VM is marked to save its image on shutdown: #{vm_name}"
+    puts "VM[#{vm_name}] is marked to save its image on shutdown."
   else
     $stderr.puts rc.message
     exit 1

@@ -3,9 +3,25 @@
 require 'fileutils'
 
 ###########################################
+# check parameters
+###########################################
+if ARGV.size != 2
+  $stderr.puts 'Two parameters are required.'
+  $stderr.puts "#{File.basename(__FILE__)} context_file lock_dir"
+  exit 1
+end
+context   = ARGV.shift # '/mnt/context.sh'
+unless FileTest.exist?(context)
+  $stderr.puts "File does not exist: #{context}"
+  exit 1
+end
+$lock_dir = ARGV.shift # '/var/lib/rvpe_init'
+FileUtils.mkdir_p($lock_dir) unless FileTest.exist?($lock_dir)
+
+
+###########################################
 # read the context file
 ###########################################
-context = '/mnt/context.sh'
 cnt_hash = Hash.new
 if FileTest.exist?(context)
   File.open(context) do |f|
@@ -21,8 +37,6 @@ end
 ###########################################
 # lock files
 ###########################################
-$lock_dir = '/var/lib/rpop_init'
-FileUtils.mkdir_p($lock_dir) unless FileTest.exist?($lock_dir)
 def lock(name)
   lock_file = $lock_dir + '/' + name
   unless FileTest.exist?(lock_file)
@@ -208,3 +222,9 @@ if FileTest.exist?("/mnt/#{cnt_hash['ROOT_PUBKEY']}")
   end
 end
 
+
+### Local variables:
+### mode: Ruby
+### coding: utf-8-unix
+### indent-tabs-mode: nil
+### End:

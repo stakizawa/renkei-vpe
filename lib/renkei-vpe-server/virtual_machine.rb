@@ -138,7 +138,8 @@ CONTEXT = [
   NTPSERVERS     = "#{vnet.ntp.strip}",
   ROOT_PUBKEY    = "root.pub",
   FILES          = "#{init_file} #{ssh_key}",
-  TARGET         = "hdc"
+  TARGET         = "hdc",
+  CREATE_DATE    = "#{Time.new.to_i}"
 ]
 
 REQUIREMENTS = "CLUSTER = \\"#{one_cluster}\\""
