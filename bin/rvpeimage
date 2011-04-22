@@ -19,7 +19,6 @@ $: << RUBY_LIB_LOCATION
 ##############################################################################
 require 'renkei-vpe'
 require 'client_utilities'
-require 'fileutils'
 require 'optparse'
 
 ##############################################################################
@@ -154,7 +153,7 @@ when 'import'
   image = RenkeiVPE::Image.new(RenkeiVPE::Image.build_xml, client)
   rc = image.register(template)
   if is_successful?(rc)
-    puts "NAME: " + image.name
+    puts "Image[#{image.name}] is created."
   else
     $stderr.puts rc.message
     exit 1
@@ -167,22 +166,20 @@ when 'export'
   img_name = ARGV[0]
   out_name = ARGV[1]
 
+  if FileTest.exist?(out_name)
+    if FileTest.directory?(out_name)
+      out_name += '/' + img_name.gsub(/\s+/, '_')
+    else
+      $stderr.puts "File[#{out_name}] exists."
+      exit 1
+    end
+  end
+
   id = get_image_id(img_name)
   image = RenkeiVPE::Image.new_with_id(id, client)
-  rc = image.info
-
+  rc = image.export(out_name)
   if is_successful?(rc)
-    # decide output file name
-    if FileTest.exist?(out_name)
-      if FileTest.directory?(out_name)
-        out_name += '/' + image['NAME'].gsub(/\s+/, '_')
-      else
-        $stderr.puts "File exists: #{out_name}"
-        exit 1
-      end
-    end
-
-    FileUtils.cp(image['SOURCE'], out_name)
+    puts "Image[#{img_name}] is exported to File[#{out_name}]."
   else
     $stderr.puts rc.message
     exit 1
@@ -198,7 +195,7 @@ when 'delete'
     image = RenkeiVPE::Image.new_with_id(id, client)
     rc = image.unregister
     if is_successful?(rc)
-      puts "Image deleted: #{image.name}"
+      puts "Image[#{image.name}] is deleted."
     else
       $stderr.puts rc.message
       exit 1
@@ -215,7 +212,7 @@ when 'publish'
     image = RenkeiVPE::Image.new_with_id(id, client)
     rc = image.publish
     if is_successful?(rc)
-      puts "Image published"
+      puts "Image[#{img_name}] is published."
     else
       $stderr.puts rc.message
       exit 1
@@ -232,7 +229,7 @@ when 'unpublish'
     image = RenkeiVPE::Image.new_with_id(id, client)
     rc = image.unpublish
     if is_successful?(rc)
-      puts "Image unpublished"
+      puts "Image[#{img_name}] is unpublished."
     else
       $stderr.puts rc.message
       exit 1

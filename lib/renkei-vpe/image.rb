@@ -83,7 +83,7 @@ module RenkeiVPE
         end
 
         #######################################################################
-        # Helpers to create/delete Image
+        # Helpers to create/delete/export Image
         #######################################################################
 
         # Register a new image
@@ -146,6 +146,15 @@ module RenkeiVPE
                 end
             end
 
+            return result
+        end
+
+        def export(filename)
+            # TODO it might be better to download the file from remove server
+            result = self.info
+            if RenkeiVPE.is_successful?(result)
+                FileUtils.cp(self['SOURCE'], filename)
+            end
             return result
         end
 

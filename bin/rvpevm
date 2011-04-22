@@ -89,6 +89,12 @@ Commands:
 
         $ #{CMD_NAME} delete vm00-nii
 
+    restart vm_name
+        restart the specified VM. This command should be used only when
+        the status of VM is 'unknown'.
+
+        $ #{CMD_NAME} restart vm00-nii
+
 
     suspend vm_name
         suspend the specified VM. A suspended VM can be resumed.
@@ -134,7 +140,7 @@ Commands:
         'user_name' can be name or id of a user.
 
 
-    show <-x> <-v> vm_names
+    show <-x> <-v> <-V> vm_names
         show information about specified VMs. vm_names can be names or
         ids of VMs.
 
@@ -228,6 +234,23 @@ when 'delete'
 
   if is_successful?(rc)
     puts "Request done: delete VM[#{vm_name}]"
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+
+#######################################
+# restart a VM
+when 'restart'
+  check_parameters('restart', 1)
+
+  vm_name = ARGV[0]
+  id = get_vm_id(vm_name)
+  vm = RenkeiVPE::VirtualMachine.new_with_id(id, client)
+  rc = vm.restart
+
+  if is_successful?(rc)
+    puts "Request done: restart VM[#{vm_name}]"
   else
     $stderr.puts rc.message
     exit 1

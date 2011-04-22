@@ -107,6 +107,10 @@ module RenkeiVPE
       action('finalize')
     end
 
+    def restart
+      action('restart')
+    end
+
     def suspend
       action('suspend')
     end
