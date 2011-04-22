@@ -57,7 +57,7 @@ module RenkeiVPE
       Model::User.create_table_if_necessary
       Model::Zone.create_table_if_necessary
       Model::VirtualNetwork.create_table_if_necessary
-      Model::VirtualHost.create_table_if_necessary
+      Model::VMLease.create_table_if_necessary
       Model::VMType.create_table_if_necessary
       Model::VirtualMachine.create_table_if_necessary
     end
@@ -406,7 +406,7 @@ CREATE TABLE #{@table_name} (
   gateway     VARCHAR(256),
   dns         TEXT,
   ntp         TEXT,
-  vhosts      TEXT
+  leases      TEXT
 );
 SQL
 
@@ -422,7 +422,7 @@ SQL
       attr_accessor :gateway      # gateway of the network
       attr_accessor :dns          # dns servers of the network, splitted by ' '
       attr_accessor :ntp          # ntp servers of the network, splitted by ' '
-      attr_accessor :vhosts       # ids of virtual hosts, splitted by ' '
+      attr_accessor :leases       # ids of vm leases, splitted by ' '
 
 
       def to_s
@@ -438,7 +438,7 @@ SQL
           "gateway='#{@gateway}',"         +
           "dns='#{@dns}',"                 +
           "ntp='#{@ntp}',"                 +
-          "vhosts='#{@vhosts}'"            +
+          "leases='#{@leases}'"            +
           ">"
       end
 
@@ -455,7 +455,7 @@ SQL
         raise_if_nil_and_not_class(@gateway,     'gateway',     String)
         raise_if_nil_and_not_class(@dns,         'dns',         String)
         raise_if_nil_and_not_class(@ntp,         'ntp',         String)
-        raise_if_nil_and_not_class(@vhosts,      'vhosts',      String)
+        raise_if_nil_and_not_class(@leases,      'leases',      String)
       end
 
       def to_create_record_str
@@ -469,7 +469,7 @@ SQL
           "'#{@gateway}',"     +
           "'#{@dns}',"         +
           "'#{@ntp}',"         +
-          "'#{@vhosts}'"
+          "'#{@leases}'"
       end
 
       def to_find_id_str
@@ -487,7 +487,7 @@ SQL
           "gateway='#{@gateway}',"         +
           "dns='#{@dns}',"                 +
           "ntp='#{@ntp}',"                 +
-          "vhosts='#{@vhosts}'"
+          "leases='#{@leases}'"
       end
 
 
@@ -504,7 +504,7 @@ SQL
           @gateway     = attrs[8]
           @dns         = attrs[9]
           @ntp         = attrs[10]
-          @vhosts      = attrs[11]
+          @leases      = attrs[11]
         end
         return vn
       end
@@ -512,51 +512,56 @@ SQL
     end
 
     ##########################################################################
-    # Model for Virtual Host that belongs to a specific Virtual Network
+    # Model for VM lease that belongs to a specific Virtual Network
     ##########################################################################
-    class VirtualHost < BaseModel  # TODO rename to VMLease
-      @table_name = 'virtual_hosts'
+    class VMLease < BaseModel
+      @table_name = 'vm_leases'
 
       @table_schema = <<SQL
 CREATE TABLE #{@table_name} (
-  id        INTEGER PRIMARY KEY AUTOINCREMENT,
-  name      VARCHAR(256),
-  address   VARCHAR(256),
-  allocated INTEGER,
-  vnetid    INTEGER
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  name        VARCHAR(256),
+  address     VARCHAR(256),
+  used        INTEGER,
+  assigned_to INTEGER,
+  vnetid      INTEGER
 );
 SQL
 
       @field_for_find_by_name = 'name'
 
-      attr_accessor :name      # name of the vhost must be an FQDN
-      attr_accessor :address   # IP address of the vhost
-      attr_accessor :allocated # 1 when it is allocated, othersize 0
-      attr_accessor :vnetid    # id of the vnet the vhost belongs to
+      attr_accessor :name        # name of the vhost lease must be an FQDN
+      attr_accessor :address     # IP address of the vhost lease
+      attr_accessor :used        # 1 when it is used, othersize 0
+      attr_accessor :assigned_to # uid when vm is assigned, othersize -1
+      attr_accessor :vnetid      # id of the vnet the vhost belongs to
 
       def to_s
-        "VirtualHost<"               +
-          "id=#{@id},"               +
-          "name='#{@name}',"         +
-          "address='#{@address}',"   +
-          "allocated=#{@allocated}," +
-          "vnetid=#{@vnetid}"        +
+        "VMLease<"                       +
+          "id=#{@id},"                   +
+          "name='#{@name}',"             +
+          "address='#{@address}',"       +
+          "used=#{@used},"               +
+          "assigned_to=#{@assigned_to}," +
+          "vnetid=#{@vnetid}"            +
           ">"
       end
 
       protected
 
       def check_fields
-        raise_if_nil_and_not_class(@name,      'name',      String)
-        raise_if_nil_and_not_class(@address,   'address',   String)
-        raise_if_nil_and_not_class(@allocated, 'allocated', Integer)
-        raise_if_nil_and_not_class(@vnetid,    'vnetid',    Integer)
+        raise_if_nil_and_not_class(@name,        'name',        String)
+        raise_if_nil_and_not_class(@address,     'address',     String)
+        raise_if_nil_and_not_class(@used,        'used',        Integer)
+        raise_if_nil_and_not_class(@assigned_to, 'assigned_to', Integer)
+        raise_if_nil_and_not_class(@vnetid,      'vnetid',      Integer)
       end
 
       def to_create_record_str
         "'#{@name}',"      +
           "'#{@address}'," +
-          "#{@allocated}," +
+          "#{@used}," +
+          "#{@assigned_to}," +
           "#{@vnetid}"
       end
 
@@ -567,20 +572,22 @@ SQL
       def to_update_record_str
         "name='#{@name}',"           +
           "address='#{@address}',"   +
-          "allocated=#{@allocated}," +
+          "used=#{@used}," +
+          "assigned_to=#{@assigned_to}," +
           "vnetid=#{@vnetid}"
       end
 
 
-      def self.setup_attrs(vh, attrs)
-        vh.instance_eval do
-          @id        = attrs[0].to_i
-          @name      = attrs[1]
-          @address   = attrs[2]
-          @allocated = attrs[3].to_i
-          @vnetid    = attrs[4].to_i
+      def self.setup_attrs(l, attrs)
+        l.instance_eval do
+          @id          = attrs[0].to_i
+          @name        = attrs[1]
+          @address     = attrs[2]
+          @used        = attrs[3].to_i
+          @assigned_to = attrs[4].to_i
+          @vnetid      = attrs[5].to_i
         end
-        return vh
+        return l
       end
 
     end

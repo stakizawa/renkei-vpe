@@ -253,41 +253,43 @@ module RenkeiVPE
 
 
       # set virtual host leases
-      vhosts_e = REXML::Element.new('LEASES')
-      vnet_e.add(vhosts_e)
-      vnet.vhosts.strip.split(/\s+/).map{ |i| i.to_i }.each do |hid|
-        not_found_msg = "VirtualHost[#{hid}] is not found."
-        vh = RenkeiVPE::Model::VirtualHost.find_by_id(hid)
-        raise not_found_msg unless vh
-        ovhs = onevn_doc.get_elements("/VNET/LEASES/LEASE[IP='#{vh.address}']")
-        if ovhs.size == 0
+      leases_e = REXML::Element.new('LEASES')
+      vnet_e.add(leases_e)
+      vnet.leases.strip.split(/\s+/).map{ |i| i.to_i }.each do |hid|
+        not_found_msg = "VMLease[#{hid}] is not found."
+        l = RenkeiVPE::Model::VMLease.find_by_id(hid)
+        raise not_found_msg unless l
+        ols = onevn_doc.get_elements("/VNET/LEASES/LEASE[IP='#{l.address}']")
+        if ols.size == 0
           raise not_found_msg
-        elsif ovhs.size > 1
-          raise "Multiple definition of VirtualHost lease: #{vh.address}"
+        elsif ols.size > 1
+          raise "Multiple definition of VM lease: #{l.address}"
         end
-        ovh = ovhs[0]
+        ol = ols[0]
 
-        id_e = REXML::Element.new('ID')
-        id_e.add(REXML::Text.new(hid.to_s))
-        name_e = REXML::Element.new('NAME')
-        name_e.add(REXML::Text.new(vh.name))
-        ip_e = REXML::Element.new('IP')
-        ip_e.add(REXML::Text.new(vh.address))
-        mac_e = REXML::Element.new('MAC')
-        mac_e.add(ovh.get_text('MAC'))
-        aloc_e = REXML::Element.new('ALLOCATED')
-        aloc_e.add(REXML::Text.new(vh.allocated.to_s))
-        vid_e = REXML::Element.new('VID')
-        vid_e.add(ovh.get_text('VID'))
-
-        vhost_e = REXML::Element.new('LEASE')
-        vhost_e.add(id_e)
-        vhost_e.add(name_e)
-        vhost_e.add(ip_e)
-        vhost_e.add(mac_e)
-        vhost_e.add(aloc_e)
-        vhost_e.add(vid_e)
-        vhosts_e.add(vhost_e)
+        lease_e = REXML::Element.new('LEASE')
+        e = REXML::Element.new('ID')
+        e.add(REXML::Text.new(hid.to_s))
+        lease_e.add(e)
+        e = REXML::Element.new('NAME')
+        e.add(REXML::Text.new(l.name))
+        lease_e.add(e)
+        e = REXML::Element.new('IP')
+        e.add(REXML::Text.new(l.address))
+        lease_e.add(e)
+        e = REXML::Element.new('MAC')
+        e.add(ol.get_text('MAC'))
+        lease_e.add(e)
+        e = REXML::Element.new('USED')
+        e.add(REXML::Text.new(l.used.to_s))
+        lease_e.add(e)
+        e = REXML::Element.new('ASSIGNED_TO')
+        e.add(REXML::Text.new(l.assigned_to.to_s))
+        lease_e.add(e)
+        e = REXML::Element.new('VID')
+        e.add(ol.get_text('VID'))
+        lease_e.add(e)
+        leases_e.add(lease_e)
       end
 
       return vnet_e

@@ -12,7 +12,7 @@ ntp:
   - 192.168.0.1
   - ntp1.noc.titech.ac.jp
   - ntp2.noc.titech.ac.jp
-vhost:
+lease:
   - name:    vm00.vhost.net
     address: 192.168.0.10
   - name:    vm01.vhost.net

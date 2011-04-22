@@ -25,9 +25,9 @@ module RenkeiVPE
       GATEWAY       = 'GATEWAY'
       DNS           = 'DNS'
       NTP           = 'NTP'
-      VHOST         = 'VHOST'
-      VHOST_NAME    = 'NAME'
-      VHOST_ADDRESS = 'ADDRESS'
+      LEASE         = 'LEASE'
+      LEASE_NAME    = 'NAME'
+      LEASE_ADDRESS = 'ADDRESS'
       INTERFACE     = 'INTERFACE'
     end
 

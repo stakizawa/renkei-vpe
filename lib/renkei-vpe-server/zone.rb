@@ -370,9 +370,9 @@ PUBLIC = YES
 
 BRIDGE = #{vnet_def[ResourceFile::VirtualNetwork::INTERFACE]}
 VN_DEF
-      vnet_def[ResourceFile::VirtualNetwork::VHOST].each do |vh|
+      vnet_def[ResourceFile::VirtualNetwork::LEASE].each do |vh|
         one_vn_template +=
-          "LEASES = [IP=\"#{vh[ResourceFile::VirtualNetwork::VHOST_ADDRESS]}\"]\n"
+          "LEASES = [IP=\"#{vh[ResourceFile::VirtualNetwork::LEASE_ADDRESS]}\"]\n"
       end
       # call rpc
       rc = call_one_xmlrpc('one.vn.allocate', session, one_vn_template)
@@ -398,11 +398,11 @@ VN_DEF
         raise e
       end
 
-      # 3. create vhosts that belong to the vnet
+      # 3. create leases that belong to the vnet
       begin
-        vnet_def[ResourceFile::VirtualNetwork::VHOST].each do |vh|
-          add_vhost_to_vnet(vh[ResourceFile::VirtualNetwork::VHOST_NAME],
-                            vh[ResourceFile::VirtualNetwork::VHOST_ADDRESS],
+        vnet_def[ResourceFile::VirtualNetwork::LEASE].each do |l|
+          add_lease_to_vnet(l[ResourceFile::VirtualNetwork::LEASE_NAME],
+                            l[ResourceFile::VirtualNetwork::LEASE_ADDRESS],
                             vn)
         end
       rescue => e
@@ -453,11 +453,11 @@ VN_DEF
         err_msg = "VirtualNetwork[#{vnet.unique_name}] is not in Zone[#{zone.name}]."
       end
 
-      # 2. remove vhosts that belong to the vnet
-      vhids = vnet.vhosts.strip.split(/\s+/).map { |i| i.to_i }
-      vhids.each do |vhid|
+      # 2. remove leases that belong to the vnet
+      lids = vnet.leases.strip.split(/\s+/).map { |i| i.to_i }
+      lids.each do |lid|
         begin
-          remove_vhost_from_vnet(vhid, vnet)
+          remove_lease_from_vnet(lid, vnet)
         rescue => e
           err_msg = (err_msg.size == 0)? e.message : err_msg + '; ' + e.message
         end
@@ -480,64 +480,64 @@ VN_DEF
       return vnet.id
     end
 
-    # +vhost_name+  name of vhost
-    # +vhost_addr+  ip address of vhost
+    # +lease_name+  name of lease
+    # +lease_addr+  ip address of lease
     # +vnet+        instance of vnet
-    # +return+      id of vhost
-    def add_vhost_to_vnet(vhost_name, vhost_addr, vnet)
-      vh = RenkeiVPE::Model::VirtualHost.find_by_name(vhost_name)
-      raise "VirtualHost[#{vhost_name}] already exists." if vh
+    # +return+      id of lease
+    def add_lease_to_vnet(lease_name, lease_addr, vnet)
+      l = RenkeiVPE::Model::VMLease.find_by_name(lease_name)
+      raise "VMLease[#{lease_name}] already exists." if l
 
       # create a virtual host record
-      vh = RenkeiVPE::Model::VirtualHost.new(-1, vhost_name, vhost_addr,
-                                             0, vnet.id)
-      vh.create
+      l = RenkeiVPE::Model::VMLease.new(-1, lease_name, lease_addr, 0, -1,
+                                        vnet.id)
+      l.create
 
       # update the virtual network record
       begin
-        vnet.vhosts = (vnet.vhosts || '') + "#{vh.id} "
+        vnet.leases = (vnet.leases || '') + "#{l.id} "
         vnet.update
       rescue => e
-        # delete vhost
-        begin; vh.delete; rescue; end
+        # delete lease
+        begin; l.delete; rescue; end
         raise e
       end
 
-      return vh.id
+      return l.id
     end
 
-    # +vhost_id+  id of vhost
-    # +vnet+      vnet where the vhost belongs
-    # +return+    vhost id in integer
-    def remove_vhost_from_vnet(vhost_id, vnet)
-      vh = RenkeiVPE::Model::VirtualHost.find_by_id(vhost_id)
-      raise "VirtualHost[#{vhost_id}] does not exist." unless vh
+    # +lease_id+  id of lease
+    # +vnet+      vnet where the lease belongs
+    # +return+    lease id in integer
+    def remove_lease_from_vnet(lease_id, vnet)
+      l = RenkeiVPE::Model::VMLease.find_by_id(lease_id)
+      raise "VMLease[#{lease_id}] does not exist." unless l
 
       err_msg = ''
 
-      # remove vhost from the vnet record
+      # remove lease from the vnet record
       begin
-        old_vhosts = vnet.vhosts.strip.split(/\s+/).map { |i| i.to_i }
-        new_vhosts = old_vhosts - [vhost_id]
-        unless old_vhosts.size > new_vhosts.size
+        old_leases = vnet.leases.strip.split(/\s+/).map { |i| i.to_i }
+        new_leases = old_leases - [lease_id]
+        unless old_leases.size > new_leases.size
           vnet_un = vnet.zone_name + '::' + vnet.name
-          raise "VirtualHost[#{vhost_id}] is not in VirtualNetwork[#{vnet_un}]."
+          raise "VMLease[#{lease_id}] is not in VirtualNetwork[#{vnet_un}]."
         end
-        vnet.vhosts = new_vhosts.join(' ') + ' '
+        vnet.leases = new_leases.join(' ') + ' '
         vnet.update
       rescue => e
         err_msg = (err_msg.size == 0)? e.message : err_msg +'; '+ e.message
       end
 
-      # remove vhost record
+      # remove lease record
       begin
-        vh.delete
+        l.delete
       rescue => e
         err_msg = (err_msg.size == 0)? e.message : err_msg +'; '+ e.message
       end
 
       raise err_msg unless err_msg.size == 0
-      return vh.id
+      return l.id
     end
 
 

@@ -76,7 +76,7 @@ module RenkeiVPE
         vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(vnet_id)
 
         # 1-2. get unused virtual host
-        lease = RenkeiVPE::Model::VirtualHost.find("vnetid=#{vnet.id} AND allocated=0")
+        lease = RenkeiVPE::Model::VMLease.find("vnetid=#{vnet.id} AND used=0")
         unless lease
           raise "No available virtual host lease in Zone[#{zone.name}]."
         end
@@ -160,9 +160,9 @@ EOS
           raise e
         end
 
-        # 6. finalize: mark lease as allocated
+        # 6. finalize: mark lease as used
         begin
-          lease.allocated = 1
+          lease.used = 1
           lease.update
         rescue => e
           vm.delete
@@ -191,11 +191,11 @@ EOS
         case action.upcase
         when 'SHUTDOWN', 'FINALIZE'
           # delete temporal files
-          lease = RenkeiVPE::Model::VirtualHost.find_by_id(vm.lease_id)
+          lease = RenkeiVPE::Model::VMLease.find_by_id(vm.lease_id)
           vmtmpdir  = "#{$rvpe_path}/var/#{lease.name}"
           FileUtils.rm_rf(vmtmpdir)
-          # mark lease as not-allocated
-          lease.allocated = 0
+          # mark lease as not-used
+          lease.used = 0
           lease.update
         end
 
@@ -253,6 +253,7 @@ EOS
     # It raises an exception when access to one fail
     def self.to_xml_element(vm, one_session)
       # get Data
+      no_data_msg = 'Missing, manually deleted.'
       # one vm
       rc = RenkeiVPE::OpenNebulaClient.call_one_xmlrpc('one.vm.info',
                                                        one_session,
@@ -267,13 +268,35 @@ EOS
         oneimg_doc = REXML::Document.new(rc[1])
         image_name = oneimg_doc.elements['/IMAGE/NAME'].get_text
       else
-        image_name = 'Missing, manually deleted.'
+        image_name = no_data_msg
       end
-      # from Renkei VPE DB # TODO user zone lease and type can also be nil
+      # from Renkei VPE DB
       user = RenkeiVPE::Model::User.find_by_id(vm.user_id)
+      if user
+        user_name = user.name
+      else
+        user_name = no_data_msg
+      end
       zone = RenkeiVPE::Model::Zone.find_by_id(vm.zone_id)
-      lease = RenkeiVPE::Model::VirtualHost.find_by_id(vm.lease_id)
+      if zone
+        zone_name = zone.name
+      else
+        zone_name = no_data_msg
+      end
+      lease = RenkeiVPE::Model::VMLease.find_by_id(vm.lease_id)
+      if lease
+        lease_name = lease.name
+        lease_address = lease.address
+      else
+        lease_name = no_data_msg
+        lease_address = no_data_msg
+      end
       type = RenkeiVPE::Model::VMType.find_by_id(vm.type_id)
+      if zone
+        type_name = type.name
+      else
+        type_name = no_data_msg
+      end
 
       # toplevel VNET element
       vm_e = REXML::Element.new('VM')
@@ -285,12 +308,12 @@ EOS
 
       # set name
       e = REXML::Element.new('NAME')
-      e.add(REXML::Text.new(lease.name))
+      e.add(REXML::Text.new(lease_name))
       vm_e.add(e)
 
       # set address
       e = REXML::Element.new('ADDRESS')
-      e.add(REXML::Text.new(lease.address))
+      e.add(REXML::Text.new(lease_address))
       vm_e.add(e)
 
       # set user id
@@ -300,7 +323,7 @@ EOS
 
       # set user name
       e = REXML::Element.new('USER_NAME')
-      e.add(REXML::Text.new(user.name))
+      e.add(REXML::Text.new(user_name))
       vm_e.add(e)
 
       # set zone id
@@ -310,7 +333,7 @@ EOS
 
       # set zone name
       e = REXML::Element.new('ZONE_NAME')
-      e.add(REXML::Text.new(zone.name))
+      e.add(REXML::Text.new(zone_name))
       vm_e.add(e)
 
       # set type id
@@ -320,7 +343,7 @@ EOS
 
       # set type name
       e = REXML::Element.new('TYPE_NAME')
-      e.add(REXML::Text.new(type.name))
+      e.add(REXML::Text.new(type_name))
       vm_e.add(e)
 
       # set image id
