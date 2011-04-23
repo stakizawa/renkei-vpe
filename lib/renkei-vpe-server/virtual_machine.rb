@@ -36,7 +36,7 @@ module RenkeiVPE
     #             about the virtual machine
     def info(session, id)
       task('rvpe.vm.info', session) do
-        vm = RenkeiVPE::Model::VirtualMachine.find_by_id(id)
+        vm = RenkeiVPE::Model::VirtualMachine.find_by_id(id)[0]
         raise "VirtualMachine[#{id}] is not found." unless vm
 
         vm_e = VirtualMachine.to_xml_element(vm, session)
@@ -62,24 +62,25 @@ module RenkeiVPE
         # 0. get user and check if the user has permission to run VMs
         #    in the specified zone
         user_name = get_user_from_session(session)
-        user = RenkeiVPE::Model::User.find_by_name(user_name)
+        user = RenkeiVPE::Model::User.find_by_name(user_name)[0]
         zone_ids = user.zones.split(/\s+/).map { |i| i.to_i }
         unless zone_ids.include?(zone_id)
           raise "User[#{user_name}] don't have permission to use Zone[#{zone_id}]."
         end
 
         # 1-1. get data about used resources
-        type = RenkeiVPE::Model::VMType.find_by_id(type_id)
-        zone = RenkeiVPE::Model::Zone.find_by_id(zone_id)
+        type = RenkeiVPE::Model::VMType.find_by_id(type_id)[0]
+        zone = RenkeiVPE::Model::Zone.find_by_id(zone_id)[0]
         # FIXME currently only one virtual network is available
         vnet_id = zone.networks.split(/\s+/).map { |i| i.to_i }[0]
-        vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(vnet_id)
+        vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(vnet_id)[0]
 
         # 1-2. get unused virtual host
-        lease = RenkeiVPE::Model::VMLease.find("vnetid=#{vnet.id} AND used=0")
-        unless lease
+        leases = RenkeiVPE::Model::VMLease.find("vnetid=#{vnet.id} AND used=0")
+        if leases.size == 0
           raise "No available virtual host lease in Zone[#{zone.name}]."
         end
+        lease = leases[0]
 
         # 1-3. get cluster name from OpenNebula
         rc = call_one_xmlrpc('one.cluster.info', session, zone.oid)
@@ -182,7 +183,7 @@ EOS
     #             otherwise it does not exist.
     def action(session, id, action)
       task('rvpe.vm.action', session) do
-        vm = RenkeiVPE::Model::VirtualMachine.find_by_id(id)
+        vm = RenkeiVPE::Model::VirtualMachine.find_by_id(id)[0]
         raise "VirtualMachine[#{id}] is not found." unless vm
 
         rc = call_one_xmlrpc('one.vm.action', session, action, vm.oid)
@@ -191,7 +192,7 @@ EOS
         case action.upcase
         when 'SHUTDOWN', 'FINALIZE'
           # delete temporal files
-          lease = RenkeiVPE::Model::VMLease.find_by_id(vm.lease_id)
+          lease = RenkeiVPE::Model::VMLease.find_by_id(vm.lease_id)[0]
           vmtmpdir  = "#{$rvpe_path}/var/#{lease.name}"
           FileUtils.rm_rf(vmtmpdir)
           # mark lease as not-used
@@ -212,7 +213,7 @@ EOS
     #              otherwise it does not exist.
     def mark_save(session, id, image_name)
       task('rvpe.vm.mark_save', session) do
-        vm = RenkeiVPE::Model::VirtualMachine.find_by_id(id)
+        vm = RenkeiVPE::Model::VirtualMachine.find_by_id(id)[0]
         raise "VirtualMachine[#{id}] is not found." unless vm
 
         # It always saves Disk whose ID is 0 (OS image).
@@ -271,19 +272,19 @@ EOS
         image_name = no_data_msg
       end
       # from Renkei VPE DB
-      user = RenkeiVPE::Model::User.find_by_id(vm.user_id)
+      user = RenkeiVPE::Model::User.find_by_id(vm.user_id)[0]
       if user
         user_name = user.name
       else
         user_name = no_data_msg
       end
-      zone = RenkeiVPE::Model::Zone.find_by_id(vm.zone_id)
+      zone = RenkeiVPE::Model::Zone.find_by_id(vm.zone_id)[0]
       if zone
         zone_name = zone.name
       else
         zone_name = no_data_msg
       end
-      lease = RenkeiVPE::Model::VMLease.find_by_id(vm.lease_id)
+      lease = RenkeiVPE::Model::VMLease.find_by_id(vm.lease_id)[0]
       if lease
         lease_name = lease.name
         lease_address = lease.address
@@ -291,7 +292,7 @@ EOS
         lease_name = no_data_msg
         lease_address = no_data_msg
       end
-      type = RenkeiVPE::Model::VMType.find_by_id(vm.type_id)
+      type = RenkeiVPE::Model::VMType.find_by_id(vm.type_id)[0]
       if zone
         type_name = type.name
       else

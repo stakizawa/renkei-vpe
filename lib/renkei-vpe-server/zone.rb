@@ -49,7 +49,7 @@ module RenkeiVPE
     #             about the zone
     def info(session, id)
       task('rvpe.zone.info', session) do
-        zone = RenkeiVPE::Model::Zone.find_by_id(id)
+        zone = RenkeiVPE::Model::Zone.find_by_id(id)[0]
         raise "Zone[#{id}] is not found." unless zone
 
         zone_e = Zone.to_xml_element(zone, session)
@@ -73,7 +73,7 @@ module RenkeiVPE
 
         # create a zone
         name = zone_def[ResourceFile::Zone::NAME]
-        zone = RenkeiVPE::Model::Zone.find_by_name(name)
+        zone = RenkeiVPE::Model::Zone.find_by_name(name)[0]
         raise "Zone[#{name}] already exists." if zone
         # create an associated site in OpenNebula
         rc = call_one_xmlrpc('one.cluster.allocate', session, name)
@@ -124,7 +124,7 @@ module RenkeiVPE
     #             otherwise it does not exist.
     def delete(session, id)
       task('rvpe.zone.delete', session, true) do
-        zone = RenkeiVPE::Model::Zone.find_by_id(id)
+        zone = RenkeiVPE::Model::Zone.find_by_id(id)[0]
         raise "Zone[#{id}] does not exist." unless zone
 
         err_msg = ''
@@ -174,7 +174,7 @@ module RenkeiVPE
     #             otherwise it does not exist.
     def add_host(session, id, host_name)
       task('rvpe.zone.add_host', session, true) do
-        zone = RenkeiVPE::Model::Zone.find_by_id(id)
+        zone = RenkeiVPE::Model::Zone.find_by_id(id)[0]
         raise "Zone[#{id}] does not exist." unless zone
 
         add_host_to_zone(session, host_name, zone)
@@ -191,7 +191,7 @@ module RenkeiVPE
     #             otherwise it does not exist.
     def remove_host(session, id, host_name)
       task('rvpe.zone.remove_host', session, true) do
-        zone = RenkeiVPE::Model::Zone.find_by_id(id)
+        zone = RenkeiVPE::Model::Zone.find_by_id(id)[0]
         raise "Zone[#{id}] does not exist." unless zone
 
         remove_host_from_zone(session, host_name, zone)
@@ -208,7 +208,7 @@ module RenkeiVPE
     #             otherwise it does not exist.
     def add_vnet(session, id, template)
       task('rvpe.zone.add_vnet', session, true) do
-        zone = RenkeiVPE::Model::Zone.find_by_id(id)
+        zone = RenkeiVPE::Model::Zone.find_by_id(id)[0]
         raise "Zone[#{id}] does not exist." unless zone
 
         vnet_def = ResourceFile::Parser.load_yaml(template)
@@ -226,7 +226,7 @@ module RenkeiVPE
     #             otherwise it does not exist.
     def remove_vnet(session, id, vnet_name)
       task('rvpe.zone.remove_vnet', session, true) do
-        zone = RenkeiVPE::Model::Zone.find_by_id(id)
+        zone = RenkeiVPE::Model::Zone.find_by_id(id)[0]
         raise "Zone[#{id}] does not exist." unless zone
 
         remove_vnet_from_zone(session, vnet_name, zone)
@@ -358,7 +358,7 @@ module RenkeiVPE
       vn_unique   = zone.name + '::' + name
 
       # 0. check if the vnet already exists
-      vnet = RenkeiVPE::Model::VirtualNetwork.find_by_name(vn_unique)
+      vnet = RenkeiVPE::Model::VirtualNetwork.find_by_name(vn_unique)[0]
       raise "VirtualNetwork[#{vn_unique}] already exists." if vnet
 
       # 1. allocate vn in OpenNebula
@@ -432,12 +432,12 @@ VN_DEF
       if vnet.kind_of?(Integer)
         # vnet is id of virtual network
         id = vnet
-        vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(id)
+        vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(id)[0]
         raise "VirtualNetwork[#{id}] does not exist." unless vnet
       elsif vnet.kind_of?(String)
         # vnet is name of virtual network
         name = zone.name + '::' + vnet
-        vnet = RenkeiVPE::Model::VirtualNetwork.find_by_name(name)
+        vnet = RenkeiVPE::Model::VirtualNetwork.find_by_name(name)[0]
         raise "VirtualNetwork[#{name}] does not exist." unless vnet
       end
 
@@ -485,7 +485,7 @@ VN_DEF
     # +vnet+        instance of vnet
     # +return+      id of lease
     def add_lease_to_vnet(lease_name, lease_addr, vnet)
-      l = RenkeiVPE::Model::VMLease.find_by_name(lease_name)
+      l = RenkeiVPE::Model::VMLease.find_by_name(lease_name)[0]
       raise "VMLease[#{lease_name}] already exists." if l
 
       # create a virtual host record
@@ -510,7 +510,7 @@ VN_DEF
     # +vnet+      vnet where the lease belongs
     # +return+    lease id in integer
     def remove_lease_from_vnet(lease_id, vnet)
-      l = RenkeiVPE::Model::VMLease.find_by_id(lease_id)
+      l = RenkeiVPE::Model::VMLease.find_by_id(lease_id)[0]
       raise "VMLease[#{lease_id}] does not exist." unless l
 
       err_msg = ''
@@ -579,7 +579,7 @@ VN_DEF
       nets_e = REXML::Element.new('NETWORKS')
       zone_e.add(nets_e)
       zone.networks.strip.split(/\s+/).map{ |i| i.to_i }.each do |nid|
-        vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(nid)
+        vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(nid)[0]
         raise "VirtualNetwork[#{nid}] is not found." unless vnet
 
         nid_e = REXML::Element.new('ID')

@@ -64,7 +64,7 @@ module RenkeiVPE
       log.info config.to_s
 
       # initialize database
-      RenkeiVPE::Database.init(DB_FILE)
+      RenkeiVPE::Model.init(DB_FILE)
 
       # initialize one client
       RenkeiVPE::OpenNebulaClient.init(config.one_endpoint)

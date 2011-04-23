@@ -33,7 +33,7 @@ module RenkeiVPE
         end
 
         uname = get_user_from_session(session)
-        user = RenkeiVPE::Model::User.find_by_name(uname)
+        user = RenkeiVPE::Model::User.find_by_name(uname)[0]
 
         pool_e = REXML::Element.new('VM_POOL')
         RenkeiVPE::Model::VirtualMachine.each do |vm|

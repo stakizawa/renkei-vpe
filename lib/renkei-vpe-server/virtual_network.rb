@@ -38,7 +38,7 @@ module RenkeiVPE
     #             about the virtual network
     def info(session, id)
       task('rvpe.vn.info', session) do
-        vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(id)
+        vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(id)[0]
         raise "VirtualNetwork[#{id}] is not found." unless vnet
 
         vnet_e = VirtualNetwork.to_xml_element(vnet, session)
@@ -59,7 +59,7 @@ module RenkeiVPE
     #             otherwise it does not exist.
     def add_dns(session, id, dnses)
       task('rvpe.vn.add_dns', session, true) do
-        vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(id)
+        vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(id)[0]
         raise "VirtualNetwork[#{id}] is not found." unless vnet
 
         add_servers_to_vnet(vnet, :dns, dnses)
@@ -75,7 +75,7 @@ module RenkeiVPE
     #             otherwise it does not exist.
     def remove_dns(session, id, dnses)
       task('rvpe.vn.remove_dns', session, true) do
-        vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(id)
+        vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(id)[0]
         raise "VirtualNetwork[#{id}] is not found." unless vnet
 
         remove_servers_from_vnet(vnet, :dns, dnses)
@@ -91,7 +91,7 @@ module RenkeiVPE
     #             otherwise it does not exist.
     def add_ntp(session, id, ntps)
       task('rvpe.vn.add_ntp', session, true) do
-        vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(id)
+        vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(id)[0]
         raise "VirtualNetwork[#{id}] is not found." unless vnet
 
         add_servers_to_vnet(vnet, :ntp, ntps)
@@ -107,7 +107,7 @@ module RenkeiVPE
     #             otherwise it does not exist.
     def remove_ntp(session, id, ntps)
       task('rvpe.vn.remove_ntp', session, true) do
-        vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(id)
+        vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(id)[0]
         raise "VirtualNetwork[#{id}] is not found." unless vnet
 
         remove_servers_from_vnet(vnet, :ntp, ntps)
@@ -257,7 +257,7 @@ module RenkeiVPE
       vnet_e.add(leases_e)
       vnet.leases.strip.split(/\s+/).map{ |i| i.to_i }.each do |hid|
         not_found_msg = "VMLease[#{hid}] is not found."
-        l = RenkeiVPE::Model::VMLease.find_by_id(hid)
+        l = RenkeiVPE::Model::VMLease.find_by_id(hid)[0]
         raise not_found_msg unless l
         ols = onevn_doc.get_elements("/VNET/LEASES/LEASE[IP='#{l.address}']")
         if ols.size == 0

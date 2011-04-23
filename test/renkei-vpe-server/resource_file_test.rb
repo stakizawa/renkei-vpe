@@ -1,7 +1,8 @@
-require File.join(File.dirname(__FILE__), '..', '..',
-                  'lib', 'renkei-vpe-server', 'resource_file')
+$: << File.join(File.dirname(__FILE__), '..', '..', 'lib')
+
 require 'test/unit'
 require 'pp'
+require 'renkei-vpe-server/resource_file'
 
 class ConfigTest < Test::Unit::TestCase
   include RenkeiVPE::ResourceFile
