@@ -23,10 +23,22 @@ SQL
 
       @field_for_find_by_name = 'name'
 
-      attr_accessor :oid      # id of the accosiated one user
-      attr_accessor :name     # name of the user
-      attr_accessor :enabled  # a flag is the user is enabled(1) or not(0)
-      attr_accessor :zones    # names of zones the user can use
+      # id of the accosiated one user
+      attr_accessor(:oid)     { |v| v.to_i }
+      # name of the user
+      attr_accessor :name
+      # a flag, user is enabled(1) or not(0)
+      attr_accessor(:enabled) { |v| v.to_i }
+      # names of zones the user can use
+      attr_accessor :zones
+
+      def initialize
+        super
+        @oid     = -1
+        @name    = ''
+        @enabled =  1
+        @zones   = ''
+      end
 
       def to_s
         "User<"                  +
@@ -70,11 +82,11 @@ SQL
         return u unless attrs.size == 5
         u.instance_eval do
           @id      = attrs[0].to_i
-          @oid     = attrs[1].to_i
-          @name    = attrs[2]
-          @enabled = attrs[3].to_i
-          @zones   = attrs[4]
         end
+        u.oid     = attrs[1]
+        u.name    = attrs[2]
+        u.enabled = attrs[3]
+        u.zones   = attrs[4]
         return u
       end
 

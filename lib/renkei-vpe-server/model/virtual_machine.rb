@@ -25,12 +25,28 @@ SQL
 
       @field_for_find_by_name = 'name'
 
-      attr_accessor :oid        # id of one VM
-      attr_accessor :user_id    # id of the VM user
-      attr_accessor :zone_id    # id of a zone the VM is located
-      attr_accessor :lease_id   # id of virtual machine lease
-      attr_accessor :type_id    # id of the VM type
-      attr_accessor :image_id   # id of OS image the VM use
+      # id of one VM
+      attr_accessor(:oid)      { |v| v.to_i }
+      # id of the VM user
+      attr_accessor(:user_id)  { |v| v.to_i }
+      # id of a zone the VM is located
+      attr_accessor(:zone_id)  { |v| v.to_i }
+      # id of virtual machine lease
+      attr_accessor(:lease_id) { |v| v.to_i }
+      # id of the VM type
+      attr_accessor(:type_id)  { |v| v.to_i }
+      # id of OS image the VM use
+      attr_accessor(:image_id) { |v| v.to_i }
+
+      def initialize
+        super
+        @oid      = -1
+        @user_id  = -1
+        @zone_id  = -1
+        @lease_id = -1
+        @type_id  = -1
+        @image_id = -1
+      end
 
       def to_s
         "VirtualMachine<"          +
@@ -40,7 +56,7 @@ SQL
           "zone_id=#{@zone_id},"   +
           "lease_id=#{@lease_id}," +
           "type_id=#{@type_id},"   +
-          "image_id=#{@image_id}," +
+          "image_id=#{@image_id}"  +
           ">"
       end
 
@@ -82,13 +98,13 @@ SQL
         return vm unless attrs.size == 7
         vm.instance_eval do
           @id       = attrs[0].to_i
-          @oid      = attrs[1].to_i
-          @user_id  = attrs[2].to_i
-          @zone_id  = attrs[3].to_i
-          @lease_id = attrs[4].to_i
-          @type_id  = attrs[5].to_i
-          @image_id = attrs[6].to_i
         end
+        vm.oid      = attrs[1]
+        vm.user_id  = attrs[2]
+        vm.zone_id  = attrs[3]
+        vm.lease_id = attrs[4]
+        vm.type_id  = attrs[5]
+        vm.image_id = attrs[6]
         return vm
       end
 

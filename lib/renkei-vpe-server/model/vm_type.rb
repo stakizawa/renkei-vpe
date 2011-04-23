@@ -23,10 +23,22 @@ SQL
 
       @field_for_find_by_name = 'name'
 
-      attr_accessor :name        # name of the VM type
-      attr_accessor :cpu         # number of cpus
-      attr_accessor :memory      # amount of memory in MB
-      attr_accessor :description # description of the VM type
+      # name of the VM type
+      attr_accessor :name
+      # number of cpus
+      attr_accessor(:cpu)    { |v| v.to_i }
+      # amount of memory in MB
+      attr_accessor(:memory) { |v| v.to_i }
+      # description of the VM type
+      attr_accessor :description
+
+      def initialize
+        super
+        @name        = ''
+        @cpu         =  0
+        @memory      =  0
+        @description = ''
+      end
 
       def to_s
         "VMType<"                         +
@@ -70,11 +82,11 @@ SQL
         return type unless attrs.size == 5
         type.instance_eval do
           @id          = attrs[0].to_i
-          @name        = attrs[1]
-          @cpu         = attrs[2].to_i
-          @memory      = attrs[3].to_i
-          @description = attrs[4]
         end
+        type.name        = attrs[1]
+        type.cpu         = attrs[2]
+        type.memory      = attrs[3]
+        type.description = attrs[4]
         return type
       end
 

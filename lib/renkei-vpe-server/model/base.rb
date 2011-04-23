@@ -60,9 +60,41 @@ module RenkeiVPE
   module Model
 
     ##########################################################################
+    # A module that overwite attr_accessor and attr_writer
+    ##########################################################################
+    module EnhancedAttributes
+      def self.included(base)
+        base.extend ClassMethods
+      end
+
+      module ClassMethods
+        def attr_accessor(attr, &block)
+          define_method "#{attr}=" do |val|
+            val = block.call(val) if block_given?
+            instance_variable_set("@#{attr}", val)
+          end
+
+          define_method attr do
+            instance_variable_get("@#{attr}")
+          end
+        end
+
+        def attr_writer(attr, &block)
+          define_method "#{attr}=" do |val|
+            val = block.call(val) if block_given?
+            instance_variable_set("@#{attr}", val)
+          end
+        end
+
+      end
+    end
+
+    ##########################################################################
     # Super class for all models
     ##########################################################################
     class BaseModel
+      include EnhancedAttributes
+
       # name and schema of a table that stores instance of this model
       @table_name   = nil
       @table_schema = nil
@@ -71,11 +103,12 @@ module RenkeiVPE
       @field_for_find_by_name = nil
 
       # id of instance of this model
-      attr_reader :id
+      attr_reader :id do |v|
+        v.to_i
+      end
 
-      def initialize(*args)
+      def initialize
         @log = RenkeiVPE::Logger.get_logger
-        self.class.setup_attrs(self, args)
       end
 
       # creates a record that represents this instance on the table.

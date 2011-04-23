@@ -82,11 +82,11 @@ module RenkeiVPE
           type = VMType.find_by_name(name)[0]
           raise "VMType[#{name}] already exists." if type
 
-          type = VMType.new(-1,
-                            type_def[ResourceFile::VMType::NAME],
-                            type_def[ResourceFile::VMType::CPU],
-                            type_def[ResourceFile::VMType::MEMORY],
-                            type_def[ResourceFile::VMType::DESCRIPTION])
+          type = VMType.new
+          type.name        = type_def[ResourceFile::VMType::NAME]
+          type.cpu         = type_def[ResourceFile::VMType::CPU]
+          type.memory      = type_def[ResourceFile::VMType::MEMORY]
+          type.description = type_def[ResourceFile::VMType::DESCRIPTION]
           type.create
 
           [true, type.id]

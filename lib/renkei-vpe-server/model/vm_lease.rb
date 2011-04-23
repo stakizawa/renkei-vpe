@@ -24,11 +24,25 @@ SQL
 
       @field_for_find_by_name = 'name'
 
-      attr_accessor :name        # name of the vhost lease must be an FQDN
-      attr_accessor :address     # IP address of the vhost lease
-      attr_accessor :used        # 1 when it is used, othersize 0
-      attr_accessor :assigned_to # uid when vm is assigned, othersize -1
-      attr_accessor :vnetid      # id of the vnet the vhost belongs to
+      # name of the vhost lease must be an FQDN
+      attr_accessor :name
+      # IP address of the vhost lease
+      attr_accessor :address
+      # 1 when it is used, othersize 0
+      attr_accessor(:used)        { |v| v.to_i }
+      # uid when vm is assigned, othersize -1
+      attr_accessor(:assigned_to) { |v| v.to_i }
+      # id of the vnet the vhost belongs to
+      attr_accessor(:vnetid)      { |v| v.to_i }
+
+      def initialize
+        super
+        @name        = ''
+        @address     = ''
+        @used        =  0
+        @assigned_to = -1
+        @vnetid      = -1
+      end
 
       def to_s
         "VMLease<"                       +
@@ -52,9 +66,9 @@ SQL
       end
 
       def to_create_record_str
-        "'#{@name}',"      +
-          "'#{@address}'," +
-          "#{@used}," +
+        "'#{@name}',"        +
+          "'#{@address}',"   +
+          "#{@used},"        +
           "#{@assigned_to}," +
           "#{@vnetid}"
       end
@@ -64,9 +78,9 @@ SQL
       end
 
       def to_update_record_str
-        "name='#{@name}',"           +
-          "address='#{@address}',"   +
-          "used=#{@used}," +
+        "name='#{@name}',"               +
+          "address='#{@address}',"       +
+          "used=#{@used},"               +
           "assigned_to=#{@assigned_to}," +
           "vnetid=#{@vnetid}"
       end
@@ -76,12 +90,12 @@ SQL
         return l unless attrs.size == 6
         l.instance_eval do
           @id          = attrs[0].to_i
-          @name        = attrs[1]
-          @address     = attrs[2]
-          @used        = attrs[3].to_i
-          @assigned_to = attrs[4].to_i
-          @vnetid      = attrs[5].to_i
         end
+        l.name        = attrs[1]
+        l.address     = attrs[2]
+        l.used        = attrs[3]
+        l.assigned_to = attrs[4]
+        l.vnetid      = attrs[5]
         return l
       end
 

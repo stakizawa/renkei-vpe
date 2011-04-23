@@ -193,9 +193,13 @@ EOS
 
           # 5. create VM record
           begin
-            vm = VirtualMachine.new(-1, rc[1],
-                                    user.id, zone.id,
-                                    lease.id, type.id, image_id)
+            vm = VirtualMachine.new
+            vm.oid      = rc[1]
+            vm.user_id  = user.id
+            vm.zone_id  = zone.id
+            vm.lease_id = lease.id
+            vm.type_id  = type.id
+            vm.image_id = image_id
             vm.create
           rescue => e
             call_one_xmlrpc('one.vm.action', session, 'finalize', rc[1])

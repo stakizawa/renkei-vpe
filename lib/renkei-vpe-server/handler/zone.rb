@@ -106,8 +106,10 @@ module RenkeiVPE
           osite_id = rc[1]
           # create a zone record
           begin
-            zone = Zone.new(-1, osite_id, name,
-                            zone_def[ResourceFile::Zone::DESCRIPTION], '', '')
+            zone = Zone.new
+            zone.oid = osite_id
+            zone.name = name
+            zone.description = zone_def[ResourceFile::Zone::DESCRIPTION]
             zone.create
           rescue => e
             call_one_xmlrpc('one.cluster.delete', session, osite_id)
@@ -404,17 +406,17 @@ VN_DEF
 
         # 2. create a vnet
         begin
-          vn = VirtualNetwork.new(-1, rc[1],
-                                  name,
-                                  vnet_def[ResourceFile::VirtualNetwork::DESCRIPTION],
-                                  zone.name,
-                                  vn_unique,
-                                  vnet_def[ResourceFile::VirtualNetwork::ADDRESS],
-                                  vnet_def[ResourceFile::VirtualNetwork::NETMASK],
-                                  vnet_def[ResourceFile::VirtualNetwork::GATEWAY],
-                                  vnet_def[ResourceFile::VirtualNetwork::DNS].join(' '),
-                                  vnet_def[ResourceFile::VirtualNetwork::NTP].join(' '),
-                                  '')
+          vn = VirtualNetwork.new
+          vn.oid         = rc[1]
+          vn.name        = name
+          vn.description = vnet_def[ResourceFile::VirtualNetwork::DESCRIPTION]
+          vn.zone_name   = zone.name,
+          vn.unique_name = vn_unique
+          vn.address     = vnet_def[ResourceFile::VirtualNetwork::ADDRESS]
+          vn.netmask     = vnet_def[ResourceFile::VirtualNetwork::NETMASK]
+          vn.gateway     = vnet_def[ResourceFile::VirtualNetwork::GATEWAY]
+          vn.dns         = vnet_def[ResourceFile::VirtualNetwork::DNS].join(' ')
+          vn.ntp         = vnet_def[ResourceFile::VirtualNetwork::NTP].join(' ')
           vn.create
         rescue => e
           # delete vn in OpenNebula
@@ -513,8 +515,10 @@ VN_DEF
         raise "VMLease[#{lease_name}] already exists." if l
 
         # create a virtual host record
-        l = VMLease.new(-1, lease_name, lease_addr, 0, -1,
-                                          vnet.id)
+        l = VMLease.new
+        l.name    = lease_name
+        l.address = lease_addr
+        l.vnetid  = vnet.id
         l.create
 
         # update the virtual network record

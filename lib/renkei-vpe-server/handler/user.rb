@@ -96,7 +96,9 @@ module RenkeiVPE
           raise rc[1] unless rc[0]
 
           begin
-            user = User.new(-1, rc[1], name, 1, '')
+            user = User.new
+            user.oid = rc[1]
+            user.name = name
             user.create
           rescue => e
             call_one_xmlrpc('one.user.delete', session, rc[1])
