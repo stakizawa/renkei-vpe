@@ -22,23 +22,9 @@ require 'xmlrpc/server'
 require 'yaml'
 require 'pp'
 
-require 'renkei-vpe-server/model'
-require 'renkei-vpe-server/server_role'
 require 'renkei-vpe-server/logger'
-require 'renkei-vpe-server/user'
-require 'renkei-vpe-server/user_pool'
-require 'renkei-vpe-server/image'
-require 'renkei-vpe-server/image_pool'
-require 'renkei-vpe-server/zone'
-require 'renkei-vpe-server/zone_pool'
-require 'renkei-vpe-server/host'
-require 'renkei-vpe-server/host_pool'
-require 'renkei-vpe-server/virtual_network'
-require 'renkei-vpe-server/virtual_network_pool'
-require 'renkei-vpe-server/vm_type'
-require 'renkei-vpe-server/vm_type_pool'
-require 'renkei-vpe-server/virtual_machine'
-require 'renkei-vpe-server/virtual_machine_pool'
+require 'renkei-vpe-server/model'
+require 'renkei-vpe-server/handler'
 
 ##############################################################################
 # RenkeiVPE module for the server
@@ -63,43 +49,15 @@ module RenkeiVPE
       log.info 'Renkei VPE server starts'
       log.info config.to_s
 
-      # initialize database
-      RenkeiVPE::Model.init(DB_FILE)
-
       # initialize one client
       RenkeiVPE::OpenNebulaClient.init(config.one_endpoint)
 
-      # setup xml rpc methods
-      rpcms = [
-               [User::INTERFACE,               User.new],
-               [UserPool::INTERFACE,           UserPool.new],
-               [Image::INTERFACE,              Image.new],
-               [ImagePool::INTERFACE,          ImagePool.new],
-               [Zone::INTERFACE,               Zone.new],
-               [ZonePool::INTERFACE,           ZonePool.new],
-               [Host::INTERFACE,               Host.new],
-               [HostPool::INTERFACE,           HostPool.new],
-               [VirtualNetwork::INTERFACE,     VirtualNetwork.new],
-               [VirtualNetworkPool::INTERFACE, VirtualNetworkPool.new],
-               [VMType::INTERFACE,             VMType.new],
-               [VMTypePool::INTERFACE,         VMTypePool.new],
-               [VirtualMachine::INTERFACE,     VirtualMachine.new],
-               [VirtualMachinePool::INTERFACE, VirtualMachinePool.new],
-              ]
+      # initialize database
+      RenkeiVPE::Model.init(DB_FILE)
 
       # setup xml rpc server
       @server = XMLRPC::Server.new(config.port)
-      rpcms.each do |iface, obj|
-        @server.add_handler(iface, obj)
-      end
-      # to support system.listMethods, system.methodSignature
-      # and system.methodHelp
-      @server.add_introspection
-      # when method missing and wrong arguments
-      @server.set_default_handler do |name, *args|
-        raise XMLRPC::FaultException.new(-99, "Method #{name} missing" +
-                                         " or wrong number of parameters!")
-      end
+      RenkeiVPE::Handler.init(@server)
     end
 
     def start
