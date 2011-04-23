@@ -33,7 +33,7 @@ SQL
           "id=#{@id},"                    +
           "name='#{@name}',"              +
           "cpu=#{@cpu},"                  +
-          "memory=#{@memory}"             +
+          "memory=#{@memory},"            +
           "description='#{@description}'" +
           ">"
       end

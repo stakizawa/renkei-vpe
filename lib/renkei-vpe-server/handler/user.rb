@@ -65,7 +65,7 @@ module RenkeiVPE
       #             about the user
       def info(session, id)
         task('rvpe.user.info', session, true) do
-          user = RenkeiVPE::Model::User.find_by_id(id)[0]
+          user = User.find_by_id(id)[0]
           raise "User[#{id}] is not found" unless user
           rc = call_one_xmlrpc('one.user.info', session, user.oid)
           raise rc[1] unless rc[0]
@@ -89,14 +89,14 @@ module RenkeiVPE
       #             generated for this user
       def allocate(session, name, passwd)
         task('rvpe.user.allocate', session, true) do
-          user = RenkeiVPE::Model::User.find_by_name(name)[0]
+          user = User.find_by_name(name)[0]
           raise "User[#{name}] already exists." if user
 
           rc = call_one_xmlrpc('one.user.allocate', session, name, passwd)
           raise rc[1] unless rc[0]
 
           begin
-            user = RenkeiVPE::Model::User.new(-1, rc[1], name, 1, '')
+            user = User.new(-1, rc[1], name, 1, '')
             user.create
           rescue => e
             call_one_xmlrpc('one.user.delete', session, rc[1])
@@ -115,7 +115,7 @@ module RenkeiVPE
       #             otherwise it does not exist.
       def delete(session, id)
         task('rvpe.user.delete', session, true) do
-          user = RenkeiVPE::Model::User.find_by_id(id)[0]
+          user = User.find_by_id(id)[0]
           raise "User[#{id}] does not exist." unless user
 
           rc = call_one_xmlrpc('one.user.delete', session, user.oid)
@@ -135,7 +135,7 @@ module RenkeiVPE
       #             otherwise it is the user id.
       def enable(session, id, enabled)
         task('rvpe.user.enable', session, true) do
-          user = RenkeiVPE::Model::User.find_by_id(id)[0]
+          user = User.find_by_id(id)[0]
           raise "User[#{id}] does not exist." unless user
 
           if enabled
@@ -158,7 +158,7 @@ module RenkeiVPE
       #             otherwise it does not exist.
       def passwd(session, id, passwd)
         task('rvpe.user.passwd', session, true) do
-          user = RenkeiVPE::Model::User.find_by_id(id)[0]
+          user = User.find_by_id(id)[0]
           raise "User[#{id}] does not exist." unless user
 
           call_one_xmlrpc('one.user.passwd', session, user.oid, passwd)
@@ -175,7 +175,7 @@ module RenkeiVPE
       #             otherwise it does not exist.
       def enable_zone(session, id, enabled, zone_id)
         task('rvpe.user.enable_zone', session, true) do
-          user = RenkeiVPE::Model::User.find_by_id(id)[0]
+          user = User.find_by_id(id)[0]
           raise "User[#{id}] does not exist." unless user
 
           zids = user.zones.strip.split(/\s+/).map { |i| i.to_i }
@@ -201,11 +201,11 @@ module RenkeiVPE
       # +id+ id of the user
       def self.modify_onexml(e, id=nil)
         if id
-          user = RenkeiVPE::Model::User.find_by_id(id)[0]
+          user = User.find_by_id(id)[0]
         else
           name_e = e.get_elements('NAME')[0]
           name = name_e.get_text
-          user = RenkeiVPE::Model::User.find_by_name(name)[0]
+          user = User.find_by_name(name)[0]
         end
 
         # 1. replace user id

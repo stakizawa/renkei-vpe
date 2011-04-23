@@ -13,6 +13,7 @@ module RenkeiVPE
     # super class.
     class BaseHandler
       include RenkeiVPE::OpenNebulaClient
+      include RenkeiVPE::Model
 
       def initialize
         @lock = Mutex.new

@@ -146,7 +146,7 @@ when 'create'
   user = RenkeiVPE::User.new(RenkeiVPE::User.build_xml, client)
   rc = user.allocate(name, pass)
   if is_successful?(rc)
-    puts "NAME: " + user.name
+    puts "User[#{user.name}] is created."
   else
     $stderr.puts rc.message
     exit 1
@@ -162,7 +162,7 @@ when 'delete'
   user = RenkeiVPE::User.new_with_id(id, client)
   rc = user.delete
   if is_successful?(rc)
-    puts "NAME deleted: " + name
+    puts "User[#{name}] is deleted."
   else
     $stderr.puts rc.message
     exit 1
@@ -179,7 +179,7 @@ when 'passwd'
   user = RenkeiVPE::User.new_with_id(id, client)
   rc = user.passwd(pass)
   if is_successful?(rc)
-    puts "Password for the user is changed: " + name
+    puts "Password for User[#{name}] is changed."
   else
     $stderr.puts rc.message
     exit 1
@@ -195,7 +195,7 @@ when 'enable'
     user = RenkeiVPE::User.new_with_id(id, client)
     rc = user.enable
     if is_successful?(rc)
-      puts "User enabled: #{user_name}"
+      puts "User[#{user_name}] is enabled."
     else
       $stderr.puts rc.message
       exit 1
@@ -212,7 +212,7 @@ when 'disable'
     user = RenkeiVPE::User.new_with_id(id, client)
     rc = user.disable
     if is_successful?(rc)
-      puts "User disabled: #{user_name}"
+      puts "User[#{user_name}] is disabled."
     else
       $stderr.puts rc.message
       exit 1

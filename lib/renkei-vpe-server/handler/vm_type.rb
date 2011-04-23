@@ -37,7 +37,7 @@ module RenkeiVPE
       def pool(session)
         task('rvpe.vmtype.pool', session) do
           pool_e = REXML::Element.new('VMTYPE_POOL')
-          RenkeiVPE::Model::VMType.each do |type|
+          VMType.each do |type|
             type_e = VMTypeHandler.to_xml_element(type)
             pool_e.add(type_e)
           end
@@ -56,7 +56,7 @@ module RenkeiVPE
       #             about the user
       def info(session, id)
         task('rvpe.vmtype.info', session) do
-          type = RenkeiVPE::Model::VMType.find_by_id(id)[0]
+          type = VMType.find_by_id(id)[0]
           raise "VMType[#{id}] is not found." unless type
 
           type_e = VMTypeHandler.to_xml_element(type)
@@ -79,14 +79,14 @@ module RenkeiVPE
           type_def = ResourceFile::Parser.load_yaml(template)
 
           name = type_def[ResourceFile::VMType::NAME]
-          type = RenkeiVPE::Model::VMType.find_by_name(name)[0]
+          type = VMType.find_by_name(name)[0]
           raise "VMType[#{name}] already exists." if type
 
-          type = RenkeiVPE::Model::VMType.new(-1,
-                                              type_def[ResourceFile::VMType::NAME],
-                                              type_def[ResourceFile::VMType::CPU],
-                                              type_def[ResourceFile::VMType::MEMORY],
-                                              type_def[ResourceFile::VMType::DESCRIPTION])
+          type = VMType.new(-1,
+                            type_def[ResourceFile::VMType::NAME],
+                            type_def[ResourceFile::VMType::CPU],
+                            type_def[ResourceFile::VMType::MEMORY],
+                            type_def[ResourceFile::VMType::DESCRIPTION])
           type.create
 
           [true, type.id]
@@ -101,7 +101,7 @@ module RenkeiVPE
       #             otherwise it does not exist.
       def delete(session, id)
         task('rvpe.vmtype.delete', session, true) do
-          type = RenkeiVPE::Model::VMType.find_by_id(id)[0]
+          type = VMType.find_by_id(id)[0]
           raise "VMType[#{id}] does not exist." unless type
 
           type.delete
