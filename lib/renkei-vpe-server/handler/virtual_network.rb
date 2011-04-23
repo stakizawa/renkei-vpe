@@ -29,7 +29,6 @@ module RenkeiVPE
              'remove_ntp')
       end
 
-
       ########################################################################
       # Implement xml rpc functions
       ########################################################################
@@ -43,7 +42,7 @@ module RenkeiVPE
         task('rvpe.vn.pool', session) do
           pool_e = REXML::Element.new('VNET_POOL')
           VirtualNetwork.each do |vnet|
-            vnet_e = VNetHandler.to_xml_element(vnet, session)
+            vnet_e = vnet.to_xml_element(session)
             pool_e.add(vnet_e)
           end
           doc = REXML::Document.new
@@ -64,7 +63,7 @@ module RenkeiVPE
           vnet = VirtualNetwork.find_by_id(id)[0]
           raise "VirtualNetwork[#{id}] is not found." unless vnet
 
-          vnet_e = VNetHandler.to_xml_element(vnet, session)
+          vnet_e = vnet.to_xml_element(session)
           doc = REXML::Document.new
           doc.add(vnet_e)
 
@@ -204,118 +203,6 @@ module RenkeiVPE
         end
 
         return [true, '']
-      end
-
-
-      # It raises an exception when access to one fail
-      def self.to_xml_element(vnet, one_session)
-        # get one vnet
-        rc = RenkeiVPE::OpenNebulaClient.call_one_xmlrpc('one.vn.info',
-                                                         one_session,
-                                                         vnet.oid)
-        raise rc[1] unless rc[0]
-        onevn_doc = REXML::Document.new(rc[1])
-
-        # toplevel VNET element
-        vnet_e = REXML::Element.new('VNET')
-
-        # set id
-        id_e = REXML::Element.new('ID')
-        id_e.add(REXML::Text.new(vnet.id.to_s))
-        vnet_e.add(id_e)
-
-        # set name
-        name_e = REXML::Element.new('NAME')
-        name_e.add(REXML::Text.new(vnet.name))
-        vnet_e.add(name_e)
-
-        # set zone name
-        name_e = REXML::Element.new('ZONE')
-        name_e.add(REXML::Text.new(vnet.zone_name))
-        vnet_e.add(name_e)
-
-        # set unique name
-        name_e = REXML::Element.new('UNIQUE_NAME')
-        name_e.add(REXML::Text.new(vnet.unique_name))
-        vnet_e.add(name_e)
-
-        # set description
-        desc_e = REXML::Element.new('DESCRIPTION')
-        desc_e.add(REXML::Text.new(vnet.description))
-        vnet_e.add(desc_e)
-
-        # set network address
-        addr_e = REXML::Element.new('ADDRESS')
-        addr_e.add(REXML::Text.new(vnet.address))
-        vnet_e.add(addr_e)
-
-        # set netmask
-        mask_e = REXML::Element.new('NETMASK')
-        mask_e.add(REXML::Text.new(vnet.netmask))
-        vnet_e.add(mask_e)
-
-        # set gateway
-        gw_e = REXML::Element.new('GATEWAY')
-        gw_e.add(REXML::Text.new(vnet.gateway))
-        vnet_e.add(gw_e)
-
-        # set dns servers
-        dns_e = REXML::Element.new('DNS')
-        dns_e.add(REXML::Text.new(vnet.dns))
-        vnet_e.add(dns_e)
-
-        # set ntp servers
-        ntp_e = REXML::Element.new('NTP')
-        ntp_e.add(REXML::Text.new(vnet.ntp))
-        vnet_e.add(ntp_e)
-
-        # set physical host side interface
-        if_e = REXML::Element.new('HOST_INTERFACE')
-        if_e.add(onevn_doc.get_text('VNET/BRIDGE'))
-        vnet_e.add(if_e)
-
-
-        # set virtual host leases
-        leases_e = REXML::Element.new('LEASES')
-        vnet_e.add(leases_e)
-        vnet.leases.strip.split(/\s+/).map{ |i| i.to_i }.each do |hid|
-          not_found_msg = "VMLease[#{hid}] is not found."
-          l = VMLease.find_by_id(hid)[0]
-          raise not_found_msg unless l
-          ols = onevn_doc.get_elements("/VNET/LEASES/LEASE[IP='#{l.address}']")
-          if ols.size == 0
-            raise not_found_msg
-          elsif ols.size > 1
-            raise "Multiple definition of VM lease: #{l.address}"
-          end
-          ol = ols[0]
-
-          lease_e = REXML::Element.new('LEASE')
-          e = REXML::Element.new('ID')
-          e.add(REXML::Text.new(hid.to_s))
-          lease_e.add(e)
-          e = REXML::Element.new('NAME')
-          e.add(REXML::Text.new(l.name))
-          lease_e.add(e)
-          e = REXML::Element.new('IP')
-          e.add(REXML::Text.new(l.address))
-          lease_e.add(e)
-          e = REXML::Element.new('MAC')
-          e.add(ol.get_text('MAC'))
-          lease_e.add(e)
-          e = REXML::Element.new('USED')
-          e.add(REXML::Text.new(l.used.to_s))
-          lease_e.add(e)
-          e = REXML::Element.new('ASSIGNED_TO')
-          e.add(REXML::Text.new(l.assigned_to.to_s))
-          lease_e.add(e)
-          e = REXML::Element.new('VID')
-          e.add(ol.get_text('VID'))
-          lease_e.add(e)
-          leases_e.add(lease_e)
-        end
-
-        return vnet_e
       end
 
     end

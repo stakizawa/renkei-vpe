@@ -85,6 +85,83 @@ SQL
           ">"
       end
 
+      def to_xml_element(one_session)
+        # get one vnet
+        rc = call_one_xmlrpc('one.vn.info', one_session, @oid)
+        raise rc[1] unless rc[0]
+        onevn_doc = REXML::Document.new(rc[1])
+
+        # toplevel VNET element
+        vnet_e = REXML::Element.new('VNET')
+
+        # set id
+        id_e = REXML::Element.new('ID')
+        id_e.add(REXML::Text.new(@id.to_s))
+        vnet_e.add(id_e)
+
+        # set name
+        name_e = REXML::Element.new('NAME')
+        name_e.add(REXML::Text.new(@name))
+        vnet_e.add(name_e)
+
+        # set zone name
+        name_e = REXML::Element.new('ZONE')
+        name_e.add(REXML::Text.new(@zone_name))
+        vnet_e.add(name_e)
+
+        # set unique name
+        name_e = REXML::Element.new('UNIQUE_NAME')
+        name_e.add(REXML::Text.new(@unique_name))
+        vnet_e.add(name_e)
+
+        # set description
+        desc_e = REXML::Element.new('DESCRIPTION')
+        desc_e.add(REXML::Text.new(@description))
+        vnet_e.add(desc_e)
+
+        # set network address
+        addr_e = REXML::Element.new('ADDRESS')
+        addr_e.add(REXML::Text.new(@address))
+        vnet_e.add(addr_e)
+
+        # set netmask
+        mask_e = REXML::Element.new('NETMASK')
+        mask_e.add(REXML::Text.new(@netmask))
+        vnet_e.add(mask_e)
+
+        # set gateway
+        gw_e = REXML::Element.new('GATEWAY')
+        gw_e.add(REXML::Text.new(@gateway))
+        vnet_e.add(gw_e)
+
+        # set dns servers
+        dns_e = REXML::Element.new('DNS')
+        dns_e.add(REXML::Text.new(@dns))
+        vnet_e.add(dns_e)
+
+        # set ntp servers
+        ntp_e = REXML::Element.new('NTP')
+        ntp_e.add(REXML::Text.new(@ntp))
+        vnet_e.add(ntp_e)
+
+        # set physical host side interface
+        if_e = REXML::Element.new('HOST_INTERFACE')
+        if_e.add(onevn_doc.get_text('VNET/BRIDGE'))
+        vnet_e.add(if_e)
+
+
+        # set virtual host leases
+        leases_e = REXML::Element.new('LEASES')
+        vnet_e.add(leases_e)
+        @leases.strip.split(/\s+/).map{ |i| i.to_i }.each do |hid|
+          l = VMLease.find_by_id(hid)[0]
+          raise not_found_msg unless l
+          leases_e.add(l.to_xml_element(one_session))
+        end
+
+        return vnet_e
+      end
+
       protected
 
       def check_fields

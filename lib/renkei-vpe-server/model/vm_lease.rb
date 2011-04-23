@@ -55,6 +55,52 @@ SQL
           ">"
       end
 
+      def to_xml_element(one_session, onevnet_doc=nil)
+        unless onevnet_doc
+          # obtain OpenNebula's vnet info
+          vnet = VirtualNetwork.find_by_id(@vnetid)[0]
+          raise "VirtualNetwork[#{id}] is not found." unless vnet
+          rc = call_one_xmlrpc('one.vn.info', one_session, vnet.oid)
+          raise rc[1] unless rc[0]
+          onevnet_doc = REXML::Document.new(rc[1])
+        end
+
+        onel_es = onevnet_doc.get_elements("/VNET/LEASES/LEASE[IP='#{@address}']")
+        if onel_es.size != 1
+          if onel_es.size == 0
+            msg = "DB error: VMLease[#{@address}] is defined in RenkeiVPE, but not in OpenNebula."
+          else  # >= 1
+            msg = "DB error: VMLease[#{@address}] is multiply defined in OpenNebula."
+          end
+          raise msg
+        end
+        onel_e = onel_es[0]
+
+        lease_e = REXML::Element.new('LEASE')
+        e = REXML::Element.new('ID')
+        e.add(REXML::Text.new(@id.to_s))
+        lease_e.add(e)
+        e = REXML::Element.new('NAME')
+        e.add(REXML::Text.new(@name))
+        lease_e.add(e)
+        e = REXML::Element.new('IP')
+        e.add(REXML::Text.new(@address))
+        lease_e.add(e)
+        e = REXML::Element.new('MAC')
+        e.add(onel_e.get_text('MAC'))
+        lease_e.add(e)
+        e = REXML::Element.new('USED')
+        e.add(REXML::Text.new(@used.to_s))
+        lease_e.add(e)
+        e = REXML::Element.new('ASSIGNED_TO')
+        e.add(REXML::Text.new(@assigned_to.to_s))
+        lease_e.add(e)
+        e = REXML::Element.new('VID')
+        e.add(onel_e.get_text('VID'))
+        lease_e.add(e)
+        return lease_e
+      end
+
       protected
 
       def check_fields

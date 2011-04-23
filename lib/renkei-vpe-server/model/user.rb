@@ -50,6 +50,31 @@ SQL
           ">"
       end
 
+      def to_xml_element(one_session)
+        rc = call_one_xmlrpc('one.user.info', one_session, @oid)
+        raise rc[1] unless rc[0]
+        e = REXML::Document.new(rc[1]).elements['USER']
+
+        # 1. replace user id
+        e.delete_element('ID')
+        id_e = REXML::Element.new('ID')
+        id_e.add(REXML::Text.new(@id.to_s))
+        e.add(id_e)
+
+        # 2. replace enabled
+        e.delete_element('ENABLED')
+        enabled_e = REXML::Element.new('ENABLED')
+        enabled_e.add(REXML::Text.new(@enabled.to_s))
+        e.add(enabled_e)
+
+        # 3. insert zones
+        zones_e = REXML::Element.new('ZONES')
+        zones_e.add(REXML::Text.new(@zones))
+        e.add(zones_e)
+
+        return e
+      end
+
       protected
 
       def check_fields
@@ -77,6 +102,18 @@ SQL
           "zones='#{@zones}'"
       end
 
+      def self.each(one_session)
+        rc = RenkeiVPE::OpenNebulaClient.call_one_xmlrpc('one.userpool.info',
+                                                         one_session)
+        raise rc[1] unless rc[0]
+
+        doc = REXML::Document.new(rc[1])
+        doc.elements.each('USER_POOL/USER') do |e|
+          name = e.elements['NAME'].get_text
+          user = User.find_by_name(name)[0]
+          yield user
+        end
+      end
 
       def self.setup_attrs(u, attrs)
         return u unless attrs.size == 5

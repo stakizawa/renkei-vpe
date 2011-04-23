@@ -32,7 +32,6 @@ module RenkeiVPE
              'enable_zone')
       end
 
-
       ########################################################################
       # Implement xml rpc functions
       ########################################################################
@@ -44,14 +43,12 @@ module RenkeiVPE
       #             if successful this is the information string
       def pool(session)
         task('rvpe.user.pool', session, true) do
-          rc = call_one_xmlrpc('one.userpool.info', session)
-          raise rc[1] unless rc[0]
-
-          doc = REXML::Document.new(rc[1])
-          doc.each_element('/USER_POOL/USER') do |e|
-            UserHandler.modify_onexml(e)
+          pool_e = REXML::Element.new('USER_POOL')
+          User.each(session) do |user|
+            pool_e.add(user.to_xml_element(session))
           end
-
+          doc = REXML::Document.new
+          doc.add(pool_e)
           [true, doc.to_s]
         end
       end
@@ -67,14 +64,9 @@ module RenkeiVPE
         task('rvpe.user.info', session, true) do
           user = User.find_by_id(id)[0]
           raise "User[#{id}] is not found" unless user
-          rc = call_one_xmlrpc('one.user.info', session, user.oid)
-          raise rc[1] unless rc[0]
 
-          doc = REXML::Document.new(rc[1])
-          doc.each_element('/USER') do |e|
-            UserHandler.modify_onexml(e, id)
-          end
-
+          doc = REXML::Document.new
+          doc.add(user.to_xml_element(session))
           [true, doc.to_s]
         end
       end
@@ -195,37 +187,6 @@ module RenkeiVPE
 
           [true, '']
         end
-      end
-
-
-      # It modifies xml obtained from one.
-      # It does 1)replace user id, 2)replace enabled and 3)insert zones.
-      # +id+ id of the user
-      def self.modify_onexml(e, id=nil)
-        if id
-          user = User.find_by_id(id)[0]
-        else
-          name_e = e.get_elements('NAME')[0]
-          name = name_e.get_text
-          user = User.find_by_name(name)[0]
-        end
-
-        # 1. replace user id
-        e.delete_element('ID')
-        id_e = REXML::Element.new('ID')
-        id_e.add(REXML::Text.new(user.id.to_s))
-        e.add(id_e)
-
-        # 2. replace enabled
-        e.delete_element('ENABLED')
-        enabled_e = REXML::Element.new('ENABLED')
-        enabled_e.add(REXML::Text.new(user.enabled.to_s))
-        e.add(enabled_e)
-
-        # 3. insert zones
-        zones_e = REXML::Element.new('ZONES')
-        zones_e.add(REXML::Text.new(user.zones))
-        e.add(zones_e)
       end
 
     end

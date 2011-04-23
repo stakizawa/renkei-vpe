@@ -1,6 +1,8 @@
 require 'renkei-vpe-server/logger'
+require 'renkei-vpe-server/one_client'
 require 'rubygems'
 require 'sqlite3'
+require 'rexml/document'
 
 module RenkeiVPE
 
@@ -94,6 +96,7 @@ module RenkeiVPE
     ##########################################################################
     class BaseModel
       include EnhancedAttributes
+      include RenkeiVPE::OpenNebulaClient
 
       # name and schema of a table that stores instance of this model
       @table_name   = nil
@@ -135,6 +138,12 @@ module RenkeiVPE
         sql = "DELETE FROM #{table} WHERE id=#{@id}"
         Database.transaction(sql)
         @log.debug "Record[#{self}] is deleted from Table[#{table}]"
+      end
+
+      # It generates an xml document that represents instance of this class.
+      # +one_session+ a string that represents OpenNebula user session.
+      def to_xml_element(one_session)
+        raise NotImplementedException
       end
 
       protected

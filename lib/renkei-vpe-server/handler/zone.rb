@@ -57,7 +57,7 @@ module RenkeiVPE
           doc.add(pool_e)
 
           Zone.each do |z|
-            zone_e = ZoneHandler.to_xml_element(z, session)
+            zone_e = z.to_xml_element(session)
             pool_e.add(zone_e)
           end
 
@@ -77,7 +77,7 @@ module RenkeiVPE
           zone = Zone.find_by_id(id)[0]
           raise "Zone[#{id}] is not found." unless zone
 
-          zone_e = ZoneHandler.to_xml_element(zone, session)
+          zone_e = zone.to_xml_element(session)
           doc = REXML::Document.new
           doc.add(zone_e)
 
@@ -566,61 +566,6 @@ VN_DEF
 
         raise err_msg unless err_msg.size == 0
         return l.id
-      end
-
-
-      # It raises an exception when access to one fail
-      def self.to_xml_element(zone, one_session)
-        # toplevel ZONE element
-        zone_e = REXML::Element.new('ZONE')
-
-        # set id
-        id_e = REXML::Element.new('ID')
-        id_e.add(REXML::Text.new(zone.id.to_s))
-        zone_e.add(id_e)
-
-        # set name
-        name_e = REXML::Element.new('NAME')
-        name_e.add(REXML::Text.new(zone.name))
-        zone_e.add(name_e)
-
-        # set hosts
-        hosts_e = REXML::Element.new('HOSTS')
-        zone_e.add(hosts_e)
-        zone.hosts.strip.split(/\s+/).map{ |i| i.to_i }.each do |hid|
-          rc = RenkeiVPE::OpenNebulaClient.call_one_xmlrpc('one.host.info',
-                                                           one_session,
-                                                           hid)
-          raise rc[1] unless rc[0]
-
-          hid_e = REXML::Element.new('ID')
-          hid_e.add(REXML::Document.new(rc[1]).get_text('HOST/ID'))
-          hname_e = REXML::Element.new('NAME')
-          hname_e.add(REXML::Document.new(rc[1]).get_text('HOST/NAME'))
-          host_e = REXML::Element.new('HOST')
-          host_e.add(hid_e)
-          host_e.add(hname_e)
-          hosts_e.add(host_e)
-        end
-
-        # set networks
-        nets_e = REXML::Element.new('NETWORKS')
-        zone_e.add(nets_e)
-        zone.networks.strip.split(/\s+/).map{ |i| i.to_i }.each do |nid|
-          vnet = VirtualNetwork.find_by_id(nid)[0]
-          raise "VirtualNetwork[#{nid}] is not found." unless vnet
-
-          nid_e = REXML::Element.new('ID')
-          nid_e.add(REXML::Text.new(nid.to_s))
-          nname_e = REXML::Element.new('NAME')
-          nname_e.add(REXML::Text.new(vnet.name))
-          net_e = REXML::Element.new('NETWORK')
-          net_e.add(nid_e)
-          net_e.add(nname_e)
-          nets_e.add(net_e)
-        end
-
-        return zone_e
       end
 
     end

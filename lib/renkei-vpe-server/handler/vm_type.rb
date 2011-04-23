@@ -24,7 +24,6 @@ module RenkeiVPE
              'delete')
       end
 
-
       ########################################################################
       # Implement xml rpc functions
       ########################################################################
@@ -38,7 +37,7 @@ module RenkeiVPE
         task('rvpe.vmtype.pool', session) do
           pool_e = REXML::Element.new('VMTYPE_POOL')
           VMType.each do |type|
-            type_e = VMTypeHandler.to_xml_element(type)
+            type_e = type.to_xml_element
             pool_e.add(type_e)
           end
           doc = REXML::Document.new
@@ -59,7 +58,7 @@ module RenkeiVPE
           type = VMType.find_by_id(id)[0]
           raise "VMType[#{id}] is not found." unless type
 
-          type_e = VMTypeHandler.to_xml_element(type)
+          type_e = type.to_xml_element
           doc = REXML::Document.new
           doc.add(type_e)
 
@@ -107,39 +106,6 @@ module RenkeiVPE
           type.delete
           [true, '']
         end
-      end
-
-
-      def self.to_xml_element(vm_type)
-        # toplevel VM Type element
-        type_e = REXML::Element.new('VMTYPE')
-
-        # set id
-        id_e = REXML::Element.new('ID')
-        id_e.add(REXML::Text.new(vm_type.id.to_s))
-        type_e.add(id_e)
-
-        # set name
-        name_e = REXML::Element.new('NAME')
-        name_e.add(REXML::Text.new(vm_type.name))
-        type_e.add(name_e)
-
-        # set cpu
-        cpu_e = REXML::Element.new('CPU')
-        cpu_e.add(REXML::Text.new(vm_type.cpu.to_s))
-        type_e.add(cpu_e)
-
-        # set memory
-        mem_e = REXML::Element.new('MEMORY')
-        mem_e.add(REXML::Text.new(vm_type.memory.to_s))
-        type_e.add(mem_e)
-
-        # set description
-        desc_e = REXML::Element.new('DESCRIPTION')
-        desc_e.add(REXML::Text.new(vm_type.description))
-        type_e.add(desc_e)
-
-        return type_e
       end
 
     end

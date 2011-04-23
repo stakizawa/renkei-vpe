@@ -27,7 +27,6 @@ module RenkeiVPE
              'mark_save')
       end
 
-
       ########################################################################
       # Implement xml rpc functions
       ########################################################################
@@ -57,7 +56,7 @@ module RenkeiVPE
             elsif flag >= 0
               next if vm.user_id != flag
             end
-            vm_e = VMHandler.to_xml_element(vm, session)
+            vm_e = vm.to_xml_element(session)
             stat = vm_e.get_elements('STATE')[0].text.to_i
             next if stat == 6 && history != 1
             pool_e.add(vm_e)
@@ -80,7 +79,7 @@ module RenkeiVPE
           vm = VirtualMachine.find_by_id(id)[0]
           raise "VirtualMachine[#{id}] is not found." unless vm
 
-          vm_e = VMHandler.to_xml_element(vm, session)
+          vm_e = vm.to_xml_element(session)
           doc = REXML::Document.new
           doc.add(vm_e)
           [true, doc.to_s]
@@ -293,136 +292,6 @@ EOS
 
           [true, '']
         end
-      end
-
-
-      # It raises an exception when access to one fail
-      def self.to_xml_element(vm, one_session)
-        # get Data
-        no_data_msg = 'Missing, manually deleted.'
-        # one vm
-        rc = RenkeiVPE::OpenNebulaClient.call_one_xmlrpc('one.vm.info',
-                                                         one_session,
-                                                         vm.oid)
-        raise rc[1] unless rc[0]
-        onevm_doc = REXML::Document.new(rc[1])
-        # one image
-        rc = RenkeiVPE::OpenNebulaClient.call_one_xmlrpc('one.image.info',
-                                                         one_session,
-                                                         vm.image_id)
-        if rc[0]
-          oneimg_doc = REXML::Document.new(rc[1])
-          image_name = oneimg_doc.elements['/IMAGE/NAME'].get_text
-        else
-          image_name = no_data_msg
-        end
-        # from Renkei VPE DB
-        user = User.find_by_id(vm.user_id)[0]
-        if user
-          user_name = user.name
-        else
-          user_name = no_data_msg
-        end
-        zone = Zone.find_by_id(vm.zone_id)[0]
-        if zone
-          zone_name = zone.name
-        else
-          zone_name = no_data_msg
-        end
-        lease = VMLease.find_by_id(vm.lease_id)[0]
-        if lease
-          lease_name = lease.name
-          lease_address = lease.address
-        else
-          lease_name = no_data_msg
-          lease_address = no_data_msg
-        end
-        type = VMType.find_by_id(vm.type_id)[0]
-        if zone
-          type_name = type.name
-        else
-          type_name = no_data_msg
-        end
-
-        # toplevel VNET element
-        vm_e = REXML::Element.new('VM')
-
-        # set id
-        e = REXML::Element.new('ID')
-        e.add(REXML::Text.new(vm.id.to_s))
-        vm_e.add(e)
-
-        # set name
-        e = REXML::Element.new('NAME')
-        e.add(REXML::Text.new(lease_name))
-        vm_e.add(e)
-
-        # set address
-        e = REXML::Element.new('ADDRESS')
-        e.add(REXML::Text.new(lease_address))
-        vm_e.add(e)
-
-        # set user id
-        e = REXML::Element.new('USER_ID')
-        e.add(REXML::Text.new(vm.user_id.to_s))
-        vm_e.add(e)
-
-        # set user name
-        e = REXML::Element.new('USER_NAME')
-        e.add(REXML::Text.new(user_name))
-        vm_e.add(e)
-
-        # set zone id
-        e = REXML::Element.new('ZONE_ID')
-        e.add(REXML::Text.new(vm.zone_id.to_s))
-        vm_e.add(e)
-
-        # set zone name
-        e = REXML::Element.new('ZONE_NAME')
-        e.add(REXML::Text.new(zone_name))
-        vm_e.add(e)
-
-        # set type id
-        e = REXML::Element.new('TYPE_ID')
-        e.add(REXML::Text.new(vm.type_id.to_s))
-        vm_e.add(e)
-
-        # set type name
-        e = REXML::Element.new('TYPE_NAME')
-        e.add(REXML::Text.new(type_name))
-        vm_e.add(e)
-
-        # set image id
-        e = REXML::Element.new('IMAGE_ID')
-        e.add(REXML::Text.new(vm.image_id.to_s))
-        vm_e.add(e)
-
-        # set image name
-        e = REXML::Element.new('IMAGE_NAME')
-        e.add(REXML::Text.new(image_name))
-        vm_e.add(e)
-
-        # set elements from one vm xml
-        targets = [
-                   '/VM/LAST_POLL',
-                   '/VM/STATE',
-                   '/VM/LCM_STATE',
-                   '/VM/STIME',
-                   '/VM/ETIME',
-                   '/VM/MEMORY',
-                   '/VM/CPU',
-                   '/VM/NET_TX',
-                   '/VM/NET_RX',
-                   '/VM/LAST_SEQ',
-                   '/VM/TEMPLATE',
-                   '/VM/HISTORY'
-                  ]
-        targets.each do |t|
-          e = onevm_doc.elements[t]
-          vm_e.add(e) if e
-        end
-
-        return vm_e
       end
 
     end

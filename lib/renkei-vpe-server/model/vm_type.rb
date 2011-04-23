@@ -50,6 +50,38 @@ SQL
           ">"
       end
 
+      def to_xml_element
+        # toplevel VM Type element
+        type_e = REXML::Element.new('VMTYPE')
+
+        # set id
+        id_e = REXML::Element.new('ID')
+        id_e.add(REXML::Text.new(@id.to_s))
+        type_e.add(id_e)
+
+        # set name
+        name_e = REXML::Element.new('NAME')
+        name_e.add(REXML::Text.new(@name))
+        type_e.add(name_e)
+
+        # set cpu
+        cpu_e = REXML::Element.new('CPU')
+        cpu_e.add(REXML::Text.new(@cpu.to_s))
+        type_e.add(cpu_e)
+
+        # set memory
+        mem_e = REXML::Element.new('MEMORY')
+        mem_e.add(REXML::Text.new(@memory.to_s))
+        type_e.add(mem_e)
+
+        # set description
+        desc_e = REXML::Element.new('DESCRIPTION')
+        desc_e.add(REXML::Text.new(@description))
+        type_e.add(desc_e)
+
+        return type_e
+      end
+
       protected
 
       def check_fields
