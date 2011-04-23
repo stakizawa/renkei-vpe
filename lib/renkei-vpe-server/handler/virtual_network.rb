@@ -4,11 +4,14 @@ require 'rexml/document'
 module RenkeiVPE
   module Handler
 
-    class VirtualNetwork < BaseHandler
+    class VNetHandler < BaseHandler
       ########################################################################
       # Define xml rpc interfaces
       ########################################################################
       INTERFACE = XMLRPC::interface('rvpe.vn') do
+        meth('val pool(string)',
+             'Retrieve information about virtual network group',
+             'pool')
         meth('val info(string, int)',
              'Retrieve information about the virtual network',
              'info')
@@ -31,6 +34,24 @@ module RenkeiVPE
       # Implement xml rpc functions
       ########################################################################
 
+      # return information about virtual network group.
+      # +session+   string that represents user session
+      # +return[0]+ true or false whenever is successful or not
+      # +return[1]+ if an error occurs this is error message,
+      #             if successful this is the information string
+      def pool(session)
+        task('rvpe.vn.pool', session) do
+          pool_e = REXML::Element.new('VNET_POOL')
+          RenkeiVPE::Model::VirtualNetwork.each do |vnet|
+            vnet_e = VNetHandler.to_xml_element(vnet, session)
+            pool_e.add(vnet_e)
+          end
+          doc = REXML::Document.new
+          doc.add(pool_e)
+          [true, doc.to_s]
+        end
+      end
+
       # return information about this virtual network.
       # +session+   string that represents user session
       # +id+        id of the virtual network
@@ -43,7 +64,7 @@ module RenkeiVPE
           vnet = RenkeiVPE::Model::VirtualNetwork.find_by_id(id)[0]
           raise "VirtualNetwork[#{id}] is not found." unless vnet
 
-          vnet_e = VirtualNetwork.to_xml_element(vnet, session)
+          vnet_e = VNetHandler.to_xml_element(vnet, session)
           doc = REXML::Document.new
           doc.add(vnet_e)
 

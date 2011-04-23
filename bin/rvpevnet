@@ -30,6 +30,20 @@ client = RenkeiVPE::Client.new()
 xml_output = false
 verbose    = false
 
+list_columns = {
+  :id      => { :name => 'ID',
+                :size => 4,
+                :proc => lambda {|d,e| d.id} },
+  :name    => { :name => 'NAME',
+                :size => 30,
+                :proc => lambda {|d,e| d.name} },
+  :zone    => { :name => 'ZONE',
+                :size => 20,
+                :proc => lambda {|d,e| d['ZONE']} },
+
+  :default => [:id, :name, :zone]
+}
+
 ##############################################################################
 # Functions
 ##############################################################################
@@ -53,13 +67,13 @@ end
 
 def add_servers(args, method, client)
   send_vnet(args, method, client) do |vn_name, servers|
-    puts "#{servers} added to #{vn_name}."
+    puts "#{servers} added to VNet[#{vn_name}]."
   end
 end
 
 def remove_servers(args, method, client)
   send_vnet(args, method, client) do |vn_name, servers|
-    puts "#{servers} removed from #{vn_name}."
+    puts "#{servers} removed from VNet[#{vn_name}]."
   end
 end
 
@@ -221,6 +235,11 @@ Commands:
         $ #{CMD_NAME} show 'tokyo tech' csi_grid 'campus net1'
 
 
+    list <-x>
+        list all virtual networks.
+        This is a debug-purpose command for #{CMD_NAME}.
+
+
     help
         show this message.
 
@@ -342,6 +361,22 @@ when 'show'
       print_leases(vnet, verbose)
       puts; puts
     end
+  end
+
+#######################################
+# list hosts
+when 'list'
+  vnet_pool = RenkeiVPE::VirtualNetworkPool.new(client)
+  rc = vnet_pool.info
+  if is_error?(rc)
+    $stderr.puts rc.message
+    exit 1
+  end
+
+  if xml_output
+    puts vnet_pool.to_xml
+  else
+    print_xml_friendly(list_columns, vnet_pool, verbose)
   end
 
 #######################################

@@ -3,11 +3,14 @@ require 'renkei-vpe-server/handler/base'
 module RenkeiVPE
   module Handler
 
-    class Host < BaseHandler
+    class HostHandler < BaseHandler
       ########################################################################
       # Define xml rpc interfaces
       ########################################################################
       INTERFACE = XMLRPC::interface('rvpe.host') do
+        meth('val pool(string)',
+             'Retrieve information about host group',
+             'pool')
         meth('val info(string, int)',
              'Retrieve information about the host',
              'info')
@@ -20,6 +23,17 @@ module RenkeiVPE
       ########################################################################
       # Implement xml rpc functions
       ########################################################################
+
+      # return information about host group.
+      # +session+   string that represents user session
+      # +return[0]+ true or false whenever is successful or not
+      # +return[1]+ if an error occurs this is error message,
+      #             if successful this is the information string
+      def pool(session)
+        task('rvpe.host.pool', session) do
+          call_one_xmlrpc('one.hostpool.info', session)
+        end
+      end
 
       # return information about this host.
       # +session+   string that represents user session

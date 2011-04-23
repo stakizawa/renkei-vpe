@@ -1,18 +1,11 @@
 require 'renkei-vpe-server/handler/base'
 require 'renkei-vpe-server/handler/user'
-require 'renkei-vpe-server/handler/user_pool'
 require 'renkei-vpe-server/handler/image'
-require 'renkei-vpe-server/handler/image_pool'
 require 'renkei-vpe-server/handler/zone'
-require 'renkei-vpe-server/handler/zone_pool'
 require 'renkei-vpe-server/handler/host'
-require 'renkei-vpe-server/handler/host_pool'
 require 'renkei-vpe-server/handler/virtual_network'
-require 'renkei-vpe-server/handler/virtual_network_pool'
 require 'renkei-vpe-server/handler/vm_type'
-require 'renkei-vpe-server/handler/vm_type_pool'
 require 'renkei-vpe-server/handler/virtual_machine'
-require 'renkei-vpe-server/handler/virtual_machine_pool'
 
 module RenkeiVPE
   ############################################################################
@@ -23,20 +16,13 @@ module RenkeiVPE
     def init(rpc_server)
       # xml rpc interface
       ifs = [
-             [User::INTERFACE,               User.new],
-             [UserPool::INTERFACE,           UserPool.new],
-             [Image::INTERFACE,              Image.new],
-             [ImagePool::INTERFACE,          ImagePool.new],
-             [Zone::INTERFACE,               Zone.new],
-             [ZonePool::INTERFACE,           ZonePool.new],
-             [Host::INTERFACE,               Host.new],
-             [HostPool::INTERFACE,           HostPool.new],
-             [VirtualNetwork::INTERFACE,     VirtualNetwork.new],
-             [VirtualNetworkPool::INTERFACE, VirtualNetworkPool.new],
-             [VMType::INTERFACE,             VMType.new],
-             [VMTypePool::INTERFACE,         VMTypePool.new],
-             [VirtualMachine::INTERFACE,     VirtualMachine.new],
-             [VirtualMachinePool::INTERFACE, VirtualMachinePool.new],
+             [UserHandler::INTERFACE,   UserHandler.new],
+             [ImageHandler::INTERFACE,  ImageHandler.new],
+             [ZoneHandler::INTERFACE,   ZoneHandler.new],
+             [HostHandler::INTERFACE,   HostHandler.new],
+             [VNetHandler::INTERFACE,   VNetHandler.new],
+             [VMTypeHandler::INTERFACE, VMTypeHandler.new],
+             [VMHandler::INTERFACE,     VMHandler.new],
             ]
 
       ifs.each do |iface, obj|

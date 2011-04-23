@@ -5,11 +5,14 @@ require 'rexml/document'
 module RenkeiVPE
   module Handler
 
-    class VMType < BaseHandler
+    class VMTypeHandler < BaseHandler
       ########################################################################
       # Define xml rpc interfaces
       ########################################################################
       INTERFACE = XMLRPC::interface('rvpe.vmtype') do
+        meth('val pool(string)',
+             'Retrieve information about vm type group',
+             'pool')
         meth('val info(string, int)',
              'Retrieve information about the vm type',
              'info')
@@ -26,6 +29,24 @@ module RenkeiVPE
       # Implement xml rpc functions
       ########################################################################
 
+      # return information about vm type group.
+      # +session+   string that represents user session
+      # +return[0]+ true or false whenever is successful or not
+      # +return[1]+ if an error occurs this is error message,
+      #             if successful this is the information string
+      def pool(session)
+        task('rvpe.vmtype.pool', session) do
+          pool_e = REXML::Element.new('VMTYPE_POOL')
+          RenkeiVPE::Model::VMType.each do |type|
+            type_e = VMTypeHandler.to_xml_element(type)
+            pool_e.add(type_e)
+          end
+          doc = REXML::Document.new
+          doc.add(pool_e)
+          [true, doc.to_s]
+        end
+      end
+
       # return information about this vm type.
       # +session+   string that represents user session
       # +id+        id of the user
@@ -38,7 +59,7 @@ module RenkeiVPE
           type = RenkeiVPE::Model::VMType.find_by_id(id)[0]
           raise "VMType[#{id}] is not found." unless type
 
-          type_e = VMType.to_xml_element(type)
+          type_e = VMTypeHandler.to_xml_element(type)
           doc = REXML::Document.new
           doc.add(type_e)
 

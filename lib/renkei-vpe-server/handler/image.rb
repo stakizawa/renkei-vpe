@@ -3,11 +3,14 @@ require 'renkei-vpe-server/handler/base'
 module RenkeiVPE
   module Handler
 
-    class Image < BaseHandler
+    class ImageHandler < BaseHandler
       ########################################################################
       # Define xml rpc interfaces
       ########################################################################
       INTERFACE = XMLRPC::interface('rvpe.image') do
+        meth('val pool(string, int)',
+             'Retrieve information about image group',
+             'pool')
         meth('val info(string, int)',
              'Retrieve information about the image',
              'info')
@@ -29,6 +32,23 @@ module RenkeiVPE
       ########################################################################
       # Implement xml rpc functions
       ########################################################################
+
+      # return information about image group.
+      # +session+   string that represents user session
+      # +flag+      flag for condition
+      # +return[0]+ true or false whenever is successful or not
+      # +return[1]+ if an error occurs this is error message,
+      #             if successful this is the information string
+      def pool(session, flag)
+        task('rvpe.image.pool', session) do
+          if flag <= -2 || flag >= 0
+            admin_session(session) do; end
+          else # flag == -1
+          end
+
+          call_one_xmlrpc('one.imagepool.info', session, flag)
+        end
+      end
 
       # return information about this image.
       # +session+   string that represents user session

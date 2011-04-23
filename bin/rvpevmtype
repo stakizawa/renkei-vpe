@@ -129,7 +129,7 @@ when 'create'
   type = RenkeiVPE::VMType.new(RenkeiVPE::VMType.build_xml, client)
   rc = type.allocate(template)
   if is_successful?(rc)
-    puts "VM type registered: " + type.name
+    puts "VMType[#{type.name}] is registered."
   else
     $stderr.puts rc.message
     exit 1
@@ -145,7 +145,7 @@ when 'delete'
   type = RenkeiVPE::VMType.new_with_id(id, client)
   rc = type.delete
   if is_successful?(rc)
-    puts "VM type deleted: " + name
+    puts "VMType[#{name}] deleted."
   else
     $stderr.puts rc.message
     exit 1

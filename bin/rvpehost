@@ -30,6 +30,23 @@ client = RenkeiVPE::Client.new()
 xml_output = false
 verbose    = false
 
+list_columns = {
+  :id      => { :name => 'ID',
+                :size => 4,
+                :proc => lambda {|d,e| d.id} },
+  :name    => { :name => 'NAME',
+                :size => 30,
+                :proc => lambda {|d,e| d.name} },
+  :zone    => { :name => 'ZONE',
+                :size => 20,
+                :proc => lambda {|d,e| d['CLUSTER']} },
+  :state   => { :name => 'STATE',
+                :size => 15,
+                :proc => lambda {|d,e| d.state_str} },
+
+  :default => [:id, :name, :zone, :state]
+}
+
 ##############################################################################
 # main
 ##############################################################################
@@ -60,6 +77,11 @@ Commands:
         information about given hosts.
 
         $ #{CMD_NAME} show 'tokyo tech' rpop-titech.cc.titech.ac.jp
+
+
+    list <-x>
+        list all hosts that run VMs on them.
+        This is a debug-purpose command for #{CMD_NAME}.
 
 
     help
@@ -99,7 +121,7 @@ when 'enable'
     host = RenkeiVPE::Host.new_with_id(id, client)
     rc = host.enable
     if is_successful?(rc)
-      puts "Host enabled: #{host_name}"
+      puts "Host[#{host_name}] enabled."
     else
       $stderr.puts rc.message
       exit 1
@@ -117,7 +139,7 @@ when 'disable'
     host = RenkeiVPE::Host.new_with_id(id, client)
     rc = host.disable
     if is_successful?(rc)
-      puts "Host disabled: #{host_name}"
+      puts "Host[#{host_name}] disabled."
     else
       $stderr.puts rc.message
       exit 1
@@ -125,7 +147,7 @@ when 'disable'
   end
 
 #######################################
-# show sites
+# show hosts
 when 'show'
   check_parameters('show', 1)
 
@@ -184,6 +206,22 @@ when 'show'
       $stderr.puts rc.message
       exit 1
     end
+  end
+
+#######################################
+# list hosts
+when 'list'
+  host_pool = RenkeiVPE::HostPool.new(client)
+  rc = host_pool.info
+  if is_error?(rc)
+    $stderr.puts rc.message
+    exit 1
+  end
+
+  if xml_output
+    puts host_pool.to_xml
+  else
+    print_xml_friendly(list_columns, host_pool, verbose)
   end
 
 #######################################

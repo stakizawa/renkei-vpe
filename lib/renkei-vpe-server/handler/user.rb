@@ -4,11 +4,14 @@ require 'rexml/document'
 module RenkeiVPE
   module Handler
 
-    class User < BaseHandler
+    class UserHandler < BaseHandler
       ########################################################################
       # Define xml rpc interfaces
       ########################################################################
       INTERFACE = XMLRPC::interface('rvpe.user') do
+        meth('val pool(string)',
+             'Retrieve information about user group',
+             'pool')
         meth('val info(string, int)',
              'Retrieve information about the user',
              'info')
@@ -34,6 +37,25 @@ module RenkeiVPE
       # Implement xml rpc functions
       ########################################################################
 
+      # return information about user group.
+      # +session+   string that represents user session
+      # +return[0]+ true or false whenever is successful or not
+      # +return[1]+ if an error occurs this is error message,
+      #             if successful this is the information string
+      def pool(session)
+        task('rvpe.user.pool', session, true) do
+          rc = call_one_xmlrpc('one.userpool.info', session)
+          raise rc[1] unless rc[0]
+
+          doc = REXML::Document.new(rc[1])
+          doc.each_element('/USER_POOL/USER') do |e|
+            UserHandler.modify_onexml(e)
+          end
+
+          [true, doc.to_s]
+        end
+      end
+
       # return information about this user.
       # +session+   string that represents user session
       # +id+        id of the user
@@ -50,7 +72,7 @@ module RenkeiVPE
 
           doc = REXML::Document.new(rc[1])
           doc.each_element('/USER') do |e|
-            User.modify_onexml(e, id)
+            UserHandler.modify_onexml(e, id)
           end
 
           [true, doc.to_s]

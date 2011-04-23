@@ -6,11 +6,14 @@ require 'rexml/document'
 module RenkeiVPE
   module Handler
 
-    class Zone < BaseHandler
+    class ZoneHandler < BaseHandler
       ########################################################################
       # Define xml rpc interfaces
       ########################################################################
       INTERFACE = XMLRPC::interface('rvpe.zone') do
+        meth('val pool(string)',
+             'Retrieve information about zone group',
+             'pool')
         meth('val info(string, int)',
              'Retrieve information about the zone',
              'info')
@@ -42,6 +45,26 @@ module RenkeiVPE
       # Implement xml rpc functions
       ########################################################################
 
+      # return information about user group.
+      # +session+   string that represents user session
+      # +return[0]+ true or false whenever is successful or not
+      # +return[1]+ if an error occurs this is error message,
+      #             if successful this is the information string
+      def pool(session)
+        task('rvpe.zone.pool', session) do
+          doc = REXML::Document.new
+          pool_e = REXML::Element.new('ZONE_POOL')
+          doc.add(pool_e)
+
+          RenkeiVPE::Model::Zone.each do |z|
+            zone_e = ZoneHandler.to_xml_element(z, session)
+            pool_e.add(zone_e)
+          end
+
+          return [true, doc.to_s]
+        end
+      end
+
       # return information about this zone.
       # +session+   string that represents user session
       # +id+        id of the zone
@@ -54,7 +77,7 @@ module RenkeiVPE
           zone = RenkeiVPE::Model::Zone.find_by_id(id)[0]
           raise "Zone[#{id}] is not found." unless zone
 
-          zone_e = Zone.to_xml_element(zone, session)
+          zone_e = ZoneHandler.to_xml_element(zone, session)
           doc = REXML::Document.new
           doc.add(zone_e)
 
