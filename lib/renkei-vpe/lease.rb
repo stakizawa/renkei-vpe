@@ -78,11 +78,11 @@ module RenkeiVPE
         end
 
         def assigned_user
-          uid = self['ASSIGNED_TO'].to_i
+          uid = self['ASSIGNED_TO_UID'].to_i
           if uid == -1
               '-'
           else
-              'To be implemented'
+              self['ASSIGNED_TO_UNAME']
           end
         end
     end

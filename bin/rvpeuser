@@ -304,7 +304,12 @@ when 'show'
         end
         puts str % ['ENABLE', enable_str]
         # print Zones
-        puts str % ['ZONES', user['ZONES']]
+        puts str % ['ZONE IDS', user['ZONE_IDS']]
+        zones = user['ZONE_NAMES'].split(';')
+        puts str % ['ZONES', zones.shift]
+        zones.each do |zone|
+          puts str % ['', zone]
+        end
         # print Password
         puts str % ['PASSWORD', user['PASSWORD']]
       end

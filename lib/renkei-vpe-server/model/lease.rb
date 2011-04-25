@@ -76,6 +76,15 @@ SQL
         end
         onel_e = onel_es[0]
 
+        # obtain user name
+        if @assigned_to >= 0
+          user = User.find_by_id(@assigned_to)[0]
+          raise "User[#{@assigned_to}] is not found." unless user
+          user_name = user.name
+        else
+          user_name = '-'
+        end
+
         lease_e = REXML::Element.new('LEASE')
         e = REXML::Element.new('ID')
         e.add(REXML::Text.new(@id.to_s))
@@ -92,8 +101,11 @@ SQL
         e = REXML::Element.new('USED')
         e.add(REXML::Text.new(@used.to_s))
         lease_e.add(e)
-        e = REXML::Element.new('ASSIGNED_TO')
+        e = REXML::Element.new('ASSIGNED_TO_UID')
         e.add(REXML::Text.new(@assigned_to.to_s))
+        lease_e.add(e)
+        e = REXML::Element.new('ASSIGNED_TO_UNAME')
+        e.add(REXML::Text.new(user_name))
         lease_e.add(e)
         e = REXML::Element.new('VID')
         e.add(onel_e.get_text('VID'))

@@ -1,0 +1,32 @@
+<LEASE_POOL>
+  <LEASE>
+    <ID>1</ID>
+    <NAME>vm00.vhost.net</NAME>
+    <IP>192.168.0.10</IP>
+    <MAC>02:00:c0:a8:00:0a</MAC>
+    <USED>0</USED>
+    <ASSIGNED_TO_UID>0</ASSIGNED_TO_UID>
+    <ASSIGNED_TO_UNAME>oneadmin</ASSIGNED_TO_UNAME>
+    <VID>-1</VID>
+  </LEASE>
+  <LEASE>
+    <ID>3</ID>
+    <NAME>vm00.naregi.org</NAME>
+    <IP>192.168.0.10</IP>
+    <MAC>02:00:c0:a8:00:0a</MAC>
+    <USED>0</USED>
+    <ASSIGNED_TO_UID>-1</ASSIGNED_TO_UID>
+    <ASSIGNED_TO_UNAME>-</ASSIGNED_TO_UNAME>
+    <VID>-1</VID>
+  </LEASE>
+  <LEASE>
+    <ID>4</ID>
+    <NAME>vm01.naregi.org</NAME>
+    <IP>192.168.0.11</IP>
+    <MAC>02:00:c0:a8:00:0b</MAC>
+    <USED>0</USED>
+    <ASSIGNED_TO_UID>-1</ASSIGNED_TO_UID>
+    <ASSIGNED_TO_UNAME>-</ASSIGNED_TO_UNAME>
+    <VID>-1</VID>
+  </LEASE>
+</LEASE_POOL>

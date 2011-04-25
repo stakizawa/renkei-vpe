@@ -17,7 +17,9 @@
         <NAME>vm00.vhost.net</NAME>
         <IP>192.168.0.10</IP>
         <MAC>02:00:c0:a8:00:0a</MAC>
-        <ALLOCATED>0</ALLOCATED>
+        <USED>0</USED>
+        <ASSIGNED_TO_UID>0</ASSIGNED_TO_UID>
+        <ASSIGNED_TO_UNAME>oneadmin</ASSIGNED_TO_UNAME>
         <VID>-1</VID>
       </LEASE>
       <LEASE>
@@ -25,17 +27,19 @@
         <NAME>vm01.vhost.net</NAME>
         <IP>192.168.0.11</IP>
         <MAC>02:00:c0:a8:00:0b</MAC>
-        <ALLOCATED>0</ALLOCATED>
+        <USED>0</USED>
+        <ASSIGNED_TO_UID>5</ASSIGNED_TO_UID>
+        <ASSIGNED_TO_UNAME>test</ASSIGNED_TO_UNAME>
         <VID>-1</VID>
       </LEASE>
     </LEASES>
   </VNET>
   <VNET>
     <ID>2</ID>
-    <NAME>test2</NAME>
-    <ZONE>tokyo tech</ZONE>
-    <UNIQUE_NAME>tokyo tech::test2</UNIQUE_NAME>
-    <DESCRIPTION>test2 network</DESCRIPTION>
+    <NAME>test</NAME>
+    <ZONE>nii</ZONE>
+    <UNIQUE_NAME>nii::test</UNIQUE_NAME>
+    <DESCRIPTION/>
     <ADDRESS>192.168.0.0</ADDRESS>
     <NETMASK>255.255.255.0</NETMASK>
     <GATEWAY>192.168.0.1</GATEWAY>
@@ -45,18 +49,22 @@
     <LEASES>
       <LEASE>
         <ID>3</ID>
-        <NAME>vm10.vhost.net</NAME>
-        <IP>192.168.0.100</IP>
-        <MAC>02:00:c0:a8:00:64</MAC>
-        <ALLOCATED>0</ALLOCATED>
+        <NAME>vm00.naregi.org</NAME>
+        <IP>192.168.0.10</IP>
+        <MAC>02:00:c0:a8:00:0a</MAC>
+        <USED>0</USED>
+        <ASSIGNED_TO_UID>-1</ASSIGNED_TO_UID>
+        <ASSIGNED_TO_UNAME>-</ASSIGNED_TO_UNAME>
         <VID>-1</VID>
       </LEASE>
       <LEASE>
         <ID>4</ID>
-        <NAME>vm11.vhost.net</NAME>
-        <IP>192.168.0.101</IP>
-        <MAC>02:00:c0:a8:00:65</MAC>
-        <ALLOCATED>0</ALLOCATED>
+        <NAME>vm01.naregi.org</NAME>
+        <IP>192.168.0.11</IP>
+        <MAC>02:00:c0:a8:00:0b</MAC>
+        <USED>0</USED>
+        <ASSIGNED_TO_UID>-1</ASSIGNED_TO_UID>
+        <ASSIGNED_TO_UNAME>-</ASSIGNED_TO_UNAME>
         <VID>-1</VID>
       </LEASE>
     </LEASES>

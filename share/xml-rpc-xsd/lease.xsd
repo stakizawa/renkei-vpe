@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    elementFormDefault="qualified"
+    targetNamespace="http://www.e-sciren.org/sub5/XMLSchema"
+    xmlns="http://www.e-sciren.org/sub5/XMLSchema">
+  <xs:element name="LEASE" type="LEASE">
+  </xs:element>
+
+  <xs:complexType name="LEASE">
+    <xs:sequence>
+      <xs:element name="ID" type="xs:integer"/>
+      <xs:element name="NAME" type="xs:string"/>
+      <xs:element name="IP" type="xs:string"/>
+      <xs:element name="MAC" type="xs:string"/>
+      <xs:element name="USED" type="xs:integer"/>
+      <xs:element name="ASSIGNED_TO_UID" type="xs:integer"/>
+      <xs:element name="ASSIGNED_TO_UNAME" type="xs:string"/>
+      <xs:element name="VID" type="xs:integer"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

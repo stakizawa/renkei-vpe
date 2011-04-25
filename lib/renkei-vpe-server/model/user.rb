@@ -67,9 +67,20 @@ SQL
         enabled_e.add(REXML::Text.new(@enabled.to_s))
         e.add(enabled_e)
 
-        # 3. insert zones
-        zones_e = REXML::Element.new('ZONES')
+        # 3. insert zones in id
+        zones_e = REXML::Element.new('ZONE_IDS')
         zones_e.add(REXML::Text.new(@zones))
+        e.add(zones_e)
+
+        # 4. insert zones in name
+        zones_e = REXML::Element.new('ZONE_NAMES')
+        zones = ''
+        zones_in_array.each do |zid|
+          zone = Zone.find_by_id(zid)[0]
+          raise "Zone[#{zid}] is not found." unless zone
+          zones += zone.name + ';'
+        end
+        zones_e.add(REXML::Text.new(zones.strip))
         e.add(zones_e)
 
         return e

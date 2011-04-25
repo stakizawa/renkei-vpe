@@ -4,6 +4,7 @@
     elementFormDefault="qualified"
     targetNamespace="http://www.e-sciren.org/sub5/XMLSchema"
     xmlns="http://www.e-sciren.org/sub5/XMLSchema">
+  <xs:include schemaLocation="lease.xsd"/>
   <xs:element name="VNET" type="VNET">
   </xs:element>
 
@@ -22,19 +23,8 @@
       <xs:element name="HOST_INTERFACE" type="xs:string"/>
       <xs:element name="LEASES">
         <xs:complexType>
-          <xs:sequence minOccurs="0">
-              <xs:element name="LEASE" minOccurs="0" maxOccurs="unbounded">
-                <xs:complexType>
-                  <xs:sequence>
-                    <xs:element name="ID" type="xs:integer"/>
-                    <xs:element name="NAME" type="xs:string"/>
-                    <xs:element name="IP" type="xs:string"/>
-                    <xs:element name="MAC" type="xs:string"/>
-                    <xs:element name="ALLOCATED" type="xs:integer"/>
-                    <xs:element name="VID" type="xs:integer"/>
-                  </xs:sequence>
-                </xs:complexType>
-              </xs:element>
+          <xs:sequence maxOccurs="unbounded" minOccurs="0">
+            <xs:element ref="LEASE" maxOccurs="unbounded" minOccurs="0"/>
           </xs:sequence>
         </xs:complexType>
       </xs:element>

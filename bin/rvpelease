@@ -177,13 +177,13 @@ when 'show'
         puts str % ['NAME', lease.name]
         puts str % ['IP ADDRESS', lease['IP']]
         puts str % ['MAC ADDRESS', lease['MAC']]
+        puts str % ['ASSIGNED USER', lease.assigned_user]
         # print used
         if lease['USED'].to_i == 1
           used_str = 'Yes'
         else
           used_str = 'No'
         end
-        puts str % ['ASSIGNED USER', lease.assigned_user]
         puts str % ['USED', used_str]
         puts str % ['USING VM ID', lease.vm_id_str]
 

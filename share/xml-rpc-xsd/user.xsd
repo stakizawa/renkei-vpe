@@ -11,7 +11,8 @@
         <xs:element name="PASSWORD" type="xs:string"/>
         <xs:element name="ID" type="xs:integer"/>
         <xs:element name="ENABLED" type="xs:integer"/>
-        <xs:element name="ZONES" type="xs:string"/>
+        <xs:element name="ZONE_IDS" type="xs:string"/>
+        <xs:element name="ZONE_NAMES" type="xs:string"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>

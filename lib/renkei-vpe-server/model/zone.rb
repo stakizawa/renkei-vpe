@@ -89,7 +89,7 @@ SQL
         # set networks
         nets_e = REXML::Element.new('NETWORKS')
         zone_e.add(nets_e)
-        @networks.strip.split(/\s+/).map{ |i| i.to_i }.each do |nid|
+        networks_in_array.each do |nid|
           vnet = VirtualNetwork.find_by_id(nid)[0]
           raise "VirtualNetwork[#{nid}] is not found." unless vnet
 
