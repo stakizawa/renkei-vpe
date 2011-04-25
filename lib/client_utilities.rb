@@ -262,7 +262,7 @@ end
 
 
 def get_entity_id(name, pool_class)
-    return name if name.match(/^[0123456789]+$/)
+    return name.to_i if name.match(/^[0123456789]+$/)
 
     pool = pool_class.new(get_rvpe_client)
     result = pool.ask_id(name)

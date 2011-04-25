@@ -62,7 +62,7 @@ module RenkeiVPE
       def ask_id(session, name)
         task('rvpe.image.ask_id', session) do
           flag = -1
-          admin_session(session) { flag = -2 }
+          admin_session(session, false) { flag = -2 }
           rc = call_one_xmlrpc('one.imagepool.info', session, flag)
           raise rc[1] unless rc[0]
 

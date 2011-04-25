@@ -19,7 +19,7 @@ module RenkeiVPE
         meth('val info(string, int)',
              'Retrieve information about the virtual machine',
              'info')
-        meth('val allocate(string, int, int, int, string)',
+        meth('val allocate(string, int, int, int, int, string)',
              'allocate a new virtual machine',
              'allocate')
         meth('val action(string, int, string)',
@@ -37,6 +37,9 @@ module RenkeiVPE
       # return information about virtual machine group.
       # +session+   string that represents user session
       # +flag+      flag for condition
+      #             if flag <  -1, return all vms
+      #             if flag == -1, return mine
+      #             if flag >=  0, return user's vms
       # +history+   results include previous all VMs info if 1,
       #             otherwize only returns info on current VMs.
       # +return[0]+ true or false whenever is successful or not
@@ -44,13 +47,12 @@ module RenkeiVPE
       #             if successful this is the information string
       def pool(session, flag, history)
         task('rvpe.vm.pool', session) do
-          flag = flag
-          if flag <= -2 || flag >= 0
-            admin_session(session) do; end
-          end
-
           uname = get_user_from_session(session)
           user = User.find_by_name(uname)[0]
+
+          if flag <= -2 || (flag >= 0 && flag != user.id)
+            admin_session(session) do; end
+          end
 
           pool_e = REXML::Element.new('VM_POOL')
           VirtualMachine.each do |vm|
@@ -108,6 +110,7 @@ module RenkeiVPE
       # allocate a new virtual machine.
       # +session+   string that represents user session
       # +type_id+   id of vm type
+      # +lease_id+  id of lease
       # +zone_id+   id of zone
       # +image_id+  id of image
       # +sshkey+    ssh public key for root access
@@ -115,7 +118,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             if successful this is the associated id (int id)
       #             generated for this vm
-      def allocate(session, type_id, zone_id, image_id, sshkey)
+      def allocate(session, type_id, lease_id, zone_id, image_id, sshkey)
         task('rvpe.vm.allocate', session) do
           # 0. get user and check if the user has permission to run VMs
           #    in the specified zone
@@ -132,12 +135,30 @@ module RenkeiVPE
           vnet_id = zone.networks_in_array[0]
           vnet = VirtualNetwork.find_by_id(vnet_id)[0]
 
-          # 1-2. get unused virtual host
-          leases = vnet.find_available_leases
-          if leases.size == 0
-            raise "No available virtual host lease in Zone[#{zone.name}]."
+          # 1-2. get an available lease
+          if lease_id > 0
+            # user specifies a pre-assigned lease
+            lease = Lease.find_by_id(lease_id)[0]
+            unless lease
+              raise "Specified lease is not found."
+            end
+            if lease.used == 1
+              raise "Lease[#{lease.name}] is already used."
+            end
+            unless lease.assigned_to == user.id
+              raise "User[#{user_name}] don't have a permission to use Lease[#{lease.name}]."
+            end
+            unless lease.vnetid == vnet_id
+              raise "Lease[#{lease.name}] can't be used in Network[#{vnet.unique_name}]."
+            end
+          else
+            # dynamically assign a new lease
+            leases = vnet.find_available_leases
+            if leases.size == 0
+              raise "No available virtual host lease in Zone[#{zone.name}]."
+            end
+            lease = leases[0]
           end
-          lease = leases[0]
 
           # 1-3. get cluster name from OpenNebula
           rc = call_one_xmlrpc('one.cluster.info', session, zone.oid)

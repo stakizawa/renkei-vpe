@@ -34,23 +34,27 @@ module RenkeiVPE
       # return information about lease group.
       # +session+   string that represents user session
       # +flag+      flag for condition
+      #             if flag <  -1, return all leases
+      #             if flag == -1, return mine & available leases
+      #             if flag >=  0, return user's leases
       # +return[0]+ true or false whenever is successful or not
       # +return[1]+ if an error occurs this is error message,
       #             if successful this is the information string
       def pool(session, flag)
         task('rvpe.lease.pool', session) do
-          if flag < -1 || flag >= 0
+          uname = get_user_from_session(session)
+          user = User.find_by_name(uname)[0]
+
+          if flag < -1 || (flag >= 0 && flag != user.id)
             admin_session(session) do; end
           else # flag == -1
           end
 
-          uname = get_user_from_session(session)
-          user = User.find_by_name(uname)[0]
-
           pool_e = REXML::Element.new('LEASE_POOL')
           Lease.each do |lease|
             if flag == -1
-              next if lease.assigned_to > 0 && lease.assigned_to != user.id
+              next if lease.assigned_to == -1 && lease.used == 1
+              next if lease.assigned_to >=  0 && lease.assigned_to != user.id
             elsif flag >= 0
               next if lease.assigned_to != flag
             end

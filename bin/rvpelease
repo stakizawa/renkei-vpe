@@ -210,7 +210,7 @@ when 'list'
     when 'm'
       filter = -1
     else # name or id of a user
-      filter = get_user_id(ARGV[0]).to_i
+      filter = get_user_id(ARGV[0])
     end
   end
 

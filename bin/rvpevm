@@ -64,15 +64,23 @@ Usage:
     #{CMD_NAME} command <options>
 
 Commands:
-    create vm_type zone_name image_name root_key_file
-        create a VM with the specified vm_type in the specified zone.
-        The VM uses an OS image whose name is image_name and a user can
-        log in the VM with a ssh key whose public key is root_key_file.
+    create vm_type zone image_name root_key_file <lease>
+        create a VM with the specified 'vm_type' in the specified 'zone'.
+        The VM uses an OS image whose name is 'image_name' and a user can
+        log in the VM with a ssh key whose public key is 'root_key_file'.
+        If an additional option 'lease', which is manually assigned by
+        the administrator to a user, is specified, the VM uses the lease
+        for its hostname and ip address.
+
         vm_type can be name or id of a VM type.
         zone_name can be name or id of a zone.
         image_name can be name or id of an OS image.
+        root_key_file is name of file.
+        lease can be name or id of a lease.
 
         $ #{CMD_NAME} create small 'tokyo tech' centos5.5 ./ssh_pubkey
+        $ #{CMD_NAME} create small 'tokyo tech' centos5.5 ./ssh_pubkey \
+        > vm00.cc.titech.ac.jp
 
     shutdown vm_name
         shutdown the specified VM. If a VM shutdowns all its files are
@@ -194,10 +202,15 @@ when 'create'
     $stderr.puts "Can't read root ssh public key file: #{ARGV[3]}"
     exit 1
   end
+  if ARGV[4]
+    lease_id = get_lease_id(ARGV[4])
+  else
+    lease_id = -1
+  end
 
   vm = RenkeiVPE::VirtualMachine.new(RenkeiVPE::VirtualMachine.build_xml,
                                      client)
-  rc = vm.create(vmtype_id, zone_id, image_id, root_pubkey)
+  rc = vm.create(vmtype_id, lease_id, zone_id, image_id, root_pubkey)
   if is_successful?(rc)
     puts "Request done: create VM[#{vm.name}]"
   else

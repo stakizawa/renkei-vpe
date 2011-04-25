@@ -169,7 +169,7 @@ SQL
 
       # It returns available lases in this virtual network.
       def find_available_leases
-        Lease.find("vnetid=#{@id} AND used=0")
+        Lease.find("vnetid=#{@id} AND used=0 AND assigned_to=-1")
       end
 
       # It adds a lease.
