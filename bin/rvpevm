@@ -37,20 +37,20 @@ list_columns = {
   :name    => { :name => 'NAME',
                 :size => 30,
                 :proc => lambda {|d,e| d.name} },
-  :user    => { :name => 'OWNER',
+  :user    => { :name => 'USER',
                 :size => 10,
                 :proc => lambda {|d,e| d['USER_NAME']} },
   :zone    => { :name => 'ZONE',
                 :size => 15,
                 :proc => lambda {|d,e| d['ZONE_NAME']} },
-  :type    => { :name => 'TYPE',
-                :size => 10,
-                :proc => lambda {|d,e| d['TYPE_NAME']} },
+  :time    => { :name => 'TIME',
+                :size => 11,
+                :proc => lambda {|d,e| str_running_time(d)} },
   :state   => { :name => 'STAT',
                 :size => 4,
                 :proc => lambda {|d,e| d.status} },
 
-  :default => [:id, :name, :user, :zone, :type, :state]
+  :default => [:id, :name, :user, :zone, :time, :state]
 }
 
 ##############################################################################
@@ -427,7 +427,7 @@ when 'show'
         else
           value = Time.at(value).strftime("%m/%d %H:%M:%S")
         end
-        puts str % ["START TIME", value]
+        puts str % ['START TIME', value]
         # print END Time
         value = vm['ETIME'].to_i
         if value == 0
@@ -435,7 +435,8 @@ when 'show'
         else
           value = Time.at(value).strftime("%m/%d %H:%M:%S")
         end
-        puts str % ["END TIME", value]
+        puts str % ['END TIME', value]
+        puts str % ['RUNNING TIME', str_running_time(vm)]
         puts
 
         # print VM monitoring information
