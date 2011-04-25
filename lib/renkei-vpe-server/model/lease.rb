@@ -6,10 +6,10 @@ module RenkeiVPE
   ############################################################################
   module Model
     ##########################################################################
-    # Model for VM lease that belongs to a specific Virtual Network
+    # Model for Lease that belongs to a specific Virtual Network
     ##########################################################################
-    class VMLease < BaseModel
-      @table_name = 'vm_leases'
+    class Lease < BaseModel
+      @table_name = 'leases'
 
       @table_schema = <<SQL
 CREATE TABLE #{@table_name} (
@@ -45,7 +45,7 @@ SQL
       end
 
       def to_s
-        "VMLease<"                       +
+        "Lease<"                       +
           "id=#{@id},"                   +
           "name='#{@name}',"             +
           "address='#{@address}',"       +
@@ -68,9 +68,9 @@ SQL
         onel_es = onevnet_doc.get_elements("/VNET/LEASES/LEASE[IP='#{@address}']")
         if onel_es.size != 1
           if onel_es.size == 0
-            msg = "DB error: VMLease[#{@address}] is defined in RenkeiVPE, but not in OpenNebula."
+            msg = "DB error: Lease[#{@address}] is defined in RenkeiVPE, but not in OpenNebula."
           else  # >= 1
-            msg = "DB error: VMLease[#{@address}] is multiply defined in OpenNebula."
+            msg = "DB error: Lease[#{@address}] is multiply defined in OpenNebula."
           end
           raise msg
         end

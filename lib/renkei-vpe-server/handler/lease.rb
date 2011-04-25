@@ -45,7 +45,7 @@ module RenkeiVPE
           user = User.find_by_name(uname)[0]
 
           pool_e = REXML::Element.new('LEASE_POOL')
-          VMLease.each do |lease|
+          Lease.each do |lease|
             if flag == -1
               next if lease.assigned_to > 0 && lease.assigned_to != user.id
             elsif flag >= 0
@@ -69,7 +69,7 @@ module RenkeiVPE
       #             about the user
       def info(session, id)
         task('rvpe.lease.info', session) do
-          lease = VMLease.find_by_id(id)[0]
+          lease = Lease.find_by_id(id)[0]
           raise "Lease[#{id}] is not found." unless lease
 
           lease_e = lease.to_xml_element(session)
@@ -89,10 +89,10 @@ module RenkeiVPE
       #             otherwise it does not exist.
       def assign(session, id, user_name)
         task('rvpe.lease.allocate', session, true) do
-          lease = VMLease.find_by_id(id)[0]
+          lease = Lease.find_by_id(id)[0]
           raise "Lease[#{id}] is not found." unless lease
 
-          if lease.assigned_to > 0
+          if lease.assigned_to >= 0
             # already assigned to another user
             user = User.find_by_id(lease.assigned_to)[0]
             user = lease.assigned_to unless user
@@ -116,7 +116,7 @@ module RenkeiVPE
       #             otherwise it does not exist.
       def release(session, id)
         task('rvpe.lease.delete', session, true) do
-          lease = VMLease.find_by_id(id)[0]
+          lease = Lease.find_by_id(id)[0]
           raise "Lease[#{id}] does not exist." unless lease
 
           if lease.assigned_to < 0

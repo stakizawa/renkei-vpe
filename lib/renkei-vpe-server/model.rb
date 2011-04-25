@@ -2,7 +2,7 @@ require 'renkei-vpe-server/model/base'
 require 'renkei-vpe-server/model/user'
 require 'renkei-vpe-server/model/virtual_machine'
 require 'renkei-vpe-server/model/virtual_network'
-require 'renkei-vpe-server/model/vm_lease'
+require 'renkei-vpe-server/model/lease'
 require 'renkei-vpe-server/model/vm_type'
 require 'renkei-vpe-server/model/zone'
 
@@ -15,7 +15,7 @@ module RenkeiVPE
       User.create_table_if_necessary
       Zone.create_table_if_necessary
       VirtualNetwork.create_table_if_necessary
-      VMLease.create_table_if_necessary
+      Lease.create_table_if_necessary
       VMType.create_table_if_necessary
       VirtualMachine.create_table_if_necessary
     end

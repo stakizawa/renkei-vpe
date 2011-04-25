@@ -516,11 +516,11 @@ VN_DEF
       # +vnet+        instance of vnet
       # +return+      id of lease
       def add_lease_to_vnet(lease_name, lease_addr, vnet)
-        l = VMLease.find_by_name(lease_name)[0]
-        raise "VMLease[#{lease_name}] already exists." if l
+        l = Lease.find_by_name(lease_name)[0]
+        raise "Lease[#{lease_name}] already exists." if l
 
         # create a virtual host record
-        l = VMLease.new
+        l = Lease.new
         l.name    = lease_name
         l.address = lease_addr
         l.vnetid  = vnet.id
@@ -543,8 +543,8 @@ VN_DEF
       # +vnet+      vnet where the lease belongs
       # +return+    lease id in integer
       def remove_lease_from_vnet(lease_id, vnet)
-        l = VMLease.find_by_id(lease_id)[0]
-        raise "VMLease[#{lease_id}] does not exist." unless l
+        l = Lease.find_by_id(lease_id)[0]
+        raise "Lease[#{lease_id}] does not exist." unless l
 
         err_msg = ''
 
@@ -555,7 +555,7 @@ VN_DEF
           new_leases = vnet.leases_in_array
           unless old_leases.size > new_leases.size
             vnet_un = vnet.zone_name + '::' + vnet.name
-            raise "VMLease[#{lease_id}] is not in VirtualNetwork[#{vnet_un}]."
+            raise "Lease[#{lease_id}] is not in VirtualNetwork[#{vnet_un}]."
           end
           vnet.update
         rescue => e

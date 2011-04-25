@@ -206,9 +206,9 @@ module RenkeiVPE
       # FIXME it might be better if it can work with enable_zone
       def release_all_leases(task_name, user)
         targets = []
-        VMLease.each do |lease|
+        Lease.each do |lease|
           if lease.assigned_to == user.id
-            # can't run update here because VMLease.each locks db.
+            # can't run update here because Lease.each locks db.
             targets << lease
           end
         end

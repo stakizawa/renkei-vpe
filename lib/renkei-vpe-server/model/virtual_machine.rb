@@ -88,7 +88,7 @@ SQL
         else
           zone_name = no_data_msg
         end
-        lease = VMLease.find_by_id(@lease_id)[0]
+        lease = Lease.find_by_id(@lease_id)[0]
         if lease
           lease_name = lease.name
           lease_address = lease.address

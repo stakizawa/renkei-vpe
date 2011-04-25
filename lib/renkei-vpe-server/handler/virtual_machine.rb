@@ -235,7 +235,7 @@ EOS
           case action.upcase
           when 'SHUTDOWN', 'FINALIZE'
             # delete temporal files
-            lease = VMLease.find_by_id(vm.lease_id)[0]
+            lease = Lease.find_by_id(vm.lease_id)[0]
             vmtmpdir  = "#{$rvpe_path}/var/#{lease.name}"
             FileUtils.rm_rf(vmtmpdir)
             # mark lease as not-used

@@ -50,7 +50,7 @@ SQL
       attr_accessor :dns
       # ntp servers of the network, splitted by ' '
       attr_accessor :ntp
-      # ids of vm leases, splitted by ' '
+      # ids of leases, splitted by ' '
       attr_accessor :leases
 
       def initialize
@@ -154,7 +154,7 @@ SQL
         leases_e = REXML::Element.new('LEASES')
         vnet_e.add(leases_e)
         @leases.strip.split(/\s+/).map{ |i| i.to_i }.each do |hid|
-          l = VMLease.find_by_id(hid)[0]
+          l = Lease.find_by_id(hid)[0]
           raise not_found_msg unless l
           leases_e.add(l.to_xml_element(one_session))
         end
@@ -169,7 +169,7 @@ SQL
 
       # It returns available lases in this virtual network.
       def find_available_leases
-        VMLease.find("vnetid=#{@id} AND used=0")
+        Lease.find("vnetid=#{@id} AND used=0")
       end
 
       # It adds a lease.
