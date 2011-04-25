@@ -162,6 +162,54 @@ SQL
         return vnet_e
       end
 
+      # It returns an array containing lease ids in integer.
+      def leases_in_array
+        @leases.strip.split(/\s+/).map { |i| i.to_i }
+      end
+
+      # It returns available lases in this virtual network.
+      def find_available_leases
+        VMLease.find("vnetid=#{@id} AND used=0")
+      end
+
+      # It adds a lease.
+      # +l_id+  id of lease to be added.
+      def add_lease(l_id)
+        @leases = (@leases || '') + "#{l_id} "
+      end
+
+      # It removes a lease.
+      # +l_id+  id of lease to be removed.
+      def remove_lease(l_id)
+        leases = leases_in_array
+        leases.delete(l_id)
+        @leases = leases.join(' ') + ' '
+      end
+
+      # It adds a type-ed server
+      def add_server(type, server)
+        servers_s = self.send(type)
+        servers_a = servers_s.strip.split(/\s+/)
+
+        unless servers_a.include? server
+          servers_a << server
+          servers_s = servers_a.join(' ')
+          self.send("#{type}=".to_sym, servers_s)
+        end
+      end
+
+      # It removes a type-ed server
+      def remove_server(type, server)
+        servers_s = self.send(type)
+        servers_a = servers_s.strip.split(/\s+/)
+
+        if servers_a.include? server
+          servers_a.delete(server)
+          servers_s = servers_a.join(' ')
+          self.send("#{type}=".to_sym, servers_s)
+        end
+      end
+
       protected
 
       def check_fields

@@ -75,6 +75,28 @@ SQL
         return e
       end
 
+      # It modifies zones fields.
+      # +zone_id+  id of zone to be enabled or disabled
+      # +enabled+  enable zone if true, otherwise disable zone
+      def modify_zones(zone_id, enabled)
+        zids = @zones.strip.split(/\s+/).map { |i| i.to_i }
+        if enabled
+          unless zids.include? zone_id
+            zids << zone_id
+          end
+        else
+          if zids.include? zone_id
+            zids.delete(zone_id)
+          end
+        end
+        @zones = zids.join(' ')
+      end
+
+      # It returns an array containing zone ids in integer.
+      def zones_in_array
+        @zones.strip.split(/\s+/).map { |i| i.to_i }
+      end
+
       protected
 
       def check_fields

@@ -172,19 +172,8 @@ module RenkeiVPE
           user = User.find_by_id(id)[0]
           raise "User[#{id}] does not exist." unless user
 
-          zids = user.zones.strip.split(/\s+/).map { |i| i.to_i }
-          if enabled
-            unless zids.include? zone_id
-              zids << zone_id
-            end
-          else
-            if zids.include? zone_id
-              zids.delete(zone_id)
-            end
-          end
-          user.zones = zids.join(' ')
+          user.modify_zones(zone_id, enabled)
           user.update
-
           [true, '']
         end
       end

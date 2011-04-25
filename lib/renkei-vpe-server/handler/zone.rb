@@ -123,7 +123,7 @@ module RenkeiVPE
             end
           rescue => e
             # delete this zone
-            delete(session, zone.id)
+            _delete(session, zone)
             raise e
           end
 
@@ -134,7 +134,7 @@ module RenkeiVPE
             end
           rescue => e
             # delete this zone
-            delete(session, zone.id)
+            _delete(session, zone)
             raise e
           end
 
@@ -153,41 +153,7 @@ module RenkeiVPE
           zone = Zone.find_by_id(id)[0]
           raise "Zone[#{id}] does not exist." unless zone
 
-          err_msg = ''
-
-          # delete virtual networks
-          zone.networks.strip.split(/\s+/).map{ |i| i.to_i }.each do |nid|
-            begin
-              remove_vnet_from_zone(session, nid, zone)
-            rescue => e
-              err_msg = (err_msg.size == 0)? e.message : err_msg +'; '+ e.message
-            end
-          end
-
-          # delete hosts
-          zone.hosts.strip.split(/\s+/).map{ |i| i.to_i }.each do |hid|
-            begin
-              remove_host_from_zone(session, hid, zone)
-            rescue => e
-              err_msg = (err_msg.size == 0)? e.message : err_msg +'; '+ e.message
-            end
-          end
-
-          # delete the associated site from OpenNebula
-          rc = call_one_xmlrpc('one.cluster.delete', session, zone.oid)
-          unless rc[0]
-            err_msg = (err_msg.size == 0)? rc[1] : err_msg + '; ' + rc[1]
-          end
-
-          # delete zone record
-          begin
-            zone.delete
-          rescue => e
-            err_msg = (err_msg.size == 0)? e.message : err_msg + '; ' + e.message
-          end
-
-          result = (err_msg.size == 0)? true : false
-          [result, err_msg]
+          _delete(session, zone)
         end
       end
 
@@ -279,6 +245,50 @@ module RenkeiVPE
 
       private
 
+      def _delete(session, zone)
+        err_msg = ''
+
+        # delete virtual networks
+        zone.networks_in_array.each do |nid|
+          begin
+            remove_vnet_from_zone(session, nid, zone)
+          rescue => e
+            err_msg = (err_msg.size == 0)? e.message : err_msg +'; '+ e.message
+          end
+        end
+
+        # delete hosts
+        zone.hosts_in_array.each do |hid|
+          begin
+            remove_host_from_zone(session, hid, zone)
+          rescue => e
+            err_msg = (err_msg.size == 0)? e.message : err_msg +'; '+ e.message
+          end
+        end
+
+        # delete the associated site from OpenNebula
+        rc = call_one_xmlrpc('one.cluster.delete', session, zone.oid)
+        unless rc[0]
+          err_msg = (err_msg.size == 0)? rc[1] : err_msg + '; ' + rc[1]
+        end
+
+        # delete zone from user records
+        User.each(session) do |user|
+          user.modify_zones(zone.id, false)
+          user.update
+        end
+
+        # delete zone record
+        begin
+          zone.delete
+        rescue => e
+          err_msg = (err_msg.size == 0)? e.message : err_msg + '; ' + e.message
+        end
+
+        result = (err_msg.size == 0)? true : false
+        [result, err_msg]
+      end
+
       # +session+   string that represents user session
       # +host_name+ name of host
       # +zone+      instance of a zone
@@ -301,7 +311,7 @@ module RenkeiVPE
 
         # add host to the zone
         begin
-          zone.hosts = (zone.hosts || '') + "#{hid} "
+          zone.add_host(hid)
           zone.update
         rescue => e
           # remove host from site
@@ -314,10 +324,6 @@ module RenkeiVPE
         return hid
       end
 
-      # It returns [boolean, integer] or [boolean, string] array.
-      # +host+       id of host or name of host
-
-
       # +session+ string that represents user session
       # +host+    name or instance of host
       # +zone+    instance of a zone
@@ -329,7 +335,7 @@ module RenkeiVPE
             host_id = host.to_i
           else
             # host is name of host
-            zone.hosts.strip.split(/\s+/).map{ |i| i.to_i }.each do |hid|
+            zone.hosts_in_array.each do |hid|
               rc = call_one_xmlrpc('one.host.info', session, hid)
               doc = REXML::Document.new(rc[1])
               if host == doc.get_text('HOST/NAME').value
@@ -348,12 +354,12 @@ module RenkeiVPE
 
         # remove host from the zone
         begin
-          old_hosts = zone.hosts.strip.split(/\s+/).map { |i| i.to_i }
-          new_hosts = old_hosts - [host_id]
+          old_hosts = zone.hosts_in_array
+          zone.remove_host(host_id)
+          new_hosts = zone.hosts_in_array
           unless old_hosts.size > new_hosts.size
             raise "Host[#{host_id}] is not in Zone[#{zone.name}]."
           end
-          zone.hosts = new_hosts.join(' ') + ' '
           zone.update
         rescue => e
           err_msg = (err_msg.size == 0)? e.message : err_msg + '; ' + e.message
@@ -410,7 +416,7 @@ VN_DEF
           vn.oid         = rc[1]
           vn.name        = name
           vn.description = vnet_def[ResourceFile::VirtualNetwork::DESCRIPTION]
-          vn.zone_name   = zone.name,
+          vn.zone_name   = zone.name
           vn.unique_name = vn_unique
           vn.address     = vnet_def[ResourceFile::VirtualNetwork::ADDRESS]
           vn.netmask     = vnet_def[ResourceFile::VirtualNetwork::NETMASK]
@@ -439,7 +445,7 @@ VN_DEF
 
         # 4. add vnet to the zone
         begin
-          zone.networks = (zone.networks || '') + "#{vn.id} "
+          zone.add_network(vn.id)
           zone.update
         rescue => e
           # delete the vnet
@@ -470,18 +476,17 @@ VN_DEF
         err_msg = ''
 
         # 1. remove vnet from the zone
-        old_nets = zone.networks.strip.split(/\s+/).map { |i| i.to_i }
-        new_nets = old_nets - [vnet.id]
+        old_nets = zone.networks_in_array
+        zone.remove_network(vnet.id)
+        new_nets = zone.networks_in_array
         if old_nets.size > new_nets.size
-          zone.networks = new_nets.join(' ') + ' '
           zone.update
         else
           err_msg = "VirtualNetwork[#{vnet.unique_name}] is not in Zone[#{zone.name}]."
         end
 
         # 2. remove leases that belong to the vnet
-        lids = vnet.leases.strip.split(/\s+/).map { |i| i.to_i }
-        lids.each do |lid|
+        vnet.leases_in_array.each do |lid|
           begin
             remove_lease_from_vnet(lid, vnet)
           rescue => e
@@ -523,7 +528,7 @@ VN_DEF
 
         # update the virtual network record
         begin
-          vnet.leases = (vnet.leases || '') + "#{l.id} "
+          vnet.add_lease(l.id)
           vnet.update
         rescue => e
           # delete lease
@@ -545,13 +550,13 @@ VN_DEF
 
         # remove lease from the vnet record
         begin
-          old_leases = vnet.leases.strip.split(/\s+/).map { |i| i.to_i }
-          new_leases = old_leases - [lease_id]
+          old_leases = vnet.leases_in_array
+          vnet.remove_lease(lease_id)
+          new_leases = vnet.leases_in_array
           unless old_leases.size > new_leases.size
             vnet_un = vnet.zone_name + '::' + vnet.name
             raise "VMLease[#{lease_id}] is not in VirtualNetwork[#{vnet_un}]."
           end
-          vnet.leases = new_leases.join(' ') + ' '
           vnet.update
         rescue => e
           err_msg = (err_msg.size == 0)? e.message : err_msg +'; '+ e.message

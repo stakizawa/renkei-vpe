@@ -106,6 +106,44 @@ SQL
         return zone_e
       end
 
+      # It returns an array containing host ids in integer.
+      def hosts_in_array
+        @hosts.strip.split(/\s+/).map { |i| i.to_i }
+      end
+
+      # It returns an array containing network ids in integer.
+      def networks_in_array
+        @networks.strip.split(/\s+/).map { |i| i.to_i }
+      end
+
+      # It adds a host to zone.
+      # +host_id+  id of host to be added.
+      def add_host(host_id)
+        @hosts = (@hosts || '') + "#{host_id} "
+      end
+
+      # It removes a host from zone.
+      # +host_id+  id of host to be removed.
+      def remove_host(host_id)
+        hosts = hosts_in_array
+        hosts.delete(host_id)
+        @hosts = hosts.join(' ') + ' '
+      end
+
+      # It adds a virtual network to zone.
+      # +vnet_id+  id of virtual network to be added.
+      def add_network(vnet_id)
+        @networks = (@networks || '') + "#{vnet_id} "
+      end
+
+      # It removes a virtual network from zone.
+      # +vnet_id+  id of  virtual network to be removed.
+      def remove_network(vnet_id)
+        vnets = networks_in_array
+        vnets.delete(vnet_id)
+        @networks = vnets.join(' ') + ' '
+      end
+
       protected
 
       def check_fields

@@ -103,8 +103,7 @@ module RenkeiVPE
           #    in the specified zone
           user_name = get_user_from_session(session)
           user = User.find_by_name(user_name)[0]
-          zone_ids = user.zones.split(/\s+/).map { |i| i.to_i }
-          unless zone_ids.include?(zone_id)
+          unless user.zones_in_array.include?(zone_id)
             raise "User[#{user_name}] don't have permission to use Zone[#{zone_id}]."
           end
 
@@ -112,11 +111,11 @@ module RenkeiVPE
           type = VMType.find_by_id(type_id)[0]
           zone = Zone.find_by_id(zone_id)[0]
           # FIXME currently only one virtual network is available
-          vnet_id = zone.networks.split(/\s+/).map { |i| i.to_i }[0]
+          vnet_id = zone.networks_in_array[0]
           vnet = VirtualNetwork.find_by_id(vnet_id)[0]
 
           # 1-2. get unused virtual host
-          leases = VMLease.find("vnetid=#{vnet.id} AND used=0")
+          leases = vnet.find_available_leases
           if leases.size == 0
             raise "No available virtual host lease in Zone[#{zone.name}]."
           end

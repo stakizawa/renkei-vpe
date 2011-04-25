@@ -148,27 +148,11 @@ module RenkeiVPE
       # +result[1]+  '' if successful, othersize a string that represents
       #              error message
       def add_servers_to_vnet(vnet, type, servers)
-        cur_servers = vnet.send(type)
-
-        new_serv_ary = servers.strip.split(/\s+/)
-        cur_serv_ary = cur_servers.strip.split(/\s+/)
-
-        new_serv_ary.each do |s|
-          unless cur_serv_ary.include? s
-            cur_serv_ary << s
-          end
+        new_servers_a = servers.strip.split(/\s+/)
+        new_servers_a.each do |s|
+          vnet.add_server(type, s)
         end
-        new_servers = cur_serv_ary.join(' ')
-
-        begin
-          vnet.send("#{type}=".to_sym, new_servers)
-          vnet.update
-        rescue => e
-          # assume that update of table is failed.
-          vnet.send("#{type}=".to_sym, cur_servers)
-          raise e
-        end
-
+        vnet.update
         return [true, '']
       end
 
@@ -181,27 +165,11 @@ module RenkeiVPE
       # +result[1]+  '' if successful, othersize a string that represents
       #              error message
       def remove_servers_from_vnet(vnet, type, servers)
-        cur_servers = vnet.send(type)
-
-        new_serv_ary = servers.strip.split(/\s+/)
-        cur_serv_ary = cur_servers.strip.split(/\s+/)
-
-        new_serv_ary.each do |s|
-          if cur_serv_ary.include? s
-            cur_serv_ary.delete(s)
-          end
+        new_servers_a = servers.strip.split(/\s+/)
+        new_servers_a.each do |s|
+          vnet.remove_server(type, s)
         end
-        new_servers = cur_serv_ary.join(' ')
-
-        begin
-          vnet.send("#{type}=".to_sym, new_servers)
-          vnet.update
-        rescue => e
-          # assume that update of table is failed.
-          vnet.send("#{type}=".to_sym, cur_servers)
-          raise e
-        end
-
+        vnet.update
         return [true, '']
       end
 
