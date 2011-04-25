@@ -4,6 +4,7 @@ require 'renkei-vpe-server/handler/image'
 require 'renkei-vpe-server/handler/zone'
 require 'renkei-vpe-server/handler/host'
 require 'renkei-vpe-server/handler/virtual_network'
+require 'renkei-vpe-server/handler/lease'
 require 'renkei-vpe-server/handler/vm_type'
 require 'renkei-vpe-server/handler/virtual_machine'
 
@@ -21,6 +22,7 @@ module RenkeiVPE
              [ZoneHandler::INTERFACE,   ZoneHandler.new],
              [HostHandler::INTERFACE,   HostHandler.new],
              [VNetHandler::INTERFACE,   VNetHandler.new],
+             [LeaseHandler::INTERFACE,  LeaseHandler.new],
              [VMTypeHandler::INTERFACE, VMTypeHandler.new],
              [VMHandler::INTERFACE,     VMHandler.new],
             ]

@@ -108,14 +108,31 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it does not exist.
       def delete(session, id)
-        task('rvpe.user.delete', session, true) do
+        task_name = 'rvpe.user.delete'
+        task(task_name, session, true) do
           user = User.find_by_id(id)[0]
           raise "User[#{id}] does not exist." unless user
 
-          rc = call_one_xmlrpc('one.user.delete', session, user.oid)
-          raise rc[1] unless rc[0]
-          user.delete
+          err_msg = ''
 
+          rc = call_one_xmlrpc('one.user.delete', session, user.oid)
+          unless rc[0]
+            log_fail(task_name, rc[1])
+            err_msg = (err_msg.size == 0)? rc[1] : err_msg +'; '+ rc[1]
+          end
+          begin
+            release_all_leases(task_name, user)
+          rescue => e
+            err_msg = (err_msg.size == 0)? e.message : err_msg +'; '+ e.message
+          end
+          begin
+            user.delete
+          rescue => e
+            log_fail(task_name, e)
+            err_msg = (err_msg.size == 0)? e.message : err_msg +'; '+ e.message
+          end
+
+          raise err_msg unless err_msg.size == 0
           [true, '']
         end
       end
@@ -128,7 +145,8 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it is the user id.
       def enable(session, id, enabled)
-        task('rvpe.user.enable', session, true) do
+        task_name = 'rvpe.user.enable'
+        task(task_name, session, true) do
           user = User.find_by_id(id)[0]
           raise "User[#{id}] does not exist." unless user
 
@@ -138,6 +156,10 @@ module RenkeiVPE
             user.enabled = 0
           end
           user.update
+
+          unless enabled
+            release_all_leases(task_name, user)
+          end
 
           [true, user.id]
         end
@@ -176,6 +198,33 @@ module RenkeiVPE
           user.update
           [true, '']
         end
+      end
+
+      private
+
+      # It releases all leases assigned to the user
+      # FIXME it might be better if it can work with enable_zone
+      def release_all_leases(task_name, user)
+        targets = []
+        VMLease.each do |lease|
+          if lease.assigned_to == user.id
+            # can't run update here because VMLease.each locks db.
+            targets << lease
+          end
+        end
+
+        err_msg = ''
+        targets.each do |lease|
+          begin
+            lease.assigned_to = -1
+            lease.update
+          rescue => e
+            log_fail(task_name, e)
+            err_msg = (err_msg.size == 0)? e.message : err_msg+'; '+e.message
+          end
+        end
+
+        raise err_msg unless err_msg.size == 0
       end
 
     end

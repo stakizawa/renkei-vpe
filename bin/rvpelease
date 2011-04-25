@@ -1,0 +1,246 @@
+#! /bin/env ruby
+
+##############################################################################
+# Environment Configuration
+##############################################################################
+RVPE_LOCATION = ENV['RVPE_LOCATION']
+
+if !RVPE_LOCATION
+  $stderr.puts 'set "RVPE_LOCATION" valiable.'
+  exit 1
+else
+  RUBY_LIB_LOCATION = RVPE_LOCATION + '/lib'
+end
+
+$: << RUBY_LIB_LOCATION
+
+##############################################################################
+# Required libraries
+##############################################################################
+require 'renkei-vpe'
+require 'client_utilities'
+require 'optparse'
+
+##############################################################################
+# Global variables
+##############################################################################
+CMD_NAME = 'rvpelease'
+
+client = RenkeiVPE::Client.new()
+xml_output = false
+verbose    = false
+
+list_columns = {
+  :id      => { :name => 'ID',
+                :size => 4,
+                :proc => lambda {|d,e| d.id} },
+  :name    => { :name => 'NAME',
+                :size => 30,
+                :proc => lambda {|d,e| d.name} },
+  :ip      => { :name => 'IP',
+                :size => 15,
+                :proc => lambda {|d,e| d['IP']} },
+  :assign  => { :name => 'ASSIGN',
+                :size => 10,
+                :proc => lambda {|d,e| d.assigned_user} },
+  :vid     => { :name => 'VM_ID',
+                :size => 15,
+                :proc => lambda {|d,e| d.vm_id_str} },
+
+  :default => [:id, :name, :ip, :assign, :vid]
+}
+
+##############################################################################
+# main
+##############################################################################
+
+begin
+  parser = OptionParser.new
+  parser.banner = <<EOT
+Usage:
+    #{CMD_NAME} command <options>
+
+Commands:
+    assign lease_name user_name
+        assign a lease whose name is 'lease_name' to a user whose name
+        is 'user_name'.
+        Only the administrator can execute this command.
+
+        $ #{CMD_NAME} assign vm00.cc.titech.ac.jp user1
+
+    release lease_name
+        release a lease whose name is 'lease_name' from the assigned user
+        Only the administrator can execute this command.
+
+        $ #{CMD_NAME} release vm00.cc.titech.ac.jp
+
+
+    show <-v> <-x> lease_names
+        show information abount leases.
+        lease_names can be names or ids of leases.
+
+        $ #{CMD_NAME} show vm00.cc.titech.ac.jp vm01.cc.titech.ac.jp
+
+
+    list <-v> <-x> <all|mine|user_name>
+        list leases.
+        If one of all(a), mine(m) and user_name is specified, it lists,
+           all(a)    : all leases
+           mine(m)   : leases assgined to a user who runs this command
+                       and ones that have not been assigned
+           user_name : leases assgined to the specified user
+
+        If none of them are specified, it assumes that 'mine' is specified.
+        'all' and user_name can be specified only by the administrator.
+        'user_name' can be name or id of a user.
+
+
+    help
+        show this message.
+
+Options:
+EOT
+
+  parser.on('-x', '--xml', ': xml output mode') do
+    xml_output = true
+  end
+
+  parser.on('-v', ': verbose output mode') do
+    verbose = true
+  end
+
+  parser.parse!(ARGV)
+rescue OptionParser::ParseError
+  $stderr.puts parser.help
+  exit 1
+rescue => e
+  $stderr.puts e.message + "\n\n"
+  $stderr.puts parser.help
+  exit 1
+end
+
+command = ARGV.shift
+case command
+#######################################
+# assign a lease to a user
+when 'assign'
+  check_parameters('assign', 2)
+
+  lease_name = ARGV[0]
+  user_name  = ARGV[1]
+  id = get_lease_id(lease_name)
+  lease = RenkeiVPE::Lease.new_with_id(id, client)
+  rc = lease.assign(user_name)
+  if is_successful?(rc)
+    puts "Lease[#{lease_name}] is assigned to User[#{user_name}]."
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+
+#######################################
+# release a lease from a user
+when 'release'
+  check_parameters('release', 1)
+
+  lease_name = ARGV[0]
+  id = get_lease_id(lease_name)
+  lease = RenkeiVPE::Lease.new_with_id(id, client)
+  rc = lease.release
+  if is_successful?(rc)
+    puts "Lease[#{lease_name}] is released."
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+
+#######################################
+# show leases
+when 'show'
+  check_parameters('show', 1)
+
+  ARGV.each do |lease_name|
+    id = get_lease_id(lease_name)
+    lease = RenkeiVPE::Lease.new_with_id(id, client)
+    rc = lease.info
+
+    if is_successful?(rc)
+      if xml_output
+        puts lease.to_xml
+      else
+        str    = '%-22s: %-20s'
+        str_h1 = '%-80s'
+
+        print_header(str_h1, 'LEASE INFORMATION', true)
+
+        puts str % ['ID', lease.id.to_s]       if verbose
+        puts str % ['NAME', lease.name]
+        puts str % ['IP ADDRESS', lease['IP']]
+        puts str % ['MAC ADDRESS', lease['MAC']]
+        # print used
+        if lease['USED'].to_i == 1
+          used_str = 'Yes'
+        else
+          used_str = 'No'
+        end
+        puts str % ['ASSIGNED USER', lease.assigned_user]
+        puts str % ['USED', used_str]
+        puts str % ['USING VM ID', lease.vm_id_str]
+
+        puts
+      end
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
+
+#######################################
+# list leases
+when 'list'
+  filter = -1
+  if ARGV.size == 1
+    case ARGV[0]
+    when 'all'
+      filter = -2
+    when 'a'
+      filter = -2
+    when 'mine'
+      filter = -1
+    when 'm'
+      filter = -1
+    else # name or id of a user
+      filter = get_user_id(ARGV[0]).to_i
+    end
+  end
+
+  lease_pool = RenkeiVPE::LeasePool.new(client, filter)
+  rc = lease_pool.info
+  if is_error?(rc)
+    $stderr.puts rc.message
+    exit 1
+  end
+
+  if xml_output
+    puts lease_pool.to_xml
+  else
+    print_xml_friendly(list_columns, lease_pool, verbose)
+  end
+
+#######################################
+# show help
+when 'help'
+  puts parser.help
+
+else
+  $stderr.puts "Unknown command: #{command}"
+  $stderr.puts parser.help
+
+end
+
+
+### Local variables:
+### mode: Ruby
+### coding: utf-8-unix
+### indent-tabs-mode: nil
+### End:

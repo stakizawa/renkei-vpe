@@ -108,11 +108,15 @@ def print_leases(xml_obj, verbose=false, print_name_on_header=false)
   end
   print_header(str, hmsg, true)
   xml_obj.each('LEASES/LEASE') do |l|
+    name = l['NAME']
+    if l['ASSIGNED_TO'].to_i > 0
+      name = '(+) ' + name
+    end
     if verbose
-      msg = [ l['ID'], l['NAME'], l['IP'], l['MAC'],
+      msg = [ l['ID'], name, l['IP'], l['MAC'],
               l['ALLOCATED'], l['VID'] ]
     else
-      msg = [ l['NAME'], l['IP'], l['MAC'] ]
+      msg = [ name, l['IP'], l['MAC'] ]
     end
     puts str % msg
   end
