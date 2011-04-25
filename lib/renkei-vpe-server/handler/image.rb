@@ -11,6 +11,9 @@ module RenkeiVPE
         meth('val pool(string, int)',
              'Retrieve information about image group',
              'pool')
+        meth('val ask_id(string, string)',
+             'Retrieve id of the given-named image',
+             'ask_id')
         meth('val info(string, int)',
              'Retrieve information about the image',
              'info')
@@ -47,6 +50,34 @@ module RenkeiVPE
           end
 
           call_one_xmlrpc('one.imagepool.info', session, flag)
+        end
+      end
+
+      # return id of the given-named image.
+      # +session+   string that represents user session
+      # +name+      name of an image
+      # +return[0]+ true or false whenever is successful or not
+      # +return[1]+ if an error occurs this is error message,
+      #             if successful this is the id of the image
+      def ask_id(session, name)
+        task('rvpe.image.ask_id', session) do
+          flag = -1
+          admin_session(session) { flag = -2 }
+          rc = call_one_xmlrpc('one.imagepool.info', session, flag)
+          raise rc[1] unless rc[0]
+
+          id = nil
+          doc = REXML::Document.new(rc[1])
+          doc.elements.each('IMAGE_POOL/IMAGE') do |e|
+            db_name = e.elements['NAME'].get_text
+            if db_name == name
+              id = e.elements['ID'].get_text.to_s.to_i
+              break
+            end
+          end
+          raise "Image[#{name}] is not found. " unless id
+
+          [true, id]
         end
       end
 

@@ -7,7 +7,8 @@ module RenkeiVPE
         #######################################################################
 
         VM_POOL_METHODS = {
-            :info => "vm.pool"
+            :info   => "vm.pool",
+            :ask_id => "vm.ask_id"
         }
 
         #######################################################################
@@ -34,6 +35,12 @@ module RenkeiVPE
         # Retrieves all the VMs in the pool.
         def info
             super(VM_POOL_METHODS[:info], @user_id, @history)
+        end
+
+        # Retrieves the id of the given-named vm.
+        # +name+  name of a vm
+        def ask_id(name)
+            super(VM_POOL_METHODS[:ask_id], name)
         end
     end
 end

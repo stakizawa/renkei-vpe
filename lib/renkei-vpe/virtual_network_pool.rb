@@ -7,7 +7,8 @@ module RenkeiVPE
         #######################################################################
 
         VN_POOL_METHODS = {
-            :info => "vn.pool"
+            :info   => "vn.pool",
+            :ask_id => "vn.ask_id"
         }
 
         #######################################################################
@@ -31,6 +32,12 @@ module RenkeiVPE
         # Retrieves all the VNETs in the pool.
         def info()
             super(VN_POOL_METHODS[:info])
+        end
+
+        # Retrieves the id of the given-named Vnet.
+        # +name+  name of a Vnet
+        def ask_id(name)
+            super(VN_POOL_METHODS[:ask_id], name)
         end
     end
 end

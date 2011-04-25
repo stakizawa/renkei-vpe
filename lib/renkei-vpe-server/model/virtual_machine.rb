@@ -14,6 +14,7 @@ module RenkeiVPE
       @table_schema = <<SQL
 CREATE TABLE #{@table_name} (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  name        VARCHAR(256),
   oid         INTEGER UNIQUE,
   user_id     INTEGER,
   zone_id     INTEGER,
@@ -25,6 +26,8 @@ SQL
 
       @field_for_find_by_name = 'name'
 
+      # name of VM
+      attr_accessor(:name)
       # id of one VM
       attr_accessor(:oid)      { |v| v.to_i }
       # id of the VM user
@@ -40,6 +43,7 @@ SQL
 
       def initialize
         super
+        @name     = ''
         @oid      = -1
         @user_id  = -1
         @zone_id  = -1
@@ -50,6 +54,7 @@ SQL
 
       def to_s
         "VirtualMachine<"          +
+          "name=#{@name},"         +
           "id=#{@id},"             +
           "oid=#{@oid},"           +
           "user_id=#{@user_id},"   +
@@ -187,6 +192,7 @@ SQL
       protected
 
       def check_fields
+        raise_if_nil_and_not_class(@name,     'name',     String)
         raise_if_nil_and_not_class(@oid,      'oid',      Integer)
         raise_if_nil_and_not_class(@user_id,  'user_id',  Integer)
         raise_if_nil_and_not_class(@zone_id,  'zone_id',  Integer)
@@ -196,7 +202,8 @@ SQL
       end
 
       def to_create_record_str
-        "#{@oid},"        +
+        "'#{@name}',"       +
+          "#{@oid},"      +
           "#{@user_id},"  +
           "#{@zone_id},"  +
           "#{@lease_id}," +
@@ -205,11 +212,12 @@ SQL
       end
 
       def to_find_id_str
-        "oid=#{@oid}"
+        "name='#{@name}'"
       end
 
       def to_update_record_str
-        "oid=#{@oid},"             +
+        "name='#{@name}',"         +
+          "oid=#{@oid},"           +
           "user_id=#{@user_id},"   +
           "zone_id=#{@zone_id},"   +
           "lease_id=#{@lease_id}," +
@@ -218,16 +226,17 @@ SQL
       end
 
       def self.setup_attrs(vm, attrs)
-        return vm unless attrs.size == 7
+        return vm unless attrs.size == 8
         vm.instance_eval do
           @id       = attrs[0].to_i
         end
-        vm.oid      = attrs[1]
-        vm.user_id  = attrs[2]
-        vm.zone_id  = attrs[3]
-        vm.lease_id = attrs[4]
-        vm.type_id  = attrs[5]
-        vm.image_id = attrs[6]
+        vm.name     = attrs[1]
+        vm.oid      = attrs[2]
+        vm.user_id  = attrs[3]
+        vm.zone_id  = attrs[4]
+        vm.lease_id = attrs[5]
+        vm.type_id  = attrs[6]
+        vm.image_id = attrs[7]
         return vm
       end
 

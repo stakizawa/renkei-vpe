@@ -7,7 +7,8 @@ module RenkeiVPE
         #######################################################################
 
         IMAGE_POOL_METHODS = {
-            :info => "image.pool"
+            :info   => "image.pool",
+            :ask_id => "image.ask_id"
         }
 
         #######################################################################
@@ -34,6 +35,12 @@ module RenkeiVPE
         # Retrieves all or part of the Images in the pool.
         def info()
             super(IMAGE_POOL_METHODS[:info],@user_id)
+        end
+
+        # Retrieves the id of the given-named image.
+        # +name+  name of an image
+        def ask_id(name)
+            super(IMAGE_POOL_METHODS[:ask_id], name)
         end
     end
 end

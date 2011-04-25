@@ -13,6 +13,9 @@ module RenkeiVPE
         meth('val pool(string, int, int)',
              'Retrieve information about virtual machine group',
              'pool')
+        meth('val ask_id(string, string)',
+             'Retrieve id of the given-named virtual machine',
+             'ask_id')
         meth('val info(string, int)',
              'Retrieve information about the virtual machine',
              'info')
@@ -64,6 +67,21 @@ module RenkeiVPE
           doc = REXML::Document.new
           doc.add(pool_e)
           [true, doc.to_s]
+        end
+      end
+
+      # return id of the given-named virtual machine.
+      # +session+   string that represents user session
+      # +name+      name of a virtual machine
+      # +return[0]+ true or false whenever is successful or not
+      # +return[1]+ if an error occurs this is error message,
+      #             if successful this is the id of the virtual machine.
+      def ask_id(session, name)
+        task('rvpe.vm.ask_id', session) do
+          vm = VirtualMachine.find_by_name(name)[0]
+          raise "VirtualMachine[#{name}] is not found. " unless vm
+
+          [true, vm.id]
         end
       end
 
@@ -192,6 +210,7 @@ EOS
           # 5. create VM record
           begin
             vm = VirtualMachine.new
+            vm.name     = lease.name
             vm.oid      = rc[1]
             vm.user_id  = user.id
             vm.zone_id  = zone.id

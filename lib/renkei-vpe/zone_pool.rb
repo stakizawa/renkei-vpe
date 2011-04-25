@@ -7,7 +7,8 @@ module RenkeiVPE
         #######################################################################
 
         ZONE_POOL_METHODS = {
-            :info => "zone.pool"
+            :info   => "zone.pool",
+            :ask_id => "zone.ask_id"
         }
 
         #######################################################################
@@ -31,6 +32,12 @@ module RenkeiVPE
         # Retrieves all the Zones in the pool.
         def info()
             super(ZONE_POOL_METHODS[:info])
+        end
+
+        # Retrieves the id of the given-named zone.
+        # +name+  name of a zone
+        def ask_id(name)
+            super(ZONE_POOL_METHODS[:ask_id], name)
         end
     end
 end

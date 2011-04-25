@@ -11,6 +11,9 @@ module RenkeiVPE
         meth('val pool(string)',
              'Retrieve information about host group',
              'pool')
+        meth('val ask_id(string, string)',
+             'Retrieve id of the given-named host',
+             'ask_id')
         meth('val info(string, int)',
              'Retrieve information about the host',
              'info')
@@ -32,6 +35,32 @@ module RenkeiVPE
       def pool(session)
         task('rvpe.host.pool', session) do
           call_one_xmlrpc('one.hostpool.info', session)
+        end
+      end
+
+      # return id of the given-named host.
+      # +session+   string that represents user session
+      # +name+      name of a host
+      # +return[0]+ true or false whenever is successful or not
+      # +return[1]+ if an error occurs this is error message,
+      #             if successful this is the id of the host
+      def ask_id(session, name)
+        task('rvpe.host.ask_id', session) do
+          rc = call_one_xmlrpc('one.hostpool.info', session)
+          raise rc[1] unless rc[0]
+
+          id = nil
+          doc = REXML::Document.new(rc[1])
+          doc.elements.each('HOST_POOL/HOST') do |e|
+            db_name = e.elements['NAME'].get_text
+            if db_name == name
+              id = e.elements['ID'].get_text.to_i
+              break
+            end
+          end
+          raise "Host[#{name}] is not found. " unless id
+
+          [true, id]
         end
       end
 

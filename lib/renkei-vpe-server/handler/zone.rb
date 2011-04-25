@@ -14,6 +14,9 @@ module RenkeiVPE
         meth('val pool(string)',
              'Retrieve information about zone group',
              'pool')
+        meth('val ask_id(string, string)',
+             'Retrieve id of the given-named zone',
+             'ask_id')
         meth('val info(string, int)',
              'Retrieve information about the zone',
              'info')
@@ -62,6 +65,21 @@ module RenkeiVPE
           end
 
           return [true, doc.to_s]
+        end
+      end
+
+      # return id of the given-named zone.
+      # +session+   string that represents user session
+      # +name+      name of a zone
+      # +return[0]+ true or false whenever is successful or not
+      # +return[1]+ if an error occurs this is error message,
+      #             if successful this is the id of the zone.
+      def ask_id(session, name)
+        task('rvpe.zone.ask_id', session) do
+          z = Zone.find_by_name(name)[0]
+          raise "Zone[#{name}] is not found. " unless z
+
+          [true, z.id]
         end
       end
 

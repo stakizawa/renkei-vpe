@@ -13,6 +13,9 @@ module RenkeiVPE
         meth('val pool(string)',
              'Retrieve information about vm type group',
              'pool')
+        meth('val ask_id(string, string)',
+             'Retrieve id of the given-named vm type',
+             'ask_id')
         meth('val info(string, int)',
              'Retrieve information about the vm type',
              'info')
@@ -43,6 +46,21 @@ module RenkeiVPE
           doc = REXML::Document.new
           doc.add(pool_e)
           [true, doc.to_s]
+        end
+      end
+
+      # return id of the given-named vm type.
+      # +session+   string that represents user session
+      # +name+      name of a vm type
+      # +return[0]+ true or false whenever is successful or not
+      # +return[1]+ if an error occurs this is error message,
+      #             if successful this is the id of the vm type
+      def ask_id(session, name)
+        task('rvpe.vmtype.ask_id', session) do
+          t = VMType.find_by_name(name)[0]
+          raise "VMType[#{name}] is not found. " unless t
+
+          [true, t.id]
         end
       end
 

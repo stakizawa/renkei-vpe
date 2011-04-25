@@ -7,7 +7,8 @@ module RenkeiVPE
         #######################################################################
 
         USER_POOL_METHODS = {
-            :info => "user.pool"
+            :info   => "user.pool",
+            :ask_id => "user.ask_id"
         }
 
         #######################################################################
@@ -31,6 +32,12 @@ module RenkeiVPE
         # Retrieves all the Users in the pool.
         def info()
             super(USER_POOL_METHODS[:info])
+        end
+
+        # Retrieves the id of the given-named user.
+        # +name+  name of a user
+        def ask_id(name)
+            super(USER_POOL_METHODS[:ask_id], name)
         end
     end
 end

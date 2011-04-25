@@ -12,6 +12,9 @@ module RenkeiVPE
         meth('val pool(string)',
              'Retrieve information about user group',
              'pool')
+        meth('val ask_id(string, string)',
+             'Retrieve id of the given-named user',
+             'ask_id')
         meth('val info(string, int)',
              'Retrieve information about the user',
              'info')
@@ -50,6 +53,21 @@ module RenkeiVPE
           doc = REXML::Document.new
           doc.add(pool_e)
           [true, doc.to_s]
+        end
+      end
+
+      # return id of the given-named user.
+      # +session+   string that represents user session
+      # +name+      name of a user
+      # +return[0]+ true or false whenever is successful or not
+      # +return[1]+ if an error occurs this is error message,
+      #             if successful this is the id of the user
+      def ask_id(session, name)
+        task('rvpe.user.ask_id', session) do
+          u = User.find_by_name(name)[0]
+          raise "User[#{name}] is not found. " unless u
+
+          [true, u.id]
         end
       end
 

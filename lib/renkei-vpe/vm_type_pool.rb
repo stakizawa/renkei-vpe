@@ -7,7 +7,8 @@ module RenkeiVPE
         #######################################################################
 
         VMTYPE_POOL_METHODS = {
-            :info => "vmtype.pool"
+            :info   => "vmtype.pool",
+            :ask_id => "vmtype.ask_id"
         }
 
         #######################################################################
@@ -31,6 +32,12 @@ module RenkeiVPE
         # Retrieves all the VM types in the pool.
         def info()
             super(VMTYPE_POOL_METHODS[:info])
+        end
+
+        # Retrieves the id of the given-named VMType.
+        # +name+  name of a VMType
+        def ask_id(name)
+            super(VMTYPE_POOL_METHODS[:ask_id], name)
         end
     end
 end

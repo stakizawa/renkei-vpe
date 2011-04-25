@@ -12,6 +12,9 @@ module RenkeiVPE
         meth('val pool(string)',
              'Retrieve information about virtual network group',
              'pool')
+        meth('val ask_id(string, string)',
+             'Retrieve id of the given-named virtual network',
+             'ask_id')
         meth('val info(string, int)',
              'Retrieve information about the virtual network',
              'info')
@@ -48,6 +51,21 @@ module RenkeiVPE
           doc = REXML::Document.new
           doc.add(pool_e)
           [true, doc.to_s]
+        end
+      end
+
+      # return id of the given-named virtual network.
+      # +session+   string that represents user session
+      # +name+      name of a virtual network
+      # +return[0]+ true or false whenever is successful or not
+      # +return[1]+ if an error occurs this is error message,
+      #             if successful this is the id of the virtual network.
+      def ask_id(session, name)
+        task('rvpe.vn.ask_id', session) do
+          vn = VirtualNetwork.find_by_name(name)[0]
+          raise "VirtualNetwork[#{name}] is not found. " unless vn
+
+          [true, vn.id]
         end
       end
 

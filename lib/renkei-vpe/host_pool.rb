@@ -7,7 +7,8 @@ module RenkeiVPE
         #######################################################################
 
         HOST_POOL_METHODS = {
-            :info => "host.pool"
+            :info   => "host.pool",
+            :ask_id => "host.ask_id",
         }
 
         #######################################################################
@@ -31,6 +32,12 @@ module RenkeiVPE
         # Retrieves all the Hosts in the pool.
         def info()
             super(HOST_POOL_METHODS[:info])
+        end
+
+        # Retrieves the id of the given-named host.
+        # +name+  name of a host
+        def ask_id(name)
+            super(HOST_POOL_METHODS[:ask_id], name)
         end
     end
 end

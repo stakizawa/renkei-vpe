@@ -13,6 +13,9 @@ module RenkeiVPE
         meth('val pool(string, int)',
              'Retrieve information about lease group',
              'pool')
+        meth('val ask_id(string, string)',
+             'Retrieve id of the given-named lease',
+             'ask_id')
         meth('val info(string, int)',
              'Retrieve information about the lease',
              'info')
@@ -57,6 +60,21 @@ module RenkeiVPE
           doc = REXML::Document.new
           doc.add(pool_e)
           [true, doc.to_s]
+        end
+      end
+
+      # return id of the given-named lease.
+      # +session+   string that represents user session
+      # +name+      name of a lease
+      # +return[0]+ true or false whenever is successful or not
+      # +return[1]+ if an error occurs this is error message,
+      #             if successful this is the id of the lease
+      def ask_id(session, name)
+        task('rvpe.lease.ask_id', session) do
+          l = Lease.find_by_name(name)[0]
+          raise "Lease[#{name}] is not found. " unless l
+
+          [true, l.id]
         end
       end
 

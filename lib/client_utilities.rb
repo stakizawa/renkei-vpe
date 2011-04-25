@@ -261,36 +261,17 @@ def check_parameters(name, number)
 end
 
 
-
 def get_entity_id(name, pool_class)
     return name if name.match(/^[0123456789]+$/)
 
-    # TODO: get vm's from the actual user
-    pool=pool_class.new(get_rvpe_client)
-    result=pool.info
-
+    pool = pool_class.new(get_rvpe_client)
+    result = pool.ask_id(name)
     if RenkeiVPE.is_error?(result)
         puts result.message
         exit -1
     end
 
-    objects=pool.select {|object| object.name==name }
-
-    class_name=pool_class.name.split('::').last.gsub(/Pool$/, '')
-
-    if objects.length>0
-        if objects.length>1
-            puts "There are multiple #{class_name}'s with name #{name}."
-            exit -1
-        else
-            result=objects.first.id
-        end
-    else
-        puts "#{class_name} named #{name} not found."
-        exit -1
-    end
-
-    result
+    pool.asked_id
 end
 
 def get_entity_id_from_zone(name, zone_name, search_str)

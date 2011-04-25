@@ -7,7 +7,8 @@ module RenkeiVPE
         #######################################################################
 
         LEASE_POOL_METHODS = {
-            :info => "lease.pool"
+            :info   => "lease.pool",
+            :ask_id => "lease.ask_id"
         }
 
         #######################################################################
@@ -33,6 +34,12 @@ module RenkeiVPE
         # Retrieves all the VM types in the pool.
         def info()
             super(LEASE_POOL_METHODS[:info],@user_id)
+        end
+
+        # Retrieves the id of the given-named lease.
+        # +name+  name of a lease
+        def ask_id(name)
+            super(LEASE_POOL_METHODS[:ask_id], name)
         end
     end
 end

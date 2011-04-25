@@ -5,6 +5,8 @@ module RenkeiVPE
     class Pool < XMLPool
         include Enumerable
 
+        attr_reader :asked_id
+
     protected
 
         #pool:: _String_ XML name of the root element
@@ -18,6 +20,8 @@ module RenkeiVPE
 
             @client = client
             @hash   = nil
+
+            @asked_id = nil
         end
 
         # Default Factory Method for the Pools. The factory method returns an
@@ -44,6 +48,22 @@ module RenkeiVPE
             if !RenkeiVPE.is_error?(rc)
                 initialize_xml(rc,@pool_name)
                 rc   = nil
+            end
+
+            return rc
+        end
+
+        # Calls to the corresponding ask_id method to retreive the id
+        # of the specified name element in the pool
+        # xml_method:: _String_ the name of the XML-RPC method
+        # args:: _Array_ with additional arguments for the ask_id call
+        # [return] nil in case of success or an Error object
+        def ask_id(xml_method, *args)
+            rc = @client.call(xml_method,*args)
+
+            if RenkeiVPE.is_successful?(rc)
+                @asked_id = rc.to_i
+                rc = nil
             end
 
             return rc
@@ -194,4 +214,3 @@ end
 ### coding: utf-8-unix
 ### indent-tabs-mode: nil
 ### End:
-
