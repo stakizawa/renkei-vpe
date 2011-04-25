@@ -131,7 +131,6 @@ Commands:
 
     list <-x>
         list registered zones you can use.
-        # TODO all mine
 
     show <-x> <-v> zone_names
         show information about specified zones. zone_names can be names
