@@ -2,14 +2,14 @@
 Instration on OS image for VMs
 ***********************************
 
-1. install rpop-init.sh to system daemon directory, such as /etc/init.d
+1. install rvpe-init.sh to system daemon directory, such as /etc/init.d
 
-     # cp rpop-init.sh /etc/init.d/rpop-init
+     # cp rvpe-init.sh /etc/init.d/rvpe-init
 
-2. setup rpop-init to run on boot
+2. setup rvpe-init to run on boot
 
      When CentOS
-     # chkconfig rpop-init --add
+     # chkconfig rvpe-init --add
 
 3. modify /etc/fstab to mount swap partition
 
@@ -22,4 +22,4 @@ Instration on OS image for VMs
 ***********************************
 
 Don't forget to put init.rb in a cd-iso image.
-It is called in 'rpop-init.sh' script to configure VM.
+It is called in 'rvpe-init.sh' script to configure VM.
