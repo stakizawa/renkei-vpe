@@ -1,0 +1,134 @@
+#!/bin/bash
+#
+# rvpe    rvpe runs This shell script starts/stops rvpe.
+#
+# chkconfig: 2345 90 10
+# description: rvpe starts/stops/statuses RENKEI-VPE.
+
+. /etc/profile.d/one.sh
+
+RETVAL=0
+
+SUDO=/usr/bin/sudo
+GFARM2FS=/usr/bin/gfarm2fs
+FUSERMOUNT=/usr/bin/fusermount
+
+ONEADMIN=popadmin
+ONE_PID_FILE=$ONE_LOCATION/var/oned.pid
+IMAGE_REPO=/usr/rpop/opennebula-2.0.1/var/images
+
+_status() {
+    # check status of OpenNebula
+    if [ ! -f $ONE_PID_FILE ]; then
+        return 1
+    fi
+    if [ ! -d /proc/`cat $ONE_PID_FILE` ]; then
+        return 1
+    fi
+
+    # check status of RENKEI-VPE
+    # TODO implement
+
+    return 0
+}
+
+start() {
+    _status
+    if [ $? -eq 0 ]; then
+        echo 'RENKEI-VPE is already running.'
+        RETVAL=1
+        return
+    fi
+
+    # mount gfarm
+    $SUDO -u $ONEADMIN $GFARM2FS -o allow_other -o ncopy=2 $IMAGE_REPO
+    if [ ! $? -eq 0 ]; then
+        echo 'Failed to start RENKEI-VPE: gfarm2fs failed to mount'
+        RETVAL=1
+        return
+    fi
+
+    # start OpenNebula
+    $SUDO -u $ONEADMIN ONE_LOCATION=$ONE_LOCATION $ONE_LOCATION/bin/one -b start
+    if [ ! $? -eq 0 ]; then
+        echo 'Failed to start RENKEI-VPE: OpenNebula failed to start'
+        RETVAL=1
+        return
+    fi
+
+    # start RENKEI-VPE
+    # TODO implement
+
+    RETVAL=0
+}
+
+stop() {
+    _status
+    if [ ! $? -eq 0 ]; then
+        echo 'RENKEI-VPE is not running.'
+        RETVAL=1
+        return
+    fi
+
+    # stop RENKEI-VPE
+    # TODO implement
+
+    # stop OpenNebula
+    $SUDO -u $ONEADMIN ONE_LOCATION=$ONE_LOCATION $ONE_LOCATION/bin/one stop
+    if [ ! $? -eq 0 ]; then
+        echo 'Failed to stop RENKEI-VPE: OpenNebula failed to stop'
+        RETVAL=1
+        return
+    fi
+
+    # unmount gfarm
+    $SUDO -u $ONEADMIN $FUSERMOUNT -u $IMAGE_REPO
+    if [ ! $? -eq 0 ]; then
+        echo 'Failed to stop RENKEI-VPE: fusermount failed to umount gfarm'
+        RETVAL=1
+        return
+    fi
+
+    RETVAL=0
+}
+
+status() {
+    _status
+    RETVAL=$?
+    if [ $RETVAL -eq 0 ]; then
+        echo "RENKEI-VPE is running..."
+    elif [ $RETVAL -eq 1 ]; then
+        echo "RENKEI-PVE is not running: OpenNebula stops"
+    elif [ $RETVAL -eq 2 ]; then
+        echo "RENKEI-PVE is not running."
+    else
+        echo "Unknown status."
+    fi
+}
+
+
+if [ ! $UID == 0 ]; then
+    echo 'Run as root'
+    exit 1
+fi
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        status
+        ;;
+    restart|reload)
+        stop
+        start
+        ;;
+    *)
+        echo $"Usage: $0 {start|stop|restart|status}"
+        RETVAL=1
+esac
+
+exit $RETVAL
