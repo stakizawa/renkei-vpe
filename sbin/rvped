@@ -137,6 +137,7 @@ rescue => e
   exit 1
 end
 
+exit_code = 0
 command = ARGV.shift
 case command
 #######################################
@@ -147,6 +148,7 @@ when 'start'
     puts "#{CMD_NAME} starts"
   else
     puts "#{CMD_NAME} doesn't start"
+    exit_code = 1
   end
 
 #######################################
@@ -157,6 +159,7 @@ when 'stop'
     puts "#{CMD_NAME} stops"
   else
     puts "#{CMD_NAME} doesn't stop"
+    exit_code = 1
   end
 
 #######################################
@@ -167,6 +170,7 @@ when 'status'
     puts "#{CMD_NAME}(#{server_pid}) is running..."
   else
     puts "#{CMD_NAME} is not running"
+    exit_code = 1
   end
 
 #######################################
@@ -179,6 +183,8 @@ else
   $stderr.puts parser.help
 
 end
+
+exit exit_code
 
 ### Local variables:
 ### mode: Ruby
