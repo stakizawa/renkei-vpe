@@ -57,7 +57,7 @@ module RenkeiVPE
       #             if successful this is the id of the vm type
       def ask_id(session, name)
         task('rvpe.vmtype.ask_id', session) do
-          t = VMType.find_by_name(name)[0]
+          t = VMType.find_by_name(name).last
           raise "VMType[#{name}] is not found. " unless t
 
           [true, t.id]
@@ -96,7 +96,7 @@ module RenkeiVPE
           type_def = ResourceFile::Parser.load_yaml(template)
 
           name = type_def[ResourceFile::VMType::NAME]
-          type = VMType.find_by_name(name)[0]
+          type = VMType.find_by_name(name).last
           raise "VMType[#{name}] already exists." if type
 
           type = VMType.new

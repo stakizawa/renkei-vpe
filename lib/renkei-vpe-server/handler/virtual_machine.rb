@@ -48,7 +48,7 @@ module RenkeiVPE
       def pool(session, flag, history)
         task('rvpe.vm.pool', session) do
           uname = get_user_from_session(session)
-          user = User.find_by_name(uname)[0]
+          user = User.find_by_name(uname).last
 
           if flag <= -2 || (flag >= 0 && flag != user.id)
             admin_session(session) do; end
@@ -80,7 +80,7 @@ module RenkeiVPE
       #             if successful this is the id of the virtual machine.
       def ask_id(session, name)
         task('rvpe.vm.ask_id', session) do
-          vm = VirtualMachine.find_by_name(name)[0]
+          vm = VirtualMachine.find_by_name(name).last
           raise "VirtualMachine[#{name}] is not found. " unless vm
 
           [true, vm.id]
@@ -123,7 +123,7 @@ module RenkeiVPE
           # 0. get user and check if the user has permission to run VMs
           #    in the specified zone
           user_name = get_user_from_session(session)
-          user = User.find_by_name(user_name)[0]
+          user = User.find_by_name(user_name).last
           unless user.zones_in_array.include?(zone_id)
             raise "User[#{user_name}] don't have permission to use Zone[#{zone_id}]."
           end

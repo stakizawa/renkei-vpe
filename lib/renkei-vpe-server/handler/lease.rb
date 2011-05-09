@@ -43,7 +43,7 @@ module RenkeiVPE
       def pool(session, flag)
         task('rvpe.lease.pool', session) do
           uname = get_user_from_session(session)
-          user = User.find_by_name(uname)[0]
+          user = User.find_by_name(uname).last
 
           if flag < -1 || (flag >= 0 && flag != user.id)
             admin_session(session) do; end
@@ -75,7 +75,7 @@ module RenkeiVPE
       #             if successful this is the id of the lease
       def ask_id(session, name)
         task('rvpe.lease.ask_id', session) do
-          l = Lease.find_by_name(name)[0]
+          l = Lease.find_by_name(name).last
           raise "Lease[#{name}] is not found. " unless l
 
           [true, l.id]
@@ -121,7 +121,7 @@ module RenkeiVPE
             raise "Lease[#{id}] is already assigned to User[#{user}]."
           end
 
-          user = User.find_by_name(user_name)[0]
+          user = User.find_by_name(user_name).last
           raise "User[#{user_name}] does not exist." unless user
 
           lease.assigned_to = user.id

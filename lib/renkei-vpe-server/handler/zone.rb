@@ -76,7 +76,7 @@ module RenkeiVPE
       #             if successful this is the id of the zone.
       def ask_id(session, name)
         task('rvpe.zone.ask_id', session) do
-          z = Zone.find_by_name(name)[0]
+          z = Zone.find_by_name(name).last
           raise "Zone[#{name}] is not found. " unless z
 
           [true, z.id]
@@ -116,7 +116,7 @@ module RenkeiVPE
 
           # create a zone
           name = zone_def[ResourceFile::Zone::NAME]
-          zone = Zone.find_by_name(name)[0]
+          zone = Zone.find_by_name(name).last
           raise "Zone[#{name}] already exists." if zone
           # create an associated site in OpenNebula
           rc = call_one_xmlrpc('one.cluster.allocate', session, name)
@@ -408,7 +408,7 @@ module RenkeiVPE
         vn_unique   = zone.name + '::' + name
 
         # 0. check if the vnet already exists
-        vnet = VirtualNetwork.find_by_name(vn_unique)[0]
+        vnet = VirtualNetwork.find_by_name(vn_unique).last
         raise "VirtualNetwork[#{vn_unique}] already exists." if vnet
 
         # 1. allocate vn in OpenNebula
@@ -487,7 +487,7 @@ VN_DEF
         elsif vnet.kind_of?(String)
           # vnet is name of virtual network
           name = zone.name + '::' + vnet
-          vnet = VirtualNetwork.find_by_name(name)[0]
+          vnet = VirtualNetwork.find_by_name(name).last
           raise "VirtualNetwork[#{name}] does not exist." unless vnet
         end
 
@@ -534,7 +534,7 @@ VN_DEF
       # +vnet+        instance of vnet
       # +return+      id of lease
       def add_lease_to_vnet(lease_name, lease_addr, vnet)
-        l = Lease.find_by_name(lease_name)[0]
+        l = Lease.find_by_name(lease_name).last
         raise "Lease[#{lease_name}] already exists." if l
 
         # create a virtual host record

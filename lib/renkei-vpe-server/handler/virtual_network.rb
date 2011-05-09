@@ -62,7 +62,7 @@ module RenkeiVPE
       #             if successful this is the id of the virtual network.
       def ask_id(session, name)
         task('rvpe.vn.ask_id', session) do
-          vn = VirtualNetwork.find_by_name(name)[0]
+          vn = VirtualNetwork.find_by_name(name).last
           raise "VirtualNetwork[#{name}] is not found. " unless vn
 
           [true, vn.id]

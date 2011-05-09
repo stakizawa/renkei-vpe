@@ -64,7 +64,7 @@ module RenkeiVPE
       #             if successful this is the id of the user
       def ask_id(session, name)
         task('rvpe.user.ask_id', session) do
-          u = User.find_by_name(name)[0]
+          u = User.find_by_name(name).last
           raise "User[#{name}] is not found. " unless u
 
           [true, u.id]
@@ -80,7 +80,7 @@ module RenkeiVPE
       #             about the user
       def info(session, id)
         task('rvpe.user.info', session, true) do
-          user = User.find_by_id(id)[0]
+          user = User.find_by_id(id).last
           raise "User[#{id}] is not found" unless user
 
           doc = REXML::Document.new
