@@ -6,6 +6,8 @@
 # description: rvpe starts/stops/statuses RENKEI-VPE.
 
 . /etc/profile.d/one.sh
+. /etc/profile.d/rpop-ruby.sh
+. /etc/profile.d/renkei-vpe.sh
 
 RETVAL=0
 
@@ -17,6 +19,8 @@ ONEADMIN=popadmin
 ONE_PID_FILE=$ONE_LOCATION/var/oned.pid
 IMAGE_REPO=/usr/rpop/opennebula-2.0.1/var/images
 
+RVPEADMIN=popadmin
+
 _status() {
     # check status of OpenNebula
     if [ ! -f $ONE_PID_FILE ]; then
@@ -27,7 +31,11 @@ _status() {
     fi
 
     # check status of RENKEI-VPE
-    # TODO implement
+    $SUDO -u $RVPEADMIN RVPE_LOCATION=$RVPE_LOCATION PATH=$PATH \
+      $RVPE_LOCATION/sbin/rvped status 1>/dev/null 2>/dev/null
+    if [ ! $? -eq 0 ]; then
+        return 2
+    fi
 
     return 0
 }
@@ -53,11 +61,20 @@ start() {
     if [ ! $? -eq 0 ]; then
         echo 'Failed to start RENKEI-VPE: OpenNebula failed to start'
         RETVAL=1
+        $SUDO -u $ONEADMIN $FUSERMOUNT -u $IMAGE_REPO
         return
     fi
 
     # start RENKEI-VPE
-    # TODO implement
+    $SUDO -u $RVPEADMIN RVPE_LOCATION=$RVPE_LOCATION PATH=$PATH \
+      $RVPE_LOCATION/sbin/rvped start
+    if [ ! $? -eq 0 ]; then
+        echo 'Failed to start RENKEI-VPE.'
+        RETVAL=1
+        $SUDO -u $ONEADMIN ONE_LOCATION=$ONE_LOCATION $ONE_LOCATION/bin/one stop
+        $SUDO -u $ONEADMIN $FUSERMOUNT -u $IMAGE_REPO
+        return
+    fi
 
     RETVAL=0
 }
@@ -71,14 +88,18 @@ stop() {
     fi
 
     # stop RENKEI-VPE
-    # TODO implement
+    $SUDO -u $RVPEADMIN RVPE_LOCATION=$RVPE_LOCATION PATH=$PATH \
+      $RVPE_LOCATION/sbin/rvped stop
+    if [ ! $? -eq 0 ]; then
+        echo 'Failed to start RENKEI-VPE.'
+        RETVAL=1
+    fi
 
     # stop OpenNebula
     $SUDO -u $ONEADMIN ONE_LOCATION=$ONE_LOCATION $ONE_LOCATION/bin/one stop
     if [ ! $? -eq 0 ]; then
         echo 'Failed to stop RENKEI-VPE: OpenNebula failed to stop'
         RETVAL=1
-        return
     fi
 
     # unmount gfarm
@@ -86,7 +107,6 @@ stop() {
     if [ ! $? -eq 0 ]; then
         echo 'Failed to stop RENKEI-VPE: fusermount failed to umount gfarm'
         RETVAL=1
-        return
     fi
 
     RETVAL=0
@@ -98,7 +118,7 @@ status() {
     if [ $RETVAL -eq 0 ]; then
         echo "RENKEI-VPE is running..."
     elif [ $RETVAL -eq 1 ]; then
-        echo "RENKEI-PVE is not running: OpenNebula stops"
+        echo "RENKEI-PVE is not running: OpenNebula is not running"
     elif [ $RETVAL -eq 2 ]; then
         echo "RENKEI-PVE is not running."
     else
