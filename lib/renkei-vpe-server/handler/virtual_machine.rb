@@ -167,7 +167,7 @@ module RenkeiVPE
           one_cluster = doc.elements['/CLUSTER/NAME'].get_text
 
           # 2. create file paths and ssh public key file
-          init_file = "#{$rvpe_path}/share/vmscripts/centos-5.5/init.rb"
+          init_file = "#{$rvpe_path}/share/vmscripts/init.rb"
           vmtmpdir  = "#{$rvpe_path}/var/#{lease.name}"
           FileUtils.mkdir_p(vmtmpdir)
           ssh_key   = "#{vmtmpdir}/root.pub"

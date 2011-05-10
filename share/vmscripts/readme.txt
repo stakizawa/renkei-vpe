@@ -1,6 +1,6 @@
-***********************************
-Instration on OS image for VMs
-***********************************
+****************************************
+Setup an OS image to use in RENKEI-VPE
+****************************************
 
 1. install rvpe-init.sh to system daemon directory, such as /etc/init.d
 
@@ -16,10 +16,3 @@ Instration on OS image for VMs
      # vi /etc/fstab
          /dev/hdd       swap     swap    defaults        0 0
 
-
-***********************************
-Instration on OS image for VMs
-***********************************
-
-Don't forget to put init.rb in a cd-iso image.
-It is called in 'rvpe-init.sh' script to configure VM.
