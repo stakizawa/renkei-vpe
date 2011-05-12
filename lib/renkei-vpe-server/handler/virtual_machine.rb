@@ -166,6 +166,23 @@ module RenkeiVPE
           doc = REXML::Document.new(rc[1])
           one_cluster = doc.elements['/CLUSTER/NAME'].get_text
 
+          # 1-4. get image information
+          rc = call_one_xmlrpc('one.image.info', session, image_id)
+          raise rc[1] unless rc[0]
+          doc = REXML::Document.new(rc[1])
+          if doc.elements['/IMAGE/TEMPLATE/BUS']
+            bus_type = doc.elements['/IMAGE/TEMPLATE/BUS'].get_text
+            dev_pref = doc.elements['/IMAGE/TEMPLATE/DEV_PREFIX'].get_text
+          else
+            # if '/IMAGE/TEMPLATE/BUS' is not found in the xml,
+            # I assume that the image is saved from a running VM and
+            # its bus and dev_prefix is 'virtio' and 'vd' as the base
+            # image has those attributes in many case.
+            # it's a dirty trick.
+            bus_type = 'virtio'
+            dev_pref = 'vd'
+          end
+
           # 2. create file paths and ssh public key file
           init_file = "#{$rvpe_path}/share/vmscripts/init.rb"
           vmtmpdir  = "#{$rvpe_path}/var/#{lease.name}"
@@ -183,8 +200,8 @@ MEMORY = #{type.memory}
 
 DISK = [
   IMAGE_ID = #{image_id},
-  BUS      = "virtio",
-  TARGET   = "vda",
+  BUS      = "#{bus_type}",
+  TARGET   = "#{dev_pref}a",
   DRIVER   = "qcow2"
 ]
 

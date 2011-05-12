@@ -103,7 +103,41 @@ module RenkeiVPE
       #             generated for this image
       def allocate(session, template)
         task('rvpe.image.allocate', session) do
-          call_one_xmlrpc('one.image.allocate', session, template)
+          image_def = ResourceFile::Parser.load_yaml(template)
+          # check fields
+          err_msg_suffix = ' in Image file.'
+          _name = image_def[ResourceFile::Image::NAME]
+          unless _name
+            raise 'Specify ' + ResourceFile::Image::NAME + err_msg_suffix
+          end
+          _type = image_def[ResourceFile::Image::TYPE]
+          _type = 'OS' unless _type
+          _public = image_def[ResourceFile::Image::PUBLIC]
+          if _public
+            _public = 'YES' # yaml automatically convert 'YES' to true
+          else
+            _public = 'NO'
+          end
+          _dev_prefix = image_def[ResourceFile::Image::DEV_PREFIX]
+          _dev_prefix = 'vd' unless _dev_prefix
+          _bus = image_def[ResourceFile::Image::BUS]
+          _bus = 'virtio' unless _bus
+          _path = image_def[ResourceFile::Image::PATH]
+          unless _path
+            raise 'Specify ' + ResourceFile::Image::PATH + err_msg_suffix
+          end
+
+          one_template = <<EOT
+NAME        = "#{_name}"
+DESCRIPTION = "#{image_def[ResourceFile::Image::DESCRIPTION]}"
+TYPE        = "#{_type}"
+PUBLIC      = "#{_public}"
+DEV_PREFIX  = "#{_dev_prefix}"
+BUS         = "#{_bus}"
+PATH        = "#{_path}"
+EOT
+
+          call_one_xmlrpc('one.image.allocate', session, one_template)
         end
       end
 

@@ -42,6 +42,19 @@ module RenkeiVPE
     end
 
     ##########################################################################
+    # A module defines labels for Image resource file.
+    ##########################################################################
+    module Image
+      NAME        = 'NAME'
+      DESCRIPTION = 'DESCRIPTION'
+      TYPE        = 'TYPE'
+      PUBLIC      = 'PUBLIC'
+      DEV_PREFIX  = 'DEV_PREFIX'
+      BUS         = 'BUS'
+      PATH        = 'PATH'
+    end
+
+    ##########################################################################
     # A module that provides parser for each config file.
     ##########################################################################
     module Parser
