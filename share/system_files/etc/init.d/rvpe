@@ -9,6 +9,7 @@
 
 RETVAL=0
 
+SU=/bin/su
 SUDO=/usr/bin/sudo
 GFARM2FS=/usr/bin/gfarm2fs
 FUSERMOUNT=/usr/bin/fusermount
@@ -29,7 +30,7 @@ _status() {
     fi
 
     # check status of RENKEI-VPE
-    $SUDO -u $RVPEADMIN sh -c '\
+    $SU - $RVPEADMIN -c '\
       source /etc/profile.d/rpop-ruby.sh; \
       source /etc/profile.d/one.sh; \
       source /etc/profile.d/renkei-vpe.sh; \
@@ -58,7 +59,7 @@ start() {
     fi
 
     # start OpenNebula
-    $SUDO -u $ONEADMIN sh -c '\
+    $SU - $ONEADMIN -c '\
       source /etc/profile.d/rpop-ruby.sh; \
       source /etc/profile.d/one.sh; \
       $ONE_LOCATION/bin/one -b start'
@@ -70,7 +71,7 @@ start() {
     fi
 
     # start RENKEI-VPE
-    $SUDO -u $RVPEADMIN sh -c '\
+    $SU - $RVPEADMIN -c '\
       source /etc/profile.d/rpop-ruby.sh; \
       source /etc/profile.d/one.sh; \
       source /etc/profile.d/renkei-vpe.sh; \
@@ -78,7 +79,7 @@ start() {
     if [ ! $? -eq 0 ]; then
         echo 'Failed to start RENKEI-VPE.'
         RETVAL=1
-        $SUDO -u $ONEADMIN sh -c '\
+        $SU - $ONEADMIN -c '\
           source /etc/profile.d/rpop-ruby.sh; \
           source /etc/profile.d/one.sh; \
           $ONE_LOCATION/bin/one stop'
@@ -98,7 +99,7 @@ stop() {
     fi
 
     # stop RENKEI-VPE
-    $SUDO -u $RVPEADMIN sh -c '\
+    $SU - $RVPEADMIN -c '\
       source /etc/profile.d/rpop-ruby.sh; \
       source /etc/profile.d/one.sh; \
       source /etc/profile.d/renkei-vpe.sh; \
@@ -109,7 +110,7 @@ stop() {
     fi
 
     # stop OpenNebula
-    $SUDO -u $ONEADMIN sh -c '\
+    $SU - $ONEADMIN -c '\
       source /etc/profile.d/rpop-ruby.sh; \
       source /etc/profile.d/one.sh; \
       $ONE_LOCATION/bin/one stop'
