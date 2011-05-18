@@ -6,8 +6,6 @@
 # description: rvpe starts/stops/statuses RENKEI-VPE.
 
 . /etc/profile.d/one.sh
-. /etc/profile.d/rpop-ruby.sh
-. /etc/profile.d/renkei-vpe.sh
 
 RETVAL=0
 
@@ -17,7 +15,7 @@ FUSERMOUNT=/usr/bin/fusermount
 
 ONEADMIN=popadmin
 ONE_PID_FILE=$ONE_LOCATION/var/oned.pid
-IMAGE_REPO=/usr/rpop/opennebula-2.0.1/var/images
+IMAGE_REPO=$ONE_LOCATION/var/images
 
 RVPEADMIN=popadmin
 
@@ -31,8 +29,11 @@ _status() {
     fi
 
     # check status of RENKEI-VPE
-    $SUDO -u $RVPEADMIN RVPE_LOCATION=$RVPE_LOCATION PATH=$PATH \
-      $RVPE_LOCATION/sbin/rvped status 1>/dev/null 2>/dev/null
+    $SUDO -u $RVPEADMIN sh -c '\
+      source /etc/profile.d/rpop-ruby.sh; \
+      source /etc/profile.d/one.sh; \
+      source /etc/profile.d/renkei-vpe.sh; \
+      $RVPE_LOCATION/sbin/rvped status 1>/dev/null 2>/dev/null'
     if [ ! $? -eq 0 ]; then
         return 2
     fi
@@ -57,7 +58,10 @@ start() {
     fi
 
     # start OpenNebula
-    $SUDO -u $ONEADMIN ONE_LOCATION=$ONE_LOCATION $ONE_LOCATION/bin/one -b start
+    $SUDO -u $ONEADMIN sh -c '\
+      source /etc/profile.d/rpop-ruby.sh; \
+      source /etc/profile.d/one.sh; \
+      $ONE_LOCATION/bin/one -b start'
     if [ ! $? -eq 0 ]; then
         echo 'Failed to start RENKEI-VPE: OpenNebula failed to start'
         RETVAL=1
@@ -66,12 +70,18 @@ start() {
     fi
 
     # start RENKEI-VPE
-    $SUDO -u $RVPEADMIN RVPE_LOCATION=$RVPE_LOCATION PATH=$PATH \
-      $RVPE_LOCATION/sbin/rvped start
+    $SUDO -u $RVPEADMIN sh -c '\
+      source /etc/profile.d/rpop-ruby.sh; \
+      source /etc/profile.d/one.sh; \
+      source /etc/profile.d/renkei-vpe.sh; \
+      $RVPE_LOCATION/sbin/rvped start'
     if [ ! $? -eq 0 ]; then
         echo 'Failed to start RENKEI-VPE.'
         RETVAL=1
-        $SUDO -u $ONEADMIN ONE_LOCATION=$ONE_LOCATION $ONE_LOCATION/bin/one stop
+        $SUDO -u $ONEADMIN sh -c '\
+          source /etc/profile.d/rpop-ruby.sh; \
+          source /etc/profile.d/one.sh; \
+          $ONE_LOCATION/bin/one stop'
         $SUDO -u $ONEADMIN $FUSERMOUNT -u $IMAGE_REPO
         return
     fi
@@ -88,15 +98,21 @@ stop() {
     fi
 
     # stop RENKEI-VPE
-    $SUDO -u $RVPEADMIN RVPE_LOCATION=$RVPE_LOCATION PATH=$PATH \
-      $RVPE_LOCATION/sbin/rvped stop
+    $SUDO -u $RVPEADMIN sh -c '\
+      source /etc/profile.d/rpop-ruby.sh; \
+      source /etc/profile.d/one.sh; \
+      source /etc/profile.d/renkei-vpe.sh; \
+      $RVPE_LOCATION/sbin/rvped stop'
     if [ ! $? -eq 0 ]; then
         echo 'Failed to start RENKEI-VPE.'
         RETVAL=1
     fi
 
     # stop OpenNebula
-    $SUDO -u $ONEADMIN ONE_LOCATION=$ONE_LOCATION $ONE_LOCATION/bin/one stop
+    $SUDO -u $ONEADMIN sh -c '\
+      source /etc/profile.d/rpop-ruby.sh; \
+      source /etc/profile.d/one.sh; \
+      $ONE_LOCATION/bin/one stop'
     if [ ! $? -eq 0 ]; then
         echo 'Failed to stop RENKEI-VPE: OpenNebula failed to stop'
         RETVAL=1
