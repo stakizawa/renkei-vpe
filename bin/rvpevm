@@ -79,7 +79,7 @@ Commands:
         lease can be name or id of a lease.
 
         $ #{CMD_NAME} create small 'tokyo tech' centos5.5 ./ssh_pubkey
-        $ #{CMD_NAME} create small 'tokyo tech' centos5.5 ./ssh_pubkey \
+        $ #{CMD_NAME} create small 'tokyo tech' centos5.5 ./ssh_pubkey \\
         > vm00.cc.titech.ac.jp
 
     shutdown vm_name
