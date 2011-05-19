@@ -86,7 +86,7 @@ rvpevm
   suspend   vm_name
   resume    vm_name
 
-  mark_save vm_name
+  mark_save vm_name image_name <image_description>
 
   list
   history

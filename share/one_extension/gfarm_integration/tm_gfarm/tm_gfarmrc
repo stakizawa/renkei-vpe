@@ -1,0 +1,43 @@
+# -------------------------------------------------------------------------- #
+# Copyright 2002-2010, OpenNebula Project Leads (OpenNebula.org)             #
+#                                                                            #
+# Licensed under the Apache License, Version 2.0 (the "License"); you may    #
+# not use this file except in compliance with the License. You may obtain    #
+# a copy of the License at                                                   #
+#                                                                            #
+# http://www.apache.org/licenses/LICENSE-2.0                                 #
+#                                                                            #
+# Unless required by applicable law or agreed to in writing, software        #
+# distributed under the License is distributed on an "AS IS" BASIS,          #
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   #
+# See the License for the specific language governing permissions and        #
+# limitations under the License.                                             #
+#--------------------------------------------------------------------------- #
+
+# ruby interpreter path
+RUBY=/usr/rpop/ruby/bin/ruby
+
+# gfarm mount point on OpenNebula oned server
+GFARM_MOUNT_POINT=/opt/one/gfarm
+
+# temporal directory in gfarm
+# is is used for moving image from hosts to path where oned can access
+GFARM_TEMP_DIR=/home/oneadmin/tmp
+
+# gfarm commands
+GFEXPORT=/work/gfarm/gfarm/bin/gfexport
+GFREG=/work/gfarm/gfarm/bin/gfreg
+
+
+# it returns file path in gfarm domain
+function gf_path
+{
+    $RUBY -e "puts '$1'.gsub('$GFARM_MOUNT_POINT', '')"
+}
+
+# it returns an temporal path on gfarm of $1 file
+function gf_mv_target
+{
+    lp=`$RUBY -e "puts '$1'.gsub('$ONE_LOCATION/var/', '').gsub('/', '_')"`
+    echo $GFARM_TEMP_DIR/$lp
+}
