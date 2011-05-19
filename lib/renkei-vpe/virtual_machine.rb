@@ -77,10 +77,11 @@ module RenkeiVPE
     end
 
     # Mark the VM to save its OS image on shutdown.
-    def mark_save(image_name)
+    def mark_save(image_name, image_description)
       return Error.new('ID not defined') if !@pe_id
 
-      rc = @client.call(VM_METHODS[:mark_save], @pe_id, image_name)
+      rc = @client.call(VM_METHODS[:mark_save], @pe_id,
+                        image_name, image_description)
       rc = nil if !RenkeiVPE.is_error?(rc)
 
       return rc

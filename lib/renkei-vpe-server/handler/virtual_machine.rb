@@ -25,7 +25,7 @@ module RenkeiVPE
         meth('val action(string, int, string)',
              'performe a specified action to the virtual machine',
              'action')
-        meth('val mark_save(string, int, string)',
+        meth('val mark_save(string, int, string, string)',
              'mark the VM to save its OS image on shutdown',
              'mark_save')
       end
@@ -299,13 +299,14 @@ EOS
       end
 
       # mark this virtual machine to save its OS image on shutdown.
-      # +session+    string that represents user session
-      # +id+         id of the virtual machine
-      # +image_name+ name of image to be saved
-      # +return[0]+  true or false whenever is successful or not
-      # +return[1]+  if an error occurs this is error message,
-      #              otherwise it does not exist.
-      def mark_save(session, id, image_name)
+      # +session+           string that represents user session
+      # +id+                id of the virtual machine
+      # +image_name+        name of image to be saved
+      # +image_description+ description of the image
+      # +return[0]+         true or false whenever is successful or not
+      # +return[1]+         if an error occurs this is error message,
+      #                     otherwise it does not exist.
+      def mark_save(session, id, image_name, image_description)
         task('rvpe.vm.mark_save', session) do
           vm = VirtualMachine.find_by_id(id)[0]
           raise "VirtualMachine[#{id}] is not found." unless vm
@@ -327,10 +328,11 @@ EOS
           dev_prefix = doc.elements["#{xml_prefix}/TARGET"].get_text.to_s[0, 2]
           bus = doc.elements["#{xml_prefix}/BUS"].get_text
           template =<<EOS
-NAME       = "#{image_name}"
-TYPE       = "OS"
-DEV_PREFIX = "#{dev_prefix}"
-BUS        = "#{bus}"
+NAME        = "#{image_name}"
+DESCRIPTION = "#{image_description}"
+TYPE        = "OS"
+DEV_PREFIX  = "#{dev_prefix}"
+BUS         = "#{bus}"
 EOS
 
           # 3. allocate ONE image
