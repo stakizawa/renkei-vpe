@@ -117,12 +117,13 @@ Commands:
         $ #{CMD_NAME} resume vm00-nii
 
 
-    mark_save vm_name
+    mark_save vm_name image_name
         mark a running VM to be seved on its shutdown. It just marks as
         to save the OS image the specified VM uses, not actually saves.
         vm_name can be name or id of a VM.
+        image_name is name of saved image.
 
-        $ #{CMD_NAME} mark_save vm00-nii
+        $ #{CMD_NAME} mark_save vm00-nii saved_vm00-nii
 
 
     list <-x> <-v> <all|mine|user_name>

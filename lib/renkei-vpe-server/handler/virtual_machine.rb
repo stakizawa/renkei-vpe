@@ -174,13 +174,7 @@ module RenkeiVPE
             bus_type = doc.elements['/IMAGE/TEMPLATE/BUS'].get_text
             dev_pref = doc.elements['/IMAGE/TEMPLATE/DEV_PREFIX'].get_text
           else
-            # if '/IMAGE/TEMPLATE/BUS' is not found in the xml,
-            # I assume that the image is saved from a running VM and
-            # its bus and dev_prefix is 'virtio' and 'vd' as the base
-            # image has those attributes in many case.
-            # it's a dirty trick.
-            bus_type = 'virtio'
-            dev_pref = 'vd'
+            raise 'BUS and/or DEV_PREFIX attributes are not set to the image.'
           end
 
           # 2. create file paths and ssh public key file
@@ -318,22 +312,28 @@ EOS
 
           # It always saves Disk whose ID is 0 (OS image).
           disk_id = 0
-          image_type = 'DISK'
-          template =<<EOS
-NAME="#{image_name}"
-TYPE="OS"
-EOS
 
-          # check if the VM is already marked
+          # 1. check if the VM is already marked
           rc = call_one_xmlrpc('one.vm.info', session, vm.oid)
           raise rc[1] unless rc[0]
           doc = REXML::Document.new(rc[1])
-          save = doc.elements["/VM/TEMPLATE/DISK[DISK_ID=\"#{disk_id}\"]/SAVE_AS"]
+          xml_prefix = "/VM/TEMPLATE/DISK[DISK_ID=\"#{disk_id}\"]"
+          save = doc.elements["#{xml_prefix}/SAVE_AS"]
           if save
             raise "VM[#{vm.id}] is already marked to save its OS image as Image[#{save.text}]"
           end
 
-          # allocate ONE image
+          # 2. create a template for the saved image
+          dev_prefix = doc.elements["#{xml_prefix}/TARGET"].get_text.to_s[0, 2]
+          bus = doc.elements["#{xml_prefix}/BUS"].get_text
+          template =<<EOS
+NAME       = "#{image_name}"
+TYPE       = "OS"
+DEV_PREFIX = "#{dev_prefix}"
+BUS        = "#{bus}"
+EOS
+
+          # 3. allocate ONE image
           rc = call_one_xmlrpc('one.image.allocate', session, template)
           raise rc[1] unless rc[0]
           image_id = rc[1]
