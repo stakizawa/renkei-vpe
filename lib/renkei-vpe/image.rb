@@ -149,11 +149,28 @@ module RenkeiVPE
             return result
         end
 
-        def export(filename)
-            # TODO it might be better to download the file from remove server
+        def export(dirname)
             result = self.info
             if RenkeiVPE.is_successful?(result)
-                FileUtils.cp(self['SOURCE'], filename)
+                FileUtils.mkdir_p(dirname)
+                disk_file = dirname + '/disk.img'
+                attr_file = dirname + '/attr.txt'
+
+                # copy the disk image file
+                # TODO download the file from remove server
+                FileUtils.cp(self['SOURCE'], disk_file)
+
+                # create the attribute file
+                File.open(attr_file, 'w') do |f|
+                  f.puts <<EOT
+name:        #{@name}
+description: #{get_template_value('DESCRIPTION')}
+public:      NO
+io_bus:      #{get_template_value('BUS')}
+nic_model:   #{get_template_value('NIC_MODEL')}
+path:        ./disk.img
+EOT
+                end
             end
             return result
         end
@@ -177,6 +194,7 @@ module RenkeiVPE
             SHORT_IMAGE_STATES[state_str]
         end
 
+        # Returns the state of the Image (string value)
         def super_state_str
             if state_str == 'USED'
                 vm_cnt_str = self['RUNNING_VMS']
@@ -204,6 +222,17 @@ module RenkeiVPE
         # Returns the state of the Image (string value)
         def short_type_str
             SHORT_IMAGE_TYPES[type_str]
+        end
+
+        # Returns a template value of the Image (string value)
+        def get_template_value(key)
+            _key = key.upcase
+            self.template_str.each_line do |line|
+              if /^#{_key}\s*=\s*(.+)/ =~ line
+                  return $1
+              end
+            end
+            return ''
         end
 
     private

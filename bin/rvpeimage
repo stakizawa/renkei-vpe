@@ -69,10 +69,13 @@ Commands:
 
     export image_name file_name
         export an image named image_name to a file named file_name.
-        If file_name file is a directory, it outputs a file under the
-        directorynamed named 'file_name/image_name'.
+        It generates one directory containing two files. The directory
+        name is file_name.
+        In the directory, there are the following two files.
+          disk.img : disk image for RENKEI-VPE
+          attr.txt : a file contains attributes of the disk image
 
-        $ #{CMD_NAME} export centos5.5_virtio centos.img
+        $ #{CMD_NAME} export centos5.5_virtio centos5.5_backup
 
     delete image_names
         delete specified images. image_names can be names of images.
@@ -167,12 +170,8 @@ when 'export'
   out_name = ARGV[1]
 
   if FileTest.exist?(out_name)
-    if FileTest.directory?(out_name)
-      out_name += '/' + img_name.gsub(/\s+/, '_')
-    else
-      $stderr.puts "File[#{out_name}] exists."
-      exit 1
-    end
+    $stderr.puts "File[#{out_name}] exists."
+    exit 1
   end
 
   id = get_image_id(img_name)
@@ -292,23 +291,11 @@ when 'show'
         # print Name
         puts str % ["NAME", image.name]
         # print Description
-        image.template_str.each_line do |line|
-          if /^(DESCRIPTION)\s*=\s*(.+)/ =~ line
-            puts str % [$1, $2]
-          end
-        end
+        puts str % ['DESCRIPTION', image.get_template_value('DESCRIPTION')]
         # print Disk IO BUS
-        image.template_str.each_line do |line|
-          if /^BUS\s*=\s*(.+)/ =~ line
-            puts str % ['DISK IO BUS', $1]
-          end
-        end
+        puts str % ['DISK IO BUS', image.get_template_value('BUS')]
         # print NIC Model
-        image.template_str.each_line do |line|
-          if /^NIC_MODEL\s*=\s*(.+)/ =~ line
-            puts str % ['NIC MODEL', $1]
-          end
-        end
+        puts str % ['NIC MODEL', image.get_template_value('NIC_MODEL')]
         puts
 
         # print Register time
