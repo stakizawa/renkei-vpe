@@ -24,10 +24,10 @@ else
     RUBY_LIB_LOCATION=ONE_LOCATION+"/lib/ruby"
 end
 
-GFARM_MOUNT_POINT = '/opt/one/gfarm'
-GFARM_TEMP_DIR    = '/home/oneadmin/tmp'
+GFARM_MOUNT_POINT = ONE_LOCATION + '/var/images'
+GFARM_TEMP_DIR    = '/work/one_images/temporal'
 
-GFMV = '/work/gfarm/gfarm/bin/gfmv'
+GFMV = '/usr/bin/gfmv'
 
 GF_IMG_DIR = GFARM_TEMP_DIR
 

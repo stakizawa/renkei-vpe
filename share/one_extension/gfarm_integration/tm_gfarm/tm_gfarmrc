@@ -18,15 +18,15 @@
 RUBY=/usr/rpop/ruby/bin/ruby
 
 # gfarm mount point on OpenNebula oned server
-GFARM_MOUNT_POINT=/opt/one/gfarm
+GFARM_MOUNT_POINT=$ONE_LOCATION/var/images
 
 # temporal directory in gfarm
 # is is used for moving image from hosts to path where oned can access
-GFARM_TEMP_DIR=/home/oneadmin/tmp
+GFARM_TEMP_DIR=/work/one_images/temporal
 
 # gfarm commands
-GFEXPORT=/work/gfarm/gfarm/bin/gfexport
-GFREG=/work/gfarm/gfarm/bin/gfreg
+GFEXPORT=/usr/bin/gfexport
+GFREG=/usr/bin/gfreg
 
 
 # it returns file path in gfarm domain
