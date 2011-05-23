@@ -85,6 +85,15 @@ SQL
           user_name = '-'
         end
 
+        # obtain vm id in RENKEI-VPE id space
+        ovid = onel_e.get_text('VID').to_s
+        if ovid == '-1'
+          vid = ovid
+        else
+          vm = VirtualMachine.find("oid=#{ovid}").last
+          vid = vm.id.to_s
+        end
+
         lease_e = REXML::Element.new('LEASE')
         e = REXML::Element.new('ID')
         e.add(REXML::Text.new(@id.to_s))
@@ -108,7 +117,7 @@ SQL
         e.add(REXML::Text.new(user_name))
         lease_e.add(e)
         e = REXML::Element.new('VID')
-        e.add(onel_e.get_text('VID'))
+        e.add(REXML::Text.new(vid))
         lease_e.add(e)
         return lease_e
       end

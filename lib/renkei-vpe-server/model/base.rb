@@ -120,7 +120,7 @@ module RenkeiVPE
         sql = "INSERT INTO #{table} VALUES (NULL,#{to_create_record_str})"
         Database.transaction(sql)
         sql = "SELECT id FROM #{table} WHERE #{to_find_id_str}"
-        @id = Database.execute(sql)[0][0]
+        @id = Database.execute(sql).last[0]
         @log.debug "Record[#{self}] is added to Table[#{table}]"
       end
 
