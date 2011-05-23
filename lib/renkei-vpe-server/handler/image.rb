@@ -118,22 +118,31 @@ module RenkeiVPE
           else
             _public = 'NO'
           end
-          _dev_prefix = image_def[ResourceFile::Image::DEV_PREFIX]
-          _dev_prefix = 'vd' unless _dev_prefix
-          _bus = image_def[ResourceFile::Image::BUS]
+          _bus = image_def[ResourceFile::Image::IO_BUS]
           _bus = 'virtio' unless _bus
+          case _bus.downcase
+          when 'virtio'
+            _dev_prefix = 'vd'
+          when 'ide'
+            _dev_prefix = 'hd'
+          else
+            _dev_prefix = 'sd'
+          end
           _path = image_def[ResourceFile::Image::PATH]
           unless _path
             raise 'Specify ' + ResourceFile::Image::PATH + err_msg_suffix
           end
+          _nic_model = image_def[ResourceFile::Image::NIC_MODEL]
+          _nic_model = 'virtio' unless _nic_model
 
           one_template = <<EOT
 NAME        = "#{_name}"
 DESCRIPTION = "#{image_def[ResourceFile::Image::DESCRIPTION]}"
 TYPE        = "#{_type}"
 PUBLIC      = "#{_public}"
-DEV_PREFIX  = "#{_dev_prefix}"
 BUS         = "#{_bus}"
+DEV_PREFIX  = "#{_dev_prefix}"
+NIC_MODEL   = "#{_nic_model}"
 PATH        = "#{_path}"
 EOT
 

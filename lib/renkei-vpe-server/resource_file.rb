@@ -49,8 +49,8 @@ module RenkeiVPE
       DESCRIPTION = 'DESCRIPTION'
       TYPE        = 'TYPE'
       PUBLIC      = 'PUBLIC'
-      DEV_PREFIX  = 'DEV_PREFIX'
-      BUS         = 'BUS'
+      IO_BUS      = 'IO_BUS'
+      NIC_MODEL   = 'NIC_MODEL'
       PATH        = 'PATH'
     end
 

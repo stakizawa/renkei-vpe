@@ -176,6 +176,11 @@ module RenkeiVPE
           else
             raise 'BUS and/or DEV_PREFIX attributes are not set to the image.'
           end
+          if doc.elements['/IMAGE/TEMPLATE/NIC_MODEL']
+            nic_model = doc.elements['/IMAGE/TEMPLATE/NIC_MODEL'].get_text
+          else
+            raise 'NIC_MODEL attributes is not set to the image.'
+          end
 
           # 2. create file paths and ssh public key file
           init_file = "#{$rvpe_path}/share/vmscripts/init.rb"
@@ -208,7 +213,7 @@ DISK = [
 NIC = [
   NETWORK_ID = #{vnet.oid},
   IP         = "#{lease.address}",
-  MODEL      = "virtio"
+  MODEL      = "#{nic_model}"
 ]
 
 # GRAPHICS = [
@@ -326,13 +331,15 @@ EOS
 
           # 2. create a template for the saved image
           dev_prefix = doc.elements["#{xml_prefix}/TARGET"].get_text.to_s[0, 2]
-          bus = doc.elements["#{xml_prefix}/BUS"].get_text
+          bus = doc.elements["#{xml_prefix}/BUS"].get_text.to_s
+          nic_model = doc.elements['/VM/TEMPLATE/NIC/MODEL'].get_text.to_s
           template =<<EOS
 NAME        = "#{image_name}"
 DESCRIPTION = "#{image_description}"
 TYPE        = "OS"
-DEV_PREFIX  = "#{dev_prefix}"
 BUS         = "#{bus}"
+DEV_PREFIX  = "#{dev_prefix}"
+NIC_MODEL   = "#{nic_model}"
 EOS
 
           # 3. allocate ONE image

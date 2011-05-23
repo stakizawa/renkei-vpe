@@ -314,7 +314,7 @@ module RenkeiVPE
       def add_host_to_zone(session, host_name, zone)
         # allocate host (only in OpenNebula)
         rc = call_one_xmlrpc('one.host.allocate', session,
-                             host_name, 'im_kvm', 'vmm_kvm', 'tm_gfarm')
+                             host_name, 'im_kvm', 'vmm_rvpe', 'tm_gfarm')
         raise rc[1] unless rc[0]
 
         # add the host to a site in OpenNebula

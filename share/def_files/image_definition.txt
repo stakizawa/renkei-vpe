@@ -6,6 +6,6 @@ name:        centos5.5
 description: CentOS5.5 for Renkei VPE
 type:        OS
 public:      YES
-dev_prefix:  vd
-bus:         virtio
+io_bus:      virtio
+nic_mode:    virtio
 path:        /work/vms/rpop-vms/vm00/disk.img
