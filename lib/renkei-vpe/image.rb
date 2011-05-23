@@ -177,6 +177,20 @@ module RenkeiVPE
             SHORT_IMAGE_STATES[state_str]
         end
 
+        def super_state_str
+            if state_str == 'USED'
+                vm_cnt_str = self['RUNNING_VMS']
+                if vm_cnt_str == '1'
+                    vm_cnt_str += ' VM'
+                else
+                    vm_cnt_str += ' VMs'
+                end
+                state_str + ' by ' + vm_cnt_str
+            else
+                state_str
+            end
+        end
+
         # Returns the type of the Image (numeric value)
         def type
             self['TYPE'].to_i

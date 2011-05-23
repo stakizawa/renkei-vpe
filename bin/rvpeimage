@@ -291,6 +291,26 @@ when 'show'
         puts str % ["ID", image.id.to_s]  if verbose
         # print Name
         puts str % ["NAME", image.name]
+        # print Description
+        image.template_str.each_line do |line|
+          if /^(DESCRIPTION)\s*=\s*(.+)/ =~ line
+            puts str % [$1, $2]
+          end
+        end
+        # print Disk IO BUS
+        image.template_str.each_line do |line|
+          if /^BUS\s*=\s*(.+)/ =~ line
+            puts str % ['DISK IO BUS', $1]
+          end
+        end
+        # print NIC Model
+        image.template_str.each_line do |line|
+          if /^NIC_MODEL\s*=\s*(.+)/ =~ line
+            puts str % ['NIC MODEL', $1]
+          end
+        end
+        puts
+
         # print Register time
         value = image['REGTIME'].to_i
         if value == 0
@@ -307,13 +327,7 @@ when 'show'
         end
         puts str % ["PUBLIC", public_str]
         # print State
-        puts str % ["STATE", image.state_str]
-        # print Description
-        image.template_str.each_line do |line|
-          if /^(DESCRIPTION)\s*=\s*(.+)/ =~ line
-            puts str % [$1, $2]
-          end
-        end
+        puts str % ["STATE", image.super_state_str]
       end
     else
       $stderr.puts rc.message
