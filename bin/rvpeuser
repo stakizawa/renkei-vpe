@@ -142,7 +142,7 @@ when 'create'
   check_parameters('create', 2)
 
   name = ARGV[0]
-  pass = ARGV[1]
+  pass = Digest::SHA1.hexdigest(ARGV[1])
   user = RenkeiVPE::User.new(RenkeiVPE::User.build_xml, client)
   rc = user.allocate(name, pass)
   if is_successful?(rc)
@@ -174,7 +174,7 @@ when 'passwd'
   check_parameters('passwd', 2)
 
   name = ARGV[0]
-  pass = ARGV[1]
+  pass = Digest::SHA1.hexdigest(ARGV[1])
   id = get_user_id(name)
   user = RenkeiVPE::User.new_with_id(id, client)
   rc = user.passwd(pass)
