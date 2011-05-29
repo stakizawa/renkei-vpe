@@ -12,6 +12,11 @@ module RenkeiVPE
     def init(db_file)
       Database.file = db_file
 
+      unless FileTest.exist?(Database.file)
+        FileUtils.touch(Database.file)
+        FileUtils.chmod(0640, Database.file)
+      end
+
       User.create_table_if_necessary
       Zone.create_table_if_necessary
       VirtualNetwork.create_table_if_necessary

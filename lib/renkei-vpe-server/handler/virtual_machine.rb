@@ -186,6 +186,7 @@ module RenkeiVPE
           init_file = "#{$rvpe_path}/share/vmscripts/init.rb"
           vmtmpdir  = "#{$rvpe_path}/var/#{lease.name}"
           FileUtils.mkdir_p(vmtmpdir)
+#          FileUtils.chmod(0750, vmtmpdir)   TODO uncomment this line
           ssh_key   = "#{vmtmpdir}/root.pub"
           File.open(ssh_key, 'w+') do |file|
             file.puts sshkey
