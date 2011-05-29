@@ -250,7 +250,7 @@ module RenkeiVPE
       # +return[1]+ always ''
       def sync(session)
         task('rvpe.zone.sync', session, true) do
-          one_loc = ENV['ONE_LOCATION']
+          one_loc = $server_config.one_location
           if one_loc
             FileUtils.touch "#{one_loc}/var/remotes"
           else

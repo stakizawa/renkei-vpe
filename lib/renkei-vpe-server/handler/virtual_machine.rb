@@ -261,12 +261,20 @@ EOS
             raise e
           end
 
-          # 6. finalize: mark lease as used
+          # 6-1. create a sym link to OpenNebula VM directory
+          one_log_dir = $server_config.one_location + "/var/#{rc[1]}"
+          rvpe_link = vmtmpdir + '/one_log'
+          FileUtils.ln_s(one_log_dir, rvpe_link)
+          # 6-2. create an empty file whose name is vm.id
+          FileUtils.touch(vmtmpdir + "/#{vm.id}")
+
+          # 7. finalize: mark lease as used
           begin
             lease.used = 1
             lease.update
           rescue => e
             vm.delete
+            FileUtils.rm_rf(vmtmpdir)
             raise e
           end
 

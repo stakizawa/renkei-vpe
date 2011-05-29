@@ -1,17 +1,6 @@
 ##############################################################################
 # Environment Configuration
 ##############################################################################
-# obtain OnenNebula library path
-one_location = ENV['ONE_LOCATION']
-
-if !one_location
-  ruby_lib_location = '/usr/lib/one/ruby'
-else
-  ruby_lib_location = one_location + '/lib/ruby'
-end
-
-$: << ruby_lib_location
-
 # obtain Renkei-VPE path
 $rvpe_path = File.dirname(File.dirname(File.expand_path(__FILE__)))
 
@@ -41,6 +30,8 @@ module RenkeiVPE
     DB_FILE  = $rvpe_path + '/var/rvped.db'
 
     def initialize(config)
+      $server_config = config
+
       # initialize logger
       RenkeiVPE::Logger.init(LOG_FILE)
       log = RenkeiVPE::Logger.get_logger
@@ -48,6 +39,9 @@ module RenkeiVPE
 
       log.info 'Renkei VPE server starts'
       log.info config.to_s
+
+      # set library path for OpenNebula
+      $: << config.one_location + '/lib/ruby'
 
       # initialize one client
       RenkeiVPE::OpenNebulaClient.init(config.one_endpoint)
@@ -93,6 +87,7 @@ module RenkeiVPE
   class ServerConfig
     DEFAULTS = {
       'port' => '8081',
+      'one_location' => ENV['ONE_LOCATION'],
       'one_endpoint' => 'http://localhost:2633/RPC2',
       'log_level' => 'info',
     }
