@@ -27,6 +27,10 @@ GFARM_TEMP_DIR=/work/one_images/temporal
 # gfarm commands
 GFEXPORT=/usr/bin/gfexport
 GFREG=/usr/bin/gfreg
+GFREP=/usr/bin/gfrep
+
+# number of replicas of images stored in gfarm
+N_REPLICAS=2
 
 
 # it returns file path in gfarm domain

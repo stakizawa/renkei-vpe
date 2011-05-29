@@ -42,3 +42,14 @@ log "Moving $1 $2"
 GF_DST_PATH=`gf_mv_target $DST_PATH`
 exec_and_log "$SSH $SRC_HOST $GFREG $SRC_PATH $GF_DST_PATH"
 exec_and_log "$SSH $SRC_HOST rm -rf $SRC_PATH"
+
+# create replicas
+MKREP_CMD="$GFREP -N $N_REPLICAS $GF_DST_PATH"
+output=`$MKREP_CMD 2>&1 1>/dev/null`
+code=$?
+if [ "x$code" != "x0" ]; then
+    log_error "Command \"$MKREP_CMD\" failed."
+    log_error "$output"
+    error_message "$output"
+fi
+log "Executed \"$MKREP_CMD\"."

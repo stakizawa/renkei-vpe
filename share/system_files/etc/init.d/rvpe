@@ -20,6 +20,8 @@ IMAGE_REPO=$ONE_LOCATION/var/images
 
 RVPEADMIN=popadmin
 
+N_REPLICAS=2
+
 _status() {
     # check status of OpenNebula
     if [ ! -f $ONE_PID_FILE ]; then
@@ -51,7 +53,7 @@ start() {
     fi
 
     # mount gfarm
-    $SUDO -u $ONEADMIN $GFARM2FS -o allow_other -o ncopy=2 $IMAGE_REPO
+    $SUDO -u $ONEADMIN $GFARM2FS -o allow_other -o ncopy=$N_REPLICAS $IMAGE_REPO
     if [ ! $? -eq 0 ]; then
         echo 'Failed to start RENKEI-VPE: gfarm2fs failed to mount'
         RETVAL=1
