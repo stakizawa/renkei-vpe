@@ -149,11 +149,11 @@ module RenkeiVPE
     end
 
     def to_s
-      line_format = "%15s | %s\n"
+      line_format = "%25s | %s\n"
 
       str = "Configuration\n"
-      @configs.each do |k,v|
-        str += line_format % [k,v]
+      @configs.keys.sort.each do |k|
+        str += line_format % [k, @configs[k]]
       end
       return str.chomp
     end
