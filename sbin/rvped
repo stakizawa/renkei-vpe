@@ -20,6 +20,7 @@ $: << RUBY_LIB_LOCATION
 require 'renkei-vpe-server'
 require 'optparse'
 require 'fileutils'
+require 'timeout'
 
 ##############################################################################
 # Global variables
@@ -31,6 +32,11 @@ CNF_FILE = RVPE_LOCATION + '/etc/rvped.conf'
 ##############################################################################
 # Functions
 ##############################################################################
+# print +msg+ on STDOUT then flush
+def print_flush(msg)
+  STDOUT.print msg
+  STDOUT.flush
+end
 
 # return 0 if server successfuly starts
 # return 1 if server doesn't start
@@ -69,7 +75,25 @@ def stop_server
     return 1
   end
 
-  Process.kill(9, server_pid)
+  Process.kill(:TERM, server_pid)
+  sleep 1
+  if FileTest.exist?("/proc/#{server_pid}")
+    begin
+      timeout(90) do
+        print_flush 'waiting the server to stop'
+        loop do
+          unless FileTest.exist?("/proc/#{server_pid}")
+            break
+          else
+            sleep 2; print_flush '.'
+          end
+        end
+      end
+    rescue Timeout::Error
+      puts 'Timeout reached.'
+      Process.kill(:KILL, server_pid)
+    end
+  end
   FileUtils.rm(PID_FILE)
 
   return 0

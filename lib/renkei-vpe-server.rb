@@ -14,6 +14,7 @@ require 'pp'
 require 'renkei-vpe-server/logger'
 require 'renkei-vpe-server/model'
 require 'renkei-vpe-server/handler'
+require 'renkei-vpe-server/image_store'
 
 ##############################################################################
 # RenkeiVPE module for the server
@@ -52,10 +53,33 @@ module RenkeiVPE
       # setup xml rpc server
       @server = XMLRPC::Server.new(config.port)
       RenkeiVPE::Handler.init(@server)
+
+      # setup gfarm replication
+      @gfrep = RenkeiVPE::ImageStore::GfarmReplicate.new(config)
     end
 
     def start
-      @server.serve
+      rpc_t = Thread.new do
+        @server.serve
+      end
+      gfrep_t = Thread.new do
+        @gfrep.serve
+      end
+
+      signals = [:INT, :TERM, :HUP]
+      signals.each do |signal|
+        Signal.trap(signal) do
+          shutdown
+        end
+      end
+
+      rpc_t.join
+      gfrep_t.join
+    end
+
+    def shutdown
+      @server.shutdown
+      @gfrep.shutdown
     end
 
     # daemonize a block
@@ -89,6 +113,10 @@ module RenkeiVPE
       'port' => '8081',
       'one_location' => ENV['ONE_LOCATION'],
       'one_endpoint' => 'http://localhost:2633/RPC2',
+      'gfarm_location' => '/usr',
+      'gfarm_local_path' => '/work/one_images',
+      'gfarm_replica_count' => '3',
+      'gfarm_replicate_interval' => '3600',
       'log_level' => 'info',
     }
 
