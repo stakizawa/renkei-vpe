@@ -3,14 +3,16 @@ copy from renkei-pop wiki.
 
 * Tips
 ** Change the number of replicas of images stored in gfarm
-1. edit rvpe to change number of replicas created on time when images are
-   registared by rvpeimage.
+Basically, just editing $RVPE_LOCATION/etc/rvped.conf is OK.
 
-     $ vi /etc/init.d/rvpe
-         N_REPLICAS=2
+  $ vi $RVPE_LOCATION/etc/rvped.conf
+      gfarm_replica_count: 3
 
-2. edit tm_gfarmrc to change number of replicas created on time when images
-   are copied from running VMs (by rvpevm mark_save & shutdown).
+  However, Renkei-VPE creates image replicas periodically and does not create
+any on when images are stored in gfarm. There is an option to create replicas
+on a call of 'rvpeimage import'.
 
-     $ vi $ONE_LOCATION/etc/tm_gfarm/tm_gfarmrc
-         N_REPLICAS=2
+  To create image replicas on its import time, edit /etc/init.d/rvpe.
+
+  $ vi /etc/init.d/rvpe
+      N_REPLICAS=2
