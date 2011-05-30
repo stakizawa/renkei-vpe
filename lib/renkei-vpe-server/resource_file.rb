@@ -58,6 +58,8 @@ module RenkeiVPE
     # A module that provides parser for each config file.
     ##########################################################################
     module Parser
+      include RenkeiVPE::Const
+
       # It opens and reads a yaml file to create a hash or array.
       def self.load_yaml_file(file_name)
         conf = YAML.load_file(file_name)
@@ -82,10 +84,22 @@ module RenkeiVPE
             result << to_upcase_yaml_hash_key(o)
           end
         else
-          result = obj
+          result = check_str(obj)
         end
         return result
       end
+
+      def self.check_str(obj)
+        return obj unless obj.kind_of?(String)
+
+        blacks = [ITEM_SEPARATOR, ATTR_SEPARATOR]
+        blacks.each do |s|
+          if obj.include?(s)
+            raise "Can't include '#{s}' in resource file: #{obj}"
+          end
+        end
+      end
+
     end
   end
 end

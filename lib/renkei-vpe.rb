@@ -17,6 +17,7 @@ $: << ruby_lib_location
 require 'xmlrpc/client'
 require 'digest/sha1'
 
+require 'renkei-vpe-common'
 require 'renkei-vpe/xml_utils'
 require 'renkei-vpe/pool'
 require 'renkei-vpe/user'

@@ -11,6 +11,7 @@ require 'xmlrpc/server'
 require 'yaml'
 require 'pp'
 
+require 'renkei-vpe-common'
 require 'renkei-vpe-server/logger'
 require 'renkei-vpe-server/model'
 require 'renkei-vpe-server/handler'

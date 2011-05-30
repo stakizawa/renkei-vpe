@@ -9,6 +9,8 @@ module RenkeiVPE
     # Model for Renkei VPE user
     ##########################################################################
     class User < BaseModel
+      include RenkeiVPE::Const
+
       @table_name = 'users'
 
       @table_schema = <<SQL
@@ -78,7 +80,7 @@ SQL
         zones_in_array.each do |zid|
           zone = Zone.find_by_id(zid)[0]
           raise "Zone[#{zid}] is not found." unless zone
-          zones += zone.name + ';'
+          zones += zone.name + ITEM_SEPARATOR
         end
         zones_e.add(REXML::Text.new(zones.strip))
         e.add(zones_e)
