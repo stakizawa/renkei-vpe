@@ -98,6 +98,7 @@ module RenkeiVPE
             raise "Can't include '#{s}' in resource file: #{obj}"
           end
         end
+        return obj
       end
 
     end

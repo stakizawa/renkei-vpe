@@ -1,40 +1,46 @@
 <IMAGE_POOL>
   <IMAGE>
-    <ID>0</ID>
+    <ID>7</ID>
     <UID>0</UID>
     <USERNAME>oneadmin</USERNAME>
-    <NAME>ttylinux sample</NAME>
+    <NAME>centos5.5</NAME>
     <TYPE>0</TYPE>
     <PUBLIC>1</PUBLIC>
     <PERSISTENT>0</PERSISTENT>
-    <REGTIME>1294726955</REGTIME>
-    <SOURCE>/opt/one/gfarm/home/oneadmin/64cf2a374f8826b94ff76f697535e6703d853388</SOURCE>
+    <REGTIME>1305885190</REGTIME>
+    <SOURCE>/opt/one/gfarm/home/oneadmin/2fa6cd5001ebe8b17bd5a4228380cd1a59773a48</SOURCE>
     <STATE>1</STATE>
     <RUNNING_VMS>0</RUNNING_VMS>
     <TEMPLATE>
-      <DESCRIPTION><![CDATA[ttylinux sample from OpenNebula]]></DESCRIPTION>
-      <DEV_PREFIX><![CDATA[hd]]></DEV_PREFIX>
-      <NAME><![CDATA[ttylinux sample]]></NAME>
-      <PATH><![CDATA[/opt/one/ttylinux/ttylinux.img]]></PATH>
+      <BUS><![CDATA[virtio]]></BUS>
+      <DESCRIPTION><![CDATA[CentOS5.5 for Renkei VPE]]></DESCRIPTION>
+      <DEV_PREFIX><![CDATA[vd]]></DEV_PREFIX>
+      <NAME><![CDATA[centos5.5]]></NAME>
+      <NIC_MODEL><![CDATA[virtio]]></NIC_MODEL>
+      <PATH><![CDATA[/work/vms/rpop-vms/vm00/disk.img]]></PATH>
+      <TYPE><![CDATA[OS]]></TYPE>
     </TEMPLATE>
   </IMAGE>
   <IMAGE>
-    <ID>4</ID>
+    <ID>8</ID>
     <UID>0</UID>
     <USERNAME>oneadmin</USERNAME>
-    <NAME>ttylinux sample2</NAME>
+    <NAME>sl3.0.9</NAME>
     <TYPE>0</TYPE>
-    <PUBLIC>0</PUBLIC>
+    <PUBLIC>1</PUBLIC>
     <PERSISTENT>0</PERSISTENT>
-    <REGTIME>1300636358</REGTIME>
-    <SOURCE>/opt/one/gfarm/home/oneadmin/c92219ad50f1d637ea88822e4b279e967e2e6bda</SOURCE>
+    <REGTIME>1305885768</REGTIME>
+    <SOURCE>/opt/one/gfarm/home/oneadmin/06830aeab7b8c7724c72b7691e0103ed68e2e66f</SOURCE>
     <STATE>1</STATE>
     <RUNNING_VMS>0</RUNNING_VMS>
     <TEMPLATE>
-      <DESCRIPTION><![CDATA[ttylinux sample from OpenNebula, private for admin]]></DESCRIPTION>
+      <BUS><![CDATA[ide]]></BUS>
+      <DESCRIPTION><![CDATA[Scientific Linux 3.0.9 for Renkei VPE]]></DESCRIPTION>
       <DEV_PREFIX><![CDATA[hd]]></DEV_PREFIX>
-      <NAME><![CDATA[ttylinux sample2]]></NAME>
-      <PATH><![CDATA[/opt/one/ttylinux/ttylinux.img]]></PATH>
+      <NAME><![CDATA[sl3.0.9]]></NAME>
+      <NIC_MODEL><![CDATA[rtl8139]]></NIC_MODEL>
+      <PATH><![CDATA[/work/vms/rpop-vms/vm02-sl309/disk.img]]></PATH>
+      <TYPE><![CDATA[OS]]></TYPE>
     </TEMPLATE>
   </IMAGE>
 </IMAGE_POOL>

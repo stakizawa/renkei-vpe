@@ -20,7 +20,8 @@ CREATE TABLE #{@table_name} (
   zone_id     INTEGER,
   lease_id    INTEGER,
   type_id     INTEGER,
-  image_id    INTEGER
+  image_id    INTEGER,
+  leases      VARCHAR(256)
 );
 SQL
 
@@ -40,6 +41,8 @@ SQL
       attr_accessor(:type_id)  { |v| v.to_i }
       # id of OS image the VM use
       attr_accessor(:image_id) { |v| v.to_i }
+      # ids of all leases the VM use
+      attr_accessor(:leases)
 
       def initialize
         super
@@ -50,6 +53,7 @@ SQL
         @lease_id = -1
         @type_id  = -1
         @image_id = -1
+        @leases   = ''
       end
 
       def to_s
@@ -61,7 +65,8 @@ SQL
           "zone_id=#{@zone_id},"   +
           "lease_id=#{@lease_id}," +
           "type_id=#{@type_id},"   +
-          "image_id=#{@image_id}"  +
+          "image_id=#{@image_id}," +
+          "leases=#{@leases}"      +
           ">"
       end
 
@@ -93,13 +98,13 @@ SQL
         else
           zone_name = no_data_msg
         end
-        lease = Lease.find_by_id(@lease_id)[0]
-        if lease
-          lease_name = lease.name
-          lease_address = lease.address
+        prime_lease = Lease.find_by_id(@lease_id)[0]
+        if prime_lease
+          prime_lease_name = prime_lease.name
+          prime_lease_address = prime_lease.address
         else
-          lease_name = no_data_msg
-          lease_address = no_data_msg
+          prime_lease_name = no_data_msg
+          prime_lease_address = no_data_msg
         end
         type = VMType.find_by_id(@type_id)[0]
         if zone
@@ -118,12 +123,12 @@ SQL
 
         # set name
         e = REXML::Element.new('NAME')
-        e.add(REXML::Text.new(lease_name))
+        e.add(REXML::Text.new(prime_lease_name))
         vm_e.add(e)
 
         # set address
         e = REXML::Element.new('ADDRESS')
-        e.add(REXML::Text.new(lease_address))
+        e.add(REXML::Text.new(prime_lease_address))
         vm_e.add(e)
 
         # set user id
@@ -166,6 +171,31 @@ SQL
         e.add(REXML::Text.new(image_name))
         vm_e.add(e)
 
+        # set all leases
+        ls_e = REXML::Element.new('LEASES')
+        @leases.split(ITEM_SEPARATOR).map{ |i| i.to_i }.each do |lid|
+          l = Lease.find_by_id(lid)[0]
+          if l
+            lname = l.name
+            laddr = l.address
+          else
+            lname = no_data_msg
+            laddr = no_data_msg
+          end
+          l_e = REXML::Element.new('LEASE')
+          e = REXML::Element.new('ID')
+          e.add(REXML::Text.new(lid.to_s))
+          l_e.add(e)
+          e = REXML::Element.new('NAME')
+          e.add(REXML::Text.new(lname))
+          l_e.add(e)
+          e = REXML::Element.new('ADDRESS')
+          e.add(REXML::Text.new(laddr))
+          l_e.add(e)
+          ls_e.add(l_e)
+        end
+        vm_e.add(ls_e)
+
         # set elements from one vm xml
         targets = [
                    '/VM/LAST_POLL',
@@ -199,16 +229,18 @@ SQL
         raise_if_nil_and_not_class(@lease_id, 'lease_id', Integer)
         raise_if_nil_and_not_class(@type_id,  'type_id',  Integer)
         raise_if_nil_and_not_class(@image_id, 'image_id', Integer)
+        raise_if_nil_and_not_class(@leases,   'leases',   String)
       end
 
       def to_create_record_str
-        "'#{@name}',"       +
+        "'#{@name}',"     +
           "#{@oid},"      +
           "#{@user_id},"  +
           "#{@zone_id},"  +
           "#{@lease_id}," +
           "#{@type_id},"  +
-          "#{@image_id}"
+          "#{@image_id}," +
+          "'#{@leases}'"
       end
 
       def to_find_id_str
@@ -222,11 +254,12 @@ SQL
           "zone_id=#{@zone_id},"   +
           "lease_id=#{@lease_id}," +
           "type_id=#{@type_id},"   +
-          "image_id=#{@image_id}"
+          "image_id=#{@image_id}," +
+          "leases='#{@leases}'"
       end
 
       def self.setup_attrs(vm, attrs)
-        return vm unless attrs.size == 8
+        return vm unless attrs.size == 9
         vm.instance_eval do
           @id       = attrs[0].to_i
         end
@@ -237,6 +270,7 @@ SQL
         vm.lease_id = attrs[5]
         vm.type_id  = attrs[6]
         vm.image_id = attrs[7]
+        vm.leases   = attrs[8] || ''
         return vm
       end
 

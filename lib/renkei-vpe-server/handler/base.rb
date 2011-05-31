@@ -12,6 +12,7 @@ module RenkeiVPE
     # All classes that process client request must have this class as their
     # super class.
     class BaseHandler
+      include RenkeiVPE::Const
       include RenkeiVPE::OpenNebulaClient
       include RenkeiVPE::Model
 

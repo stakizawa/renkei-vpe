@@ -9,8 +9,6 @@ module RenkeiVPE
     # Model for Renkei VPE user
     ##########################################################################
     class User < BaseModel
-      include RenkeiVPE::Const
-
       @table_name = 'users'
 
       @table_schema = <<SQL

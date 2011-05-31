@@ -19,7 +19,7 @@ module RenkeiVPE
         meth('val info(string, int)',
              'Retrieve information about the virtual machine',
              'info')
-        meth('val allocate(string, int, int, int, int, string)',
+        meth('val allocate(string, string, string, string, string, string)',
              'allocate a new virtual machine',
              'allocate')
         meth('val action(string, int, string)',
@@ -81,7 +81,7 @@ module RenkeiVPE
       def ask_id(session, name)
         task('rvpe.vm.ask_id', session) do
           vm = VirtualMachine.find_by_name(name).last
-          raise "VirtualMachine[#{name}] is not found. " unless vm
+          raise "VirtualMachine[#{name}] is not found." unless vm
 
           [true, vm.id]
         end
@@ -109,64 +109,32 @@ module RenkeiVPE
 
       # allocate a new virtual machine.
       # +session+   string that represents user session
-      # +type_id+   id of vm type
-      # +lease_id+  id of lease
-      # +zone_id+   id of zone
+      # +type_n+    id or name of vm type
       # +image_id+  id of image
       # +sshkey+    ssh public key for root access
+      # +zone_n+    id or name of zone
+      # +networks+  ids or names of networks and leases
       # +return[0]+ true or false whenever is successful or not
       # +return[1]+ if an error occurs this is error message,
       #             if successful this is the associated id (int id)
       #             generated for this vm
-      def allocate(session, type_id, lease_id, zone_id, image_id, sshkey)
+      def allocate(session, type_n, image_id, sshkey, zone_n, networks)
         task('rvpe.vm.allocate', session) do
-          # 0. get user and check if the user has permission to run VMs
+          # 0. get resources and check if they exist
+          type = VMType.find_by_id_or_name(type_n).last
+          raise "VMType[#{type_n}] is not found." unless type
+          zone = Zone.find_by_id_or_name(zone_n).last
+          raise "Zone[#{zone_n}] is not found." unless zone
+
+          # 1. get user and check if the user has permission to run VMs
           #    in the specified zone
           user_name = get_user_from_session(session)
           user = User.find_by_name(user_name).last
-          unless user.zones_in_array.include?(zone_id)
-            raise "User[#{user_name}] don't have permission to use Zone[#{zone_id}]."
+          unless user.zones_in_array.include?(zone.id)
+            raise "User[#{user_name}] don't have permission to use Zone[#{zone_n}]."
           end
 
-          # 1-1. get data about used resources
-          type = VMType.find_by_id(type_id)[0]
-          zone = Zone.find_by_id(zone_id)[0]
-          # FIXME currently only one virtual network is available
-          vnet_id = zone.networks_in_array[0]
-          vnet = VirtualNetwork.find_by_id(vnet_id)[0]
-
-          # 1-2. get an available lease
-          if lease_id > 0
-            # user specifies a pre-assigned lease
-            lease = Lease.find_by_id(lease_id)[0]
-            unless lease
-              raise "Specified lease is not found."
-            end
-            if lease.used == 1
-              raise "Lease[#{lease.name}] is already used."
-            end
-            unless lease.assigned_to == user.id
-              raise "User[#{user_name}] don't have a permission to use Lease[#{lease.name}]."
-            end
-            unless lease.vnetid == vnet_id
-              raise "Lease[#{lease.name}] can't be used in Network[#{vnet.unique_name}]."
-            end
-          else
-            # dynamically assign a new lease
-            leases = vnet.find_available_leases
-            if leases.size == 0
-              raise "No available virtual host lease in Zone[#{zone.name}]."
-            end
-            lease = leases[0]
-          end
-
-          # 1-3. get cluster name from OpenNebula
-          rc = call_one_xmlrpc('one.cluster.info', session, zone.oid)
-          raise rc[1] unless rc[0]
-          doc = REXML::Document.new(rc[1])
-          one_cluster = doc.elements['/CLUSTER/NAME'].get_text
-
-          # 1-4. get image information
+          # 2. get image information
           rc = call_one_xmlrpc('one.image.info', session, image_id)
           raise rc[1] unless rc[0]
           doc = REXML::Document.new(rc[1])
@@ -182,9 +150,55 @@ module RenkeiVPE
             raise 'NIC_MODEL attributes is not set to the image.'
           end
 
-          # 2. create file paths and ssh public key file
+          # 3. get cluster name from OpenNebula
+          rc = call_one_xmlrpc('one.cluster.info', session, zone.oid)
+          raise rc[1] unless rc[0]
+          doc = REXML::Document.new(rc[1])
+          one_cluster = doc.elements['/CLUSTER/NAME'].get_text
+
+          # 4. get network information
+          vnets = Array.new
+          leases = Array.new
+          networks.split(ITEM_SEPARATOR).each do |net_lease|
+            net_n,lease_n = net_lease.split(ATTR_SEPARATOR)
+            net_fn = zone_n + ATTR_SEPARATOR + net_n
+
+            vnet = VirtualNetwork.find_by_name(net_fn).last
+            raise "VirtualNetwork[#{net_fn}] is not found." unless vnet
+
+            if lease_n
+              # user specifies a pre-assigned lease
+              lease = Lease.find_by_id_or_name(lease_n).last
+              unless lease
+                raise "Lease[#{lease_n}] is not found."
+              end
+              if lease.used == 1
+                raise "Lease[#{lease.name}] is already used."
+              end
+              unless lease.assigned_to == user.id
+                raise "User[#{user_name}] don't have a permission to use Lease[#{lease.name}]."
+              end
+              unless lease.vnetid == vnet.id
+                raise "Lease[#{lease.name}] can't be used in VirtualNetwork[#{net_fn}]."
+              end
+            else
+              # dynamically assign a new lease
+              dyn_leases = vnet.find_available_leases(user.id)
+              if dyn_leases.size == 0
+                raise "No available virtual host lease in VirtualNetwork[#{net_fn}]."
+              end
+              lease = dyn_leases[0]
+            end
+
+            vnets  << vnet
+            leases << lease
+          end
+          prime_vnet  = vnets[0]
+          prime_lease = leases[0]
+
+          # 5. create file paths and ssh public key file
           init_file = "#{$rvpe_path}/share/vmscripts/init.rb"
-          vmtmpdir  = "#{$rvpe_path}/var/#{lease.name}"
+          vmtmpdir  = "#{$rvpe_path}/var/#{prime_lease.name}"
           FileUtils.mkdir_p(vmtmpdir)
 #          FileUtils.chmod(0750, vmtmpdir)   TODO uncomment this line
           ssh_key   = "#{vmtmpdir}/root.pub"
@@ -192,9 +206,9 @@ module RenkeiVPE
             file.puts sshkey
           end
 
-          # 3. create VM definition file
+          # 6. create VM definition file
           vm_def =<<EOS
-NAME   = "#{lease.name}"
+NAME   = "#{prime_lease.name}"
 VCPU   = #{type.cpu}
 MEMORY = #{type.memory}
 
@@ -211,27 +225,38 @@ DISK = [
   TARGET = "hdd"
 ]
 
+EOS
+
+          vnets.each_with_index do |vnet, i|
+            vm_def +=<<EOS
 NIC = [
   NETWORK_ID = #{vnet.oid},
-  IP         = "#{lease.address}",
+  IP         = "#{leases[i].address}",
   MODEL      = "#{nic_model}"
 ]
 
-# GRAPHICS = [
-#   TYPE   = "vnc",
-#   KEYMAP = "ja"
-# ]
+EOS
+          end
 
+          vm_def +=<<EOS
 CONTEXT = [
   HOSTNAME       = "$NAME",
-  PRIMARY_IPADDR = "$NIC[ IP, NETWORK_ID=\\"#{vnet.oid}\\" ]",
-  ETH0_HWADDR    = "$NIC[ MAC, NETWORK_ID=\\"#{vnet.oid}\\" ]",
-  ETH0_IPADDR    = "$NIC[ IP, NETWORK_ID=\\"#{vnet.oid}\\" ]",
-  ETH0_NETWORK   = "#{vnet.address}",
-  ETH0_NETMASK   = "#{vnet.netmask}",
-  ETH0_GATEWAY   = "#{vnet.gateway}",
-  NAMESERVERS    = "#{vnet.dns.strip}",
-  NTPSERVERS     = "#{vnet.ntp.strip}",
+  PRIMARY_IPADDR = "$NIC[ IP, NETWORK_ID=\\"#{prime_vnet.oid}\\" ]",
+  NAMESERVERS    = "#{prime_vnet.dns.strip}",
+  NTPSERVERS     = "#{prime_vnet.ntp.strip}",
+  ETH0_GATEWAY   = "#{prime_vnet.gateway}",
+EOS
+
+          vnets.each_with_index do |vnet, i|
+            vm_def +=<<EOS
+  ETH#{i}_HWADDR    = "$NIC[ MAC, NETWORK_ID=\\"#{vnet.oid}\\" ]",
+  ETH#{i}_IPADDR    = "$NIC[ IP, NETWORK_ID=\\"#{vnet.oid}\\" ]",
+  ETH#{i}_NETWORK   = "#{vnet.address}",
+  ETH#{i}_NETMASK   = "#{vnet.netmask}",
+EOS
+          end
+
+          vm_def +=<<EOS
   ROOT_PUBKEY    = "root.pub",
   FILES          = "#{init_file} #{ssh_key}",
   TARGET         = "hdc",
@@ -239,43 +264,52 @@ CONTEXT = [
 ]
 
 REQUIREMENTS = "CLUSTER = \\"#{one_cluster}\\""
+
+# GRAPHICS = [
+#   TYPE   = "vnc",
+#   KEYMAP = "ja"
+# ]
 EOS
 
-          # 4. run VM
+          # 7. run VM
           rc = call_one_xmlrpc('one.vm.allocate', session, vm_def)
           raise rc[1] unless rc[0]
 
-          # 5. create VM record
+          # 8. create VM record
           begin
             vm = VirtualMachine.new
-            vm.name     = lease.name
+            vm.name     = prime_lease.name
             vm.oid      = rc[1]
             vm.user_id  = user.id
             vm.zone_id  = zone.id
-            vm.lease_id = lease.id
+            vm.lease_id = prime_lease.id
             vm.type_id  = type.id
             vm.image_id = image_id
+            vm.leases   = leases.map{ |l| l.id }.join(ITEM_SEPARATOR)
             vm.create
           rescue => e
             call_one_xmlrpc('one.vm.action', session, 'finalize', rc[1])
             raise e
           end
 
-          # 6-1. create a sym link to OpenNebula VM directory
+          # 9-1. create a sym link to OpenNebula VM directory
           one_log_dir = $server_config.one_location + "/var/#{rc[1]}"
           rvpe_link = vmtmpdir + '/one_log'
           FileUtils.ln_s(one_log_dir, rvpe_link)
-          # 6-2. create an empty file whose name is vm.id
+          # 9-2. create an empty file whose name is vm.id
           FileUtils.touch(vmtmpdir + "/#{vm.id}")
 
-          # 7. finalize: mark lease as used
-          begin
-            lease.used = 1
-            lease.update
-          rescue => e
-            vm.delete
-            FileUtils.rm_rf(vmtmpdir)
-            raise e
+          # 10. finalize: mark leases as used
+          leases.each do |lease|
+            begin
+              lease.used = 1
+              lease.update
+            rescue => e
+              call_one_xmlrpc('one.vm.action', session, 'finalize', rc[1])
+              vm.delete
+              FileUtils.rm_rf(vmtmpdir)
+              raise e
+            end
           end
 
           [true, vm.id]
@@ -303,9 +337,12 @@ EOS
             lease = Lease.find_by_id(vm.lease_id)[0]
             vmtmpdir  = "#{$rvpe_path}/var/#{lease.name}"
             FileUtils.rm_rf(vmtmpdir)
-            # mark lease as not-used
-            lease.used = 0
-            lease.update
+            # mark leases as not-used
+            vm.leases.split(ITEM_SEPARATOR).map { |i| i.to_i }.each do |lid|
+              lease = Lease.find_by_id(lid)[0]
+              lease.used = 0
+              lease.update
+            end
           end
 
           rc

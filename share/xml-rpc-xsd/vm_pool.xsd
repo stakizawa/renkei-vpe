@@ -9,7 +9,7 @@
   <xs:element name="VM_POOL">
     <xs:complexType>
       <xs:sequence maxOccurs="1" minOccurs="1">
-	<xs:element ref="VM" maxOccurs="unbounded" minOccurs="0"/>
+        <xs:element ref="VM" maxOccurs="unbounded" minOccurs="0"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>

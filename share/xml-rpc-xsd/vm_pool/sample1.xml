@@ -1,35 +1,42 @@
 <VM_POOL>
   <VM>
-    <ID>11</ID>
+    <ID>81</ID>
     <NAME>vm00.vhost.net</NAME>
     <ADDRESS>192.168.0.10</ADDRESS>
     <USER_ID>0</USER_ID>
     <USER_NAME>oneadmin</USER_NAME>
-    <ZONE_ID>4</ZONE_ID>
-    <ZONE_NAME>tokyo tech</ZONE_NAME>
-    <TYPE_ID>5</TYPE_ID>
+    <ZONE_ID>36</ZONE_ID>
+    <ZONE_NAME>tokyo_tech</ZONE_NAME>
+    <TYPE_ID>7</TYPE_ID>
     <TYPE_NAME>small</TYPE_NAME>
-    <IMAGE_ID>12</IMAGE_ID>
-    <IMAGE_NAME>test_save</IMAGE_NAME>
-    <LAST_POLL>1303377023</LAST_POLL>
+    <IMAGE_ID>7</IMAGE_ID>
+    <IMAGE_NAME>centos5.5</IMAGE_NAME>
+    <LEASES>
+      <LEASE>
+        <ID>15</ID>
+        <NAME>vm00.vhost.net</NAME>
+        <ADDRESS>192.168.0.10</ADDRESS>
+      </LEASE>
+    </LEASES>
+    <LAST_POLL>1306819815</LAST_POLL>
     <STATE>3</STATE>
     <LCM_STATE>3</LCM_STATE>
-    <STIME>1303376341</STIME>
+    <STIME>1306819797</STIME>
     <ETIME>0</ETIME>
-    <MEMORY>1048576</MEMORY>
+    <MEMORY>0</MEMORY>
     <CPU>0</CPU>
     <NET_TX>0</NET_TX>
     <NET_RX>0</NET_RX>
     <LAST_SEQ>0</LAST_SEQ>
     <TEMPLATE>
       <CONTEXT>
-        <CREATE_DATE><![CDATA[1303376341]]></CREATE_DATE>
+        <CREATE_DATE><![CDATA[1306819797]]></CREATE_DATE>
         <ETH0_GATEWAY><![CDATA[192.168.0.1]]></ETH0_GATEWAY>
         <ETH0_HWADDR><![CDATA[02:00:c0:a8:00:0a]]></ETH0_HWADDR>
         <ETH0_IPADDR><![CDATA[192.168.0.10]]></ETH0_IPADDR>
         <ETH0_NETMASK><![CDATA[255.255.255.0]]></ETH0_NETMASK>
         <ETH0_NETWORK><![CDATA[192.168.0.0]]></ETH0_NETWORK>
-        <FILES><![CDATA[/home/shin/work/2011/opennebula/renkei-vpe/share/vmscripts/centos-5.5/init.rb /home/shin/work/2011/opennebula/renkei-vpe/var/vm00.vhost.net/root.pub]]></FILES>
+        <FILES><![CDATA[/home/shin/work/2011/opennebula/renkei-vpe/share/vmscripts/init.rb /home/shin/work/2011/opennebula/renkei-vpe/var/vm00.vhost.net/root.pub]]></FILES>
         <HOSTNAME><![CDATA[vm00.vhost.net]]></HOSTNAME>
         <NAMESERVERS><![CDATA[192.168.0.1 131.112.125.58]]></NAMESERVERS>
         <NTPSERVERS><![CDATA[192.168.0.1 ntp1.noc.titech.ac.jp ntp2.noc.titech.ac.jp]]></NTPSERVERS>
@@ -42,11 +49,11 @@
         <CLONE><![CDATA[YES]]></CLONE>
         <DISK_ID><![CDATA[0]]></DISK_ID>
         <DRIVER><![CDATA[qcow2]]></DRIVER>
-        <IMAGE><![CDATA[test_save]]></IMAGE>
-        <IMAGE_ID><![CDATA[12]]></IMAGE_ID>
+        <IMAGE><![CDATA[centos5.5]]></IMAGE>
+        <IMAGE_ID><![CDATA[7]]></IMAGE_ID>
         <READONLY><![CDATA[NO]]></READONLY>
         <SAVE><![CDATA[NO]]></SAVE>
-        <SOURCE><![CDATA[/opt/one/gfarm/home/oneadmin/e19aa9d2eb0ae6ad7e6e984c53a2377335752368]]></SOURCE>
+        <SOURCE><![CDATA[/opt/one/gfarm/home/oneadmin/2fa6cd5001ebe8b17bd5a4228380cd1a59773a48]]></SOURCE>
         <TARGET><![CDATA[vda]]></TARGET>
         <TYPE><![CDATA[DISK]]></TYPE>
       </DISK>
@@ -63,22 +70,22 @@
         <IP><![CDATA[192.168.0.10]]></IP>
         <MAC><![CDATA[02:00:c0:a8:00:0a]]></MAC>
         <MODEL><![CDATA[virtio]]></MODEL>
-        <NETWORK><![CDATA[tokyo tech::test]]></NETWORK>
-        <NETWORK_ID><![CDATA[40]]></NETWORK_ID>
+        <NETWORK><![CDATA[tokyo_tech#test]]></NETWORK>
+        <NETWORK_ID><![CDATA[79]]></NETWORK_ID>
       </NIC>
-      <REQUIREMENTS><![CDATA[CLUSTER = "tokyo tech"]]></REQUIREMENTS>
+      <REQUIREMENTS><![CDATA[CLUSTER = "tokyo_tech"]]></REQUIREMENTS>
       <VCPU><![CDATA[1]]></VCPU>
-      <VMID><![CDATA[125]]></VMID>
+      <VMID><![CDATA[222]]></VMID>
     </TEMPLATE>
     <HISTORY>
       <SEQ>0</SEQ>
       <HOSTNAME>192.168.0.2</HOSTNAME>
-      <HID>26</HID>
-      <STIME>1303376347</STIME>
+      <HID>62</HID>
+      <STIME>1306819806</STIME>
       <ETIME>0</ETIME>
-      <PSTIME>1303376347</PSTIME>
-      <PETIME>1303376422</PETIME>
-      <RSTIME>1303376422</RSTIME>
+      <PSTIME>1306819806</PSTIME>
+      <PETIME>1306819815</PETIME>
+      <RSTIME>1306819815</RSTIME>
       <RETIME>0</RETIME>
       <ESTIME>0</ESTIME>
       <EETIME>0</EETIME>
@@ -86,21 +93,28 @@
     </HISTORY>
   </VM>
   <VM>
-    <ID>12</ID>
+    <ID>82</ID>
     <NAME>vm01.vhost.net</NAME>
     <ADDRESS>192.168.0.11</ADDRESS>
-    <USER_ID>5</USER_ID>
-    <USER_NAME>test</USER_NAME>
-    <ZONE_ID>4</ZONE_ID>
-    <ZONE_NAME>tokyo tech</ZONE_NAME>
-    <TYPE_ID>5</TYPE_ID>
+    <USER_ID>0</USER_ID>
+    <USER_NAME>oneadmin</USER_NAME>
+    <ZONE_ID>36</ZONE_ID>
+    <ZONE_NAME>tokyo_tech</ZONE_NAME>
+    <TYPE_ID>7</TYPE_ID>
     <TYPE_NAME>small</TYPE_NAME>
-    <IMAGE_ID>11</IMAGE_ID>
-    <IMAGE_NAME>rpop-centos5.5</IMAGE_NAME>
-    <LAST_POLL>0</LAST_POLL>
+    <IMAGE_ID>7</IMAGE_ID>
+    <IMAGE_NAME>centos5.5</IMAGE_NAME>
+    <LEASES>
+      <LEASE>
+        <ID>16</ID>
+        <NAME>vm01.vhost.net</NAME>
+        <ADDRESS>192.168.0.11</ADDRESS>
+      </LEASE>
+    </LEASES>
+    <LAST_POLL>1306820145</LAST_POLL>
     <STATE>3</STATE>
-    <LCM_STATE>1</LCM_STATE>
-    <STIME>1303377370</STIME>
+    <LCM_STATE>3</LCM_STATE>
+    <STIME>1306820120</STIME>
     <ETIME>0</ETIME>
     <MEMORY>0</MEMORY>
     <CPU>0</CPU>
@@ -109,13 +123,13 @@
     <LAST_SEQ>0</LAST_SEQ>
     <TEMPLATE>
       <CONTEXT>
-        <CREATE_DATE><![CDATA[1303377370]]></CREATE_DATE>
+        <CREATE_DATE><![CDATA[1306820120]]></CREATE_DATE>
         <ETH0_GATEWAY><![CDATA[192.168.0.1]]></ETH0_GATEWAY>
         <ETH0_HWADDR><![CDATA[02:00:c0:a8:00:0b]]></ETH0_HWADDR>
         <ETH0_IPADDR><![CDATA[192.168.0.11]]></ETH0_IPADDR>
         <ETH0_NETMASK><![CDATA[255.255.255.0]]></ETH0_NETMASK>
         <ETH0_NETWORK><![CDATA[192.168.0.0]]></ETH0_NETWORK>
-        <FILES><![CDATA[/home/shin/work/2011/opennebula/renkei-vpe/share/vmscripts/centos-5.5/init.rb /home/shin/work/2011/opennebula/renkei-vpe/var/vm01.vhost.net/root.pub]]></FILES>
+        <FILES><![CDATA[/home/shin/work/2011/opennebula/renkei-vpe/share/vmscripts/init.rb /home/shin/work/2011/opennebula/renkei-vpe/var/vm01.vhost.net/root.pub]]></FILES>
         <HOSTNAME><![CDATA[vm01.vhost.net]]></HOSTNAME>
         <NAMESERVERS><![CDATA[192.168.0.1 131.112.125.58]]></NAMESERVERS>
         <NTPSERVERS><![CDATA[192.168.0.1 ntp1.noc.titech.ac.jp ntp2.noc.titech.ac.jp]]></NTPSERVERS>
@@ -128,11 +142,11 @@
         <CLONE><![CDATA[YES]]></CLONE>
         <DISK_ID><![CDATA[0]]></DISK_ID>
         <DRIVER><![CDATA[qcow2]]></DRIVER>
-        <IMAGE><![CDATA[rpop-centos5.5]]></IMAGE>
-        <IMAGE_ID><![CDATA[11]]></IMAGE_ID>
+        <IMAGE><![CDATA[centos5.5]]></IMAGE>
+        <IMAGE_ID><![CDATA[7]]></IMAGE_ID>
         <READONLY><![CDATA[NO]]></READONLY>
         <SAVE><![CDATA[NO]]></SAVE>
-        <SOURCE><![CDATA[/opt/one/gfarm/home/oneadmin/4a4c6e4641edc3c2ece88276eae176c43fe80858]]></SOURCE>
+        <SOURCE><![CDATA[/opt/one/gfarm/home/oneadmin/2fa6cd5001ebe8b17bd5a4228380cd1a59773a48]]></SOURCE>
         <TARGET><![CDATA[vda]]></TARGET>
         <TYPE><![CDATA[DISK]]></TYPE>
       </DISK>
@@ -149,22 +163,22 @@
         <IP><![CDATA[192.168.0.11]]></IP>
         <MAC><![CDATA[02:00:c0:a8:00:0b]]></MAC>
         <MODEL><![CDATA[virtio]]></MODEL>
-        <NETWORK><![CDATA[tokyo tech::test]]></NETWORK>
-        <NETWORK_ID><![CDATA[40]]></NETWORK_ID>
+        <NETWORK><![CDATA[tokyo_tech#test]]></NETWORK>
+        <NETWORK_ID><![CDATA[79]]></NETWORK_ID>
       </NIC>
-      <REQUIREMENTS><![CDATA[CLUSTER = "tokyo tech"]]></REQUIREMENTS>
+      <REQUIREMENTS><![CDATA[CLUSTER = "tokyo_tech"]]></REQUIREMENTS>
       <VCPU><![CDATA[1]]></VCPU>
-      <VMID><![CDATA[126]]></VMID>
+      <VMID><![CDATA[223]]></VMID>
     </TEMPLATE>
     <HISTORY>
       <SEQ>0</SEQ>
       <HOSTNAME>192.168.0.2</HOSTNAME>
-      <HID>26</HID>
-      <STIME>1303377397</STIME>
+      <HID>62</HID>
+      <STIME>1306820136</STIME>
       <ETIME>0</ETIME>
-      <PSTIME>1303377397</PSTIME>
-      <PETIME>0</PETIME>
-      <RSTIME>0</RSTIME>
+      <PSTIME>1306820136</PSTIME>
+      <PETIME>1306820144</PETIME>
+      <RSTIME>1306820144</RSTIME>
       <RETIME>0</RETIME>
       <ESTIME>0</ESTIME>
       <EETIME>0</EETIME>

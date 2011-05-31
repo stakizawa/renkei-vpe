@@ -18,6 +18,15 @@
         <xs:element name="TYPE_NAME" type="xs:string"/>
         <xs:element name="IMAGE_ID" type="xs:integer"/>
         <xs:element name="IMAGE_NAME" type="xs:string"/>
+        <xs:element name="LEASES">
+          <xs:complexType>
+            <xs:sequence minOccurs="1" maxOccurs="unbounded">
+              <xs:element name="ID" type="xs:integer"/>
+              <xs:element name="NAME" type="xs:string"/>
+              <xs:element name="ADDRESS" type="xs:string"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
         <xs:element name="LAST_POLL" type="xs:integer"/>
         <xs:element name="STATE" type="xs:integer"/>
         <xs:element name="LCM_STATE" type="xs:integer"/>

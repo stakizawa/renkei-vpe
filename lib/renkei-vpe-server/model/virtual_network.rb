@@ -168,8 +168,13 @@ SQL
       end
 
       # It returns available lases in this virtual network.
-      def find_available_leases
-        Lease.find("vnetid=#{@id} AND used=0 AND assigned_to=-1")
+      # +assigned_user+  id of user who owns lease
+      def find_available_leases(assigned_user=-1)
+        res = Lease.find("vnetid=#{@id} AND used=0 AND assigned_to=-1")
+        if res.empty? && assigned_user != -1
+          res = Lease.find("vnetid=#{@id} AND used=0 AND assigned_to=#{assigned_user}")
+        end
+        return res
       end
 
       # It adds a lease.

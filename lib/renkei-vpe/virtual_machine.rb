@@ -55,13 +55,13 @@ module RenkeiVPE
 
     # Allocates a new VM in RenkeiVPE.
     #
-    # +type+   id of VM type
-    # +lease+  id of lease to be used
-    # +zone+   id of zone where VM will be located
-    # +image+  id of image to be used
-    # +sshkey+ ssh public key for root access to the VM
-    def allocate(type, lease, zone, image, sshkey)
-      super(VM_METHODS[:allocate], type, lease, zone, image, sshkey)
+    # +type+     id or name of VM type
+    # +image_id+ id of image to be used
+    # +sshkey+   ssh public key for root access to the VM
+    # +zone+     id or name of zone where VM will be located
+    # +nets+     id or name of networks and leases the VM will use
+    def allocate(type, image_id, sshkey, zone, nets)
+      super(VM_METHODS[:allocate], type, image_id, sshkey, zone, nets)
     end
 
     # Do action to the VM.
@@ -92,8 +92,8 @@ module RenkeiVPE
     # Helpers for rpc
     ##########################################################################
 
-    def create(type, lease, zone, image, sshkey)
-      rc = allocate(type, lease, zone, image, sshkey)
+    def create(type, image_id, sshkey, zone, nets)
+      rc = allocate(type, image_id, sshkey, zone, nets)
       return rc if RenkeiVPE.is_error?(rc)
       rc = info
       return rc if RenkeiVPE.is_error?(rc)

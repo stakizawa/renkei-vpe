@@ -81,7 +81,8 @@ rvpevmtype
 
 
 rvpevm
-  create    vm_type zone_name image_name root_key_file
+  create    vm_type image_name root_key_file zone network<#lease> \
+            <network<#lease>>
   shutdown  vm_name
   suspend   vm_name
   resume    vm_name

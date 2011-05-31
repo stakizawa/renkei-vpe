@@ -95,6 +95,7 @@ module RenkeiVPE
     # Super class for all models
     ##########################################################################
     class BaseModel
+      include RenkeiVPE::Const
       include EnhancedAttributes
       include RenkeiVPE::OpenNebulaClient
 
@@ -217,7 +218,7 @@ module RenkeiVPE
       # the given +condition+.
       # It returns nil if not found.
       def self.find(condition)
-        sql = "SELECT * FROM #{@table_name} WHERE #{condition};"
+        sql = "SELECT * FROM #{@table_name} WHERE #{condition}"
         result = []
         Database.execute(sql) do |val|
           result << gen_instance(val)
@@ -235,6 +236,16 @@ module RenkeiVPE
       # It returns nil if not found.
       def self.find_by_name(name)
         find(to_find_by_name_cond_str(name))
+      end
+
+      # It finds and returns a record whose name or id is +arg+.
+      # It returns nil if not found.
+      def self.find_by_id_or_name(arg)
+        if /^\d+$/ =~ arg
+          find_by_id(arg)
+        else
+          find_by_name(arg)
+        end
       end
 
       # It returns a string used in self.find_by_name.

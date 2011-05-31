@@ -21,6 +21,8 @@ require 'renkei-vpe'
 require 'client_utilities'
 require 'optparse'
 
+include RenkeiVPE::Const
+
 ##############################################################################
 # Global variables
 ##############################################################################
@@ -64,23 +66,28 @@ Usage:
     #{CMD_NAME} command <options>
 
 Commands:
-    create vm_type zone image_name root_key_file <lease>
+    create vm_type image_name root_key_file zone network1<#lease1> \\
+                                                 <networkN<#leaseN>>
         create a VM with the specified 'vm_type' in the specified 'zone'.
-        The VM uses an OS image whose name is 'image_name' and a user can
+        The VM uses an OS image whose name is 'image_name' and connects
+        to the specified networks, such as 'network1' etc. The default
+        gateway for the VM is provided from the first network. A user can
         log in the VM with a ssh key whose public key is 'root_key_file'.
         If an additional option 'lease', which is manually assigned by
         the administrator to a user, is specified, the VM uses the lease
         for its hostname and ip address.
 
         vm_type can be name or id of a VM type.
-        zone_name can be name or id of a zone.
         image_name can be name or id of an OS image.
         root_key_file is name of file.
-        lease can be name or id of a lease.
+        zone_name can be name or id of a zone.
+        network can be name or id of a network in the zone.
+        lease can be name or id of a lease in the network.
 
-        $ #{CMD_NAME} create small 'tokyo tech' centos5.5 ./ssh_pubkey
-        $ #{CMD_NAME} create small 'tokyo tech' centos5.5 ./ssh_pubkey \\
-        > vm00.cc.titech.ac.jp
+        $ #{CMD_NAME} create small centos5.5 ./ssh_pubkey 'tokyo tech' \\
+        > csi-grid
+        $ #{CMD_NAME} create small centos5.5 ./ssh_pubkey 'tokyo tech' \\
+        > csi-grid#vm00.cc.titech.ac.jp
 
     shutdown vm_name
         shutdown the specified VM. If a VM shutdowns all its files are
@@ -195,26 +202,25 @@ case command
 #######################################
 # create a VM
 when 'create'
-  check_parameters('create', 4)
+  check_parameters('create', 5)
 
-  vmtype_id = get_vmtype_id(ARGV[0])
-  zone_id   = get_zone_id(ARGV[1])
-  image_id  = get_image_id(ARGV[2])
+  vmtype   = ARGV.shift
+  # TODO to use id only for image is dirty
+  image_id = get_image_id(ARGV.shift)
+  key_file = ARGV.shift
+  zone     = ARGV.shift
+  networks = ARGV.join(ITEM_SEPARATOR)
+  # read contents of key_file
   begin
-    root_pubkey = File.read(ARGV[3])
+    root_pubkey = File.read(key_file)
   rescue
-    $stderr.puts "Can't read root ssh public key file: #{ARGV[3]}"
+    $stderr.puts "Can't read root ssh public key file: #{key_file}"
     exit 1
-  end
-  if ARGV[4]
-    lease_id = get_lease_id(ARGV[4])
-  else
-    lease_id = -1
   end
 
   vm = RenkeiVPE::VirtualMachine.new(RenkeiVPE::VirtualMachine.build_xml,
                                      client)
-  rc = vm.create(vmtype_id, lease_id, zone_id, image_id, root_pubkey)
+  rc = vm.create(vmtype, image_id, root_pubkey, zone, networks)
   if is_successful?(rc)
     puts "Request done: create VM[#{vm.name}]"
   else
@@ -406,10 +412,8 @@ when 'show'
       else
         str='%-15s: %-30s'
 
-        # print header
-        print_header('%-80s', 'VM INFORMATION', true)
-
         # print VM information
+        print_header('%-80s', 'VM INFORMATION', true)
         # print ID
         puts str % ['ID', vm.id.to_s]  if verbose
         # print Name
@@ -430,6 +434,19 @@ when 'show'
         puts str % ['IMAGE ID', vm['IMAGE_ID']] if verbose
         # print Image Name
         puts str % ['IMAGE', vm['IMAGE_NAME']]
+        # print VM network lease information
+        leases = Array.new
+        vm.each('LEASES/LEASE') do |lease|
+          leases << lease
+        end
+        lhstr = 'HOSTNAME(ADDRESS)'
+        lhstr = '[ID] ' + lhstr if verbose
+        puts str % ['ADDRESS LEASES', lhstr]
+        leases.each do |lease|
+          lstr = lease['NAME'] + '(' + lease['ADDRESS'] + ')'
+          lstr = '[' + lease['ID'] + '] ' + lstr if verbose
+          puts str % ['', lstr]
+        end
         puts
 
         # print VM user information

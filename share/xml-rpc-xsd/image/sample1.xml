@@ -1,18 +1,21 @@
 <IMAGE>
-  <ID>0</ID>
+  <ID>7</ID>
   <UID>0</UID>
-  <NAME>ttylinux sample</NAME>
+  <NAME>centos5.5</NAME>
   <TYPE>0</TYPE>
   <PUBLIC>1</PUBLIC>
   <PERSISTENT>0</PERSISTENT>
-  <REGTIME>1294726955</REGTIME>
-  <SOURCE>/opt/one/gfarm/home/oneadmin/64cf2a374f8826b94ff76f697535e6703d853388</SOURCE>
+  <REGTIME>1305885190</REGTIME>
+  <SOURCE>/opt/one/gfarm/home/oneadmin/2fa6cd5001ebe8b17bd5a4228380cd1a59773a48</SOURCE>
   <STATE>1</STATE>
   <RUNNING_VMS>0</RUNNING_VMS>
   <TEMPLATE>
-    <DESCRIPTION><![CDATA[ttylinux sample from OpenNebula]]></DESCRIPTION>
-    <DEV_PREFIX><![CDATA[hd]]></DEV_PREFIX>
-    <NAME><![CDATA[ttylinux sample]]></NAME>
-    <PATH><![CDATA[/opt/one/ttylinux/ttylinux.img]]></PATH>
+    <BUS><![CDATA[virtio]]></BUS>
+    <DESCRIPTION><![CDATA[CentOS5.5 for Renkei VPE]]></DESCRIPTION>
+    <DEV_PREFIX><![CDATA[vd]]></DEV_PREFIX>
+    <NAME><![CDATA[centos5.5]]></NAME>
+    <NIC_MODEL><![CDATA[virtio]]></NIC_MODEL>
+    <PATH><![CDATA[/work/vms/rpop-vms/vm00/disk.img]]></PATH>
+    <TYPE><![CDATA[OS]]></TYPE>
   </TEMPLATE>
 </IMAGE>

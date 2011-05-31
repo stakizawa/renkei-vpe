@@ -404,7 +404,7 @@ module RenkeiVPE
       # +return+    id of vnet
       def add_vnet_to_zone(session, vnet_def, zone)
         name        = vnet_def[ResourceFile::VirtualNetwork::NAME]
-        vn_unique   = zone.name + '::' + name
+        vn_unique   = zone.name + ATTR_SEPARATOR + name
 
         # 0. check if the vnet already exists
         vnet = VirtualNetwork.find_by_name(vn_unique).last
@@ -485,7 +485,8 @@ VN_DEF
           raise "VirtualNetwork[#{id}] does not exist." unless vnet
         elsif vnet.kind_of?(String)
           # vnet is name of virtual network
-          name = zone.name + '::' + vnet
+          name = zone.name + ATTR_SEPARATOR + vnet
+
           vnet = VirtualNetwork.find_by_name(name).last
           raise "VirtualNetwork[#{name}] does not exist." unless vnet
         end
@@ -571,7 +572,8 @@ VN_DEF
           vnet.remove_lease(lease_id)
           new_leases = vnet.leases_in_array
           unless old_leases.size > new_leases.size
-            vnet_un = vnet.zone_name + '::' + vnet.name
+            vnet_un = vnet.zone_name + ATTR_SEPARATOR + vnet.name
+
             raise "Lease[#{lease_id}] is not in VirtualNetwork[#{vnet_un}]."
           end
           vnet.update

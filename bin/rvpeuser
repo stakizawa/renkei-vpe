@@ -305,7 +305,7 @@ when 'show'
         puts str % ['ENABLE', enable_str]
         # print Zones
         puts str % ['ZONE IDS', user['ZONE_IDS']]
-        zones = user['ZONE_NAMES'].split(';')
+        zones = user['ZONE_NAMES'].split(RenkeiVPE::Const::ITEM_SEPARATOR)
         puts str % ['ZONES', zones.shift]
         zones.each do |zone|
           puts str % ['', zone]
