@@ -52,7 +52,7 @@ module RenkeiVPE
         username = get_user_from_session(session)
 
         # 2. check if user is registered in Renkei VPE
-        u = RenkeiVPE::Model::User.find_by_name(username)[0]
+        u = RenkeiVPE::Model::User.find_by_name(username).last
         unless u
           msg = "User is not found: #{username}"
           @log.warn msg

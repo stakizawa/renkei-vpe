@@ -65,7 +65,7 @@ module RenkeiVPE
       def ask_id(session, name)
         task('rvpe.user.ask_id', session) do
           u = User.find_by_name(name).last
-          raise "User[#{name}] is not found. " unless u
+          raise "User[#{name}] is not found." unless u
 
           [true, u.id]
         end
@@ -79,9 +79,16 @@ module RenkeiVPE
       #             if successful this is the string with the information
       #             about the user
       def info(session, id)
-        task('rvpe.user.info', session, true) do
+        task('rvpe.user.info', session) do
+          session_uname = get_user_from_session(session)
+          session_user = User.find_by_name(session_uname).last
+
           user = User.find_by_id(id).last
-          raise "User[#{id}] is not found" unless user
+          raise "User[#{id}] is not found." unless user
+
+          if session_user.id != 0 && session_user.id != id
+            raise "You don't have permission to see info. of User[#{user.name}]."
+          end
 
           doc = REXML::Document.new
           doc.add(user.to_xml_element(session))

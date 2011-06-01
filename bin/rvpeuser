@@ -42,6 +42,41 @@ list_columns = {
 }
 
 ##############################################################################
+# Functions
+##############################################################################
+def print_user(user, xml_output, verbose=false)
+  if xml_output
+    puts user.to_xml
+  else
+    str="%-15s: %-30s"
+
+    # print header
+    print_header("%-80s", "USER INFORMATION", true)
+
+    # print ID
+    puts str % ['ID', user.id.to_s]  if verbose
+    # print Name
+    puts str % ['NAME', user.name]
+    # print Enable flag
+    if user['ENABLED'].to_i == 1
+      enable_str = 'Yes'
+    else
+      enable_str = 'No'
+    end
+    puts str % ['ENABLE', enable_str]
+    # print Zones
+    puts str % ['ZONE IDS', user['ZONE_IDS']]       if verbose
+    zones = user['ZONE_NAMES'].split(RenkeiVPE::Const::ITEM_SEPARATOR)
+    puts str % ['ZONES', zones.shift]
+    zones.each do |zone|
+      puts str % ['', zone]
+    end
+    # print Password
+    puts str % ['PASSWORD HASH', user['PASSWORD']]  if verbose
+  end
+end
+
+##############################################################################
 # main
 ##############################################################################
 
@@ -55,6 +90,12 @@ Notes:
     This command can be used only by administrator.
 
 Commands:
+    info
+        show my information.
+
+        $ #{CMD_NAME} info
+
+
     create user_name password
         create a new user
 
@@ -136,6 +177,24 @@ end
 
 command = ARGV.shift
 case command
+#######################################
+# show information
+when 'info'
+  name = File.open(ENV['ONE_AUTH']).read.split(':')[0]
+  uid = get_user_id(name)
+
+  user = RenkeiVPE::User.new_with_id(uid, client)
+  rc = user.info
+  if is_successful?(rc)
+    print_user(user, xml_output, false)
+    puts
+    print_header("%-80s", "ASSIGNED VM LEASES", true)
+    system("rvpelease list #{name}")
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+
 #######################################
 # create a user
 when 'create'
@@ -284,35 +343,7 @@ when 'show'
     rc = user.info
 
     if is_successful?(rc)
-      if xml_output
-        puts user.to_xml
-      else
-        str="%-15s: %-30s"
-
-        # print header
-        print_header("%-80s", "USER INFORMATION", true)
-
-        # print ID
-        puts str % ['ID', user.id.to_s]
-        # print Name
-        puts str % ['NAME', user.name]
-        # print Enable flag
-        if user['ENABLED'].to_i == 1
-          enable_str = 'Yes'
-        else
-          enable_str = 'No'
-        end
-        puts str % ['ENABLE', enable_str]
-        # print Zones
-        puts str % ['ZONE IDS', user['ZONE_IDS']]
-        zones = user['ZONE_NAMES'].split(RenkeiVPE::Const::ITEM_SEPARATOR)
-        puts str % ['ZONES', zones.shift]
-        zones.each do |zone|
-          puts str % ['', zone]
-        end
-        # print Password
-        puts str % ['PASSWORD', user['PASSWORD']]
-      end
+      print_user(user, xml_output, true)
     else
       $stderr.puts rc.message
       exit 1
