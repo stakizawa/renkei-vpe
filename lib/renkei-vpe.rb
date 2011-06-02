@@ -102,7 +102,7 @@ module RenkeiVPE
       elsif ENV["RVPE_XMLRPC"]
         @rvpe_endpoint=ENV["RVPE_XMLRPC"]
       else
-        @rvpe_endpoint="http://localhost:8080/"
+        @rvpe_endpoint="http://localhost:3111/"
       end
 
       @server=XMLRPC::Client.new2(@rvpe_endpoint)

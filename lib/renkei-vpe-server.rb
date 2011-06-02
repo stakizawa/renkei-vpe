@@ -111,7 +111,7 @@ module RenkeiVPE
 
   class ServerConfig
     DEFAULTS = {
-      'port' => '8081',
+      'port' => '3111',
       'one_location' => ENV['ONE_LOCATION'],
       'one_endpoint' => 'http://localhost:2633/RPC2',
       'gfarm_location' => '/usr',
