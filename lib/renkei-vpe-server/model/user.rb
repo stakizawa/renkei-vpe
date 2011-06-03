@@ -17,7 +17,8 @@ CREATE TABLE #{@table_name} (
   oid     INTEGER UNIQUE,
   name    VARCHAR(256) UNIQUE,
   enabled INTEGER,
-  zones   TEXT
+  zones   TEXT,
+  vm_cnt  INTEGER
 );
 SQL
 
@@ -31,6 +32,8 @@ SQL
       attr_accessor(:enabled) { |v| v.to_i }
       # names of zones the user can use
       attr_accessor :zones
+      # number of VM a user can run
+      attr_accessor(:vm_cnt)  { |v| v.to_i }
 
       def initialize
         super
@@ -38,6 +41,7 @@ SQL
         @name    = ''
         @enabled =  1
         @zones   = ''
+        @vm_cnt  = -1
       end
 
       def to_s
@@ -46,7 +50,8 @@ SQL
           "oid=#{@oid},"         +
           "name='#{@name}',"     +
           "enabled=#{@enabled}," +
-          "zones='#{@zones}'"    +
+          "zones='#{@zones}',"   +
+          "vm_cnt=#{@vm_cnt}"    +
           ">"
       end
 
@@ -77,6 +82,11 @@ SQL
         # set enabled
         e = REXML::Element.new('ENABLED')
         e.add(REXML::Text.new(@enabled.to_s))
+        user_e.add(e)
+
+        # set number of VMs
+        e = REXML::Element.new('VM_CNT')
+        e.add(REXML::Text.new(@vm_cnt.to_s))
         user_e.add(e)
 
         # set zones in id
@@ -127,13 +137,15 @@ SQL
         raise_if_nil_and_not_class(@name,    'name',    String)
         raise_if_nil_and_not_class(@enabled, 'enabled', Integer)
         raise_if_nil_or_not_class( @zones,   'zones',   String)
+        raise_if_nil_and_not_class(@vm_cnt,  'vm_cnt',  Integer)
       end
 
       def to_create_record_str
         "#{@oid},"       +
           "'#{@name}',"  +
           "#{@enabled}," +
-          "'#{@zones}'"
+          "'#{@zones}'," +
+          "#{@vm_cnt}"
       end
 
       def to_find_id_str
@@ -144,7 +156,8 @@ SQL
         "oid=#{@oid},"           +
           "name='#{@name}',"     +
           "enabled=#{@enabled}," +
-          "zones='#{@zones}'"
+          "zones='#{@zones}',"   +
+          "vm_cnt=#{@vm_cnt}"
       end
 
       def self.each(one_session)
@@ -161,7 +174,7 @@ SQL
       end
 
       def self.setup_attrs(u, attrs)
-        return u unless attrs.size == 5
+        return u unless attrs.size == 6
         u.instance_eval do
           @id      = attrs[0].to_i
         end
@@ -169,6 +182,7 @@ SQL
         u.name    = attrs[2]
         u.enabled = attrs[3]
         u.zones   = attrs[4]
+        u.vm_cnt  = attrs[5]
         return u
       end
 

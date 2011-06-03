@@ -126,10 +126,19 @@ module RenkeiVPE
           zone = Zone.find_by_id_or_name(zone_n).last
           raise "Zone[#{zone_n}] is not found." unless zone
 
-          # 1. get user and check if the user has permission to run VMs
-          #    in the specified zone
+          # 1.   check user limitation & permission
           user_name = get_user_from_session(session)
           user = User.find_by_name(user_name).last
+          # 1-1. check if the user don't overcommit his VM.
+          rc = call_one_xmlrpc('one.vmpool.info', session, user.oid, false, -1)
+          raise rc[1] unless rc[0]
+          doc = REXML::Document.new(rc[1])
+          cur_vm_cnt = REXML::XPath.match(doc, 'VM_POOL/node()').size
+          if cur_vm_cnt >= user.vm_cnt
+            raise "User[#{user_name}] can't run more than #{cur_vm_cnt} VMs."
+          end
+          # 1-2. get user and check if the user has permission to run VMs
+          #      in the specified zone
           unless user.zones_in_array.include?(zone.id)
             raise "User[#{user_name}] don't have permission to use Zone[#{zone_n}]."
           end

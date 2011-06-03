@@ -4,6 +4,7 @@
     <NAME>oneadmin</NAME>
     <PASSWORD>3ae8a7dcb5f4df453b8c35d0fcd407a622f3ed0a</PASSWORD>
     <ENABLED>1</ENABLED>
+    <VM_CNT>100</VM_CNT>
     <ZONE_IDS>36;37</ZONE_IDS>
     <ZONE_NAMES>tokyo_tech;nii</ZONE_NAMES>
   </USER>
@@ -12,6 +13,7 @@
     <NAME>shin</NAME>
     <PASSWORD>3ae8a7dcb5f4df453b8c35d0fcd407a622f3ed0a</PASSWORD>
     <ENABLED>1</ENABLED>
+    <VM_CNT>1</VM_CNT>
     <ZONE_IDS/>
     <ZONE_NAMES/>
   </USER>
@@ -20,6 +22,7 @@
     <NAME>test</NAME>
     <PASSWORD>MIIBCAKCAQEAxjtZMbg/vh5PEnrcdmsRt1roNZxAYZSXOh5g4+dmiIIl9mvKLfgYOhRYMEvW6V0YKIhhjDNvz4rfRDOduSR0v9RbQ6xEpfY0VH40gWD7b6YKxfGzYHLZ0ryWCkHzCCavdgXmV7+bMZ7vlEmM7zKH1Hj0ZYxla+28KKwKIp0dNTzjZu3ERxcybmZ32nmmws6u3cIHnkls9llDyZGA1fbi8EldOR9rh6qBMKpKAhNirKawLXnMv3svPn22aOZSYhhOOB953Sc3T2lzKhTaZCEkqIl3qxx4qmC7knqoiviVzPOkKrtXDDd4SE0WDpzZq0z/IVgRR6xav5NirOisQcjpGwIBIw==</PASSWORD>
     <ENABLED>1</ENABLED>
+    <VM_CNT>10</VM_CNT>
     <ZONE_IDS>36;37</ZONE_IDS>
     <ZONE_NAMES>tokyo_tech;nii</ZONE_NAMES>
   </USER>

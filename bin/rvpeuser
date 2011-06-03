@@ -64,6 +64,8 @@ def print_user(user, xml_output, verbose=false)
       enable_str = 'No'
     end
     puts str % ['ENABLE', enable_str]
+    # print VM_CNT
+    puts str % ['LIMIT', user['VM_CNT']]
     # print Zones
     puts str % ['ZONE IDS', user['ZONE_IDS']]       if verbose
     zones = user['ZONE_NAMES'].split(RenkeiVPE::Const::ITEM_SEPARATOR)
@@ -96,10 +98,13 @@ Commands:
         $ #{CMD_NAME} info
 
 
-    create user_name password
-        create a new user
+    create user_name password <number>
+        create a new user. If the third parameter 'number' is specified,
+        the limit of the user is set as 'number'. If it is not specified,
+        user limit is 2 by default.
 
         $ #{CMD_NAME} create user1 password1
+        $ #{CMD_NAME} create user1 password1 10
 
     delete user_name
         delete a user from the system. site_name can be name or id of
@@ -142,6 +147,13 @@ Commands:
         zone_names can be names of zones.
 
         $ #{CMD_NAME} disable_zone user1 'tokyo tech'
+
+    limit user_name number
+        set a maximum number of VMs a user can run.
+        user_name is name or if of a user.
+        number is maximum number of VMs the user can run.
+
+        $ #{CMD_NAME} limit user1 5
 
 
     list <-x>
@@ -200,12 +212,19 @@ when 'info'
 when 'create'
   check_parameters('create', 2)
 
-  name = ARGV[0]
-  pass = Digest::SHA1.hexdigest(ARGV[1])
+  name  = ARGV[0]
+  pass  = Digest::SHA1.hexdigest(ARGV[1])
+  limit = ARGV[2] || 2
   user = RenkeiVPE::User.new(RenkeiVPE::User.build_xml, client)
   rc = user.allocate(name, pass)
   if is_successful?(rc)
-    puts "User[#{user.name}] is created."
+    rc = user.limit(limit)
+    if is_successful?(rc)
+      puts "User[#{user.name}] is created."
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
   else
     $stderr.puts rc.message
     exit 1
@@ -314,6 +333,23 @@ when 'disable_zone'
       $stderr.puts rc.message
       exit 1
     end
+  end
+
+#######################################
+# limit a user
+when 'limit'
+  check_parameters('limit', 2)
+
+  user_name = ARGV.shift
+  id = get_user_id(user_name)
+  user = RenkeiVPE::User.new_with_id(id, client)
+  number = ARGV.shift
+  rc = user.limit(number)
+  if is_successful?(rc)
+    puts "Set a limit to User[#{user_name}]"
+  else
+    $stderr.puts rc.message
+    exit 1
   end
 
 #######################################

@@ -33,6 +33,9 @@ module RenkeiVPE
         meth('val enable_zone(string, int, bool, int)',
              'Enables or disables a user to use a zone',
              'enable_zone')
+        meth('val limit(string, int, int)',
+             'Set the maximum number of VMs the user can run',
+             'limit')
       end
 
       ########################################################################
@@ -224,6 +227,25 @@ module RenkeiVPE
           [true, '']
         end
       end
+
+      # Set the maximum number of VMs the user can run
+      # +session+   string that represents user session
+      # +id+        id for the user
+      # +limit+     maximum number of VMs a user can run
+      # +return[0]+ true or false whenever is successful or not
+      # +return[1]+ if an error occurs this is error message,
+      #             otherwise it does not exist.
+      def limit(session, id, limit)
+        task('rvpe.user.limit', session, true) do
+          user = User.find_by_id(id)[0]
+          raise "User[#{id}] does not exist." unless user
+
+          user.vm_cnt = limit
+          user.update
+          [true, '']
+        end
+      end
+
 
       private
 

@@ -1,5 +1,5 @@
 rvpeuser
-  create        user_name  password
+  create        user_name  password <number>
   delete        user_name
   passwd        user_name  password
 
@@ -8,6 +8,7 @@ rvpeuser
 
   enable_zone   user_name  zone_names
   disable_zone  user_name  zone_names
+  limit         user_name  number
 
   list
   show          user_names
