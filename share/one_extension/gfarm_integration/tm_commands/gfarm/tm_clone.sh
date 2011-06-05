@@ -60,4 +60,3 @@ http://*)
 esac
 
 exec_and_log "$SSH $DST_HOST chmod a+rw $DST_PATH"
-
