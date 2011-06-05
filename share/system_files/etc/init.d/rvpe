@@ -14,13 +14,15 @@ SUDO=/usr/bin/sudo
 GFARM2FS=/usr/bin/gfarm2fs
 FUSERMOUNT=/usr/bin/fusermount
 
+# Parameters for OpenNebula
 ONEADMIN=popadmin
 ONE_PID_FILE=$ONE_LOCATION/var/oned.pid
 IMAGE_REPO=$ONE_LOCATION/var/images
 
+# Parameters for Renkei-VPE
 RVPEADMIN=popadmin
-
-N_REPLICAS=2
+GF_LOCAL_PATH=/work/one_images
+GF_N_REPLICAS=3
 
 _status() {
     # check status of OpenNebula
@@ -53,7 +55,8 @@ start() {
     fi
 
     # mount gfarm
-    $SUDO -u $ONEADMIN $GFARM2FS -o allow_other -o ncopy=$N_REPLICAS $IMAGE_REPO
+    $SUDO -u $ONEADMIN $GFARM2FS -o allow_other -o ncopy=$GF_N_REPLICAS \
+        -o modules=subdir -o subdir=$GF_LOCAL_PATH $IMAGE_REPO
     if [ ! $? -eq 0 ]; then
         echo 'Failed to start RENKEI-VPE: gfarm2fs failed to mount'
         RETVAL=1

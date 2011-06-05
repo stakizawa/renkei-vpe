@@ -20,8 +20,11 @@ RUBY=/usr/rpop/ruby/bin/ruby
 # gfarm mount point on OpenNebula oned server
 GFARM_MOUNT_POINT=$ONE_LOCATION/var/images
 
+# image store directory on gfarm
+GFARM_DIR=/work/one_images
+
 # temporal directory in gfarm
-# is is used for moving image from hosts to path where oned can access
+# it is used for moving image from hosts to path where oned can access
 GFARM_TEMP_DIR=/work/one_images/temporal
 
 # gfarm commands
@@ -32,10 +35,10 @@ GFREG=/usr/bin/gfreg
 # it returns file path in gfarm domain
 function gf_path
 {
-    $RUBY -e "puts '$1'.gsub('$GFARM_MOUNT_POINT', '')"
+    $RUBY -e "puts '$1'.gsub('$GFARM_MOUNT_POINT', $GFARM_DIR)"
 }
 
-# it returns an temporal path on gfarm of $1 file
+# it returns a temporal path on gfarm of $1 file
 function gf_mv_target
 {
     lp=`$RUBY -e "puts '$1'.gsub('$ONE_LOCATION/var/', '').gsub('/', '_')"`

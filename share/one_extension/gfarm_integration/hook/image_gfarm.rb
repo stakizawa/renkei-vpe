@@ -24,14 +24,13 @@ else
     RUBY_LIB_LOCATION=ONE_LOCATION+"/lib/ruby"
 end
 
-GFARM_MOUNT_POINT = ONE_LOCATION + '/var/images'
-GFARM_TEMP_DIR    = '/work/one_images/temporal'
+$: << RUBY_LIB_LOCATION
 
 GFMV = '/usr/bin/gfmv'
 
-GF_IMG_DIR = GFARM_TEMP_DIR
-
-$: << RUBY_LIB_LOCATION
+GFARM_MOUNT_POINT = ONE_LOCATION + '/var/images'
+GFARM_DIR         = '/work/one_images'
+GFARM_TEMP_DIR    = GFARM_DIR + '/temporal'
 
 require 'fileutils'
 require 'OpenNebula'
@@ -58,7 +57,7 @@ vm.info
 
 vm.each('TEMPLATE/DISK') do |disk| 
     disk_id     = disk["DISK_ID"]
-    source_path = GF_IMG_DIR+"/#{vm_id}_disk.#{disk_id}"
+    source_path = GFARM_TEMP_DIR + "/#{vm_id}_disk.#{disk_id}"
     
     if image_id = disk["SAVE_AS"]
         image=Image.new(
@@ -67,7 +66,7 @@ vm.each('TEMPLATE/DISK') do |disk|
         result = image.info
         if !OpenNebula.is_error?(result)
             dest_path = image['SOURCE']
-            dest_gf_path = dest_path.gsub(GFARM_MOUNT_POINT, '')
+            dest_gf_path = dest_path.gsub(GFARM_MOUNT_POINT, GFARM_DIR)
             system("#{GFMV} #{source_path} #{dest_gf_path}")
             system("/bin/chmod 0660 #{dest_path}")
             image.enable
