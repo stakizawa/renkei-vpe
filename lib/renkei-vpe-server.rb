@@ -111,14 +111,15 @@ module RenkeiVPE
 
   class ServerConfig
     DEFAULTS = {
-      'port' => '3111',
-      'one_location' => ENV['ONE_LOCATION'],
-      'one_endpoint' => 'http://localhost:2633/RPC2',
-      'gfarm_location' => '/usr',
-      'gfarm_local_path' => '/work/one_images',
-      'gfarm_replica_count' => '3',
+      'port'                     => '3111',
+      'one_location'             => ENV['ONE_LOCATION'],
+      'one_endpoint'             => 'http://localhost:2633/RPC2',
+      'gfarm_location'           => '/usr',
+      'gfarm_local_path'         => '/work/one_images',
+      'gfarm_replica_count'      => '3',
       'gfarm_replicate_interval' => '3600',
-      'log_level' => 'info',
+      'log_level'                => 'info',
+      'user_limit'               => '1',
     }
 
     instance_methods.each do |m|

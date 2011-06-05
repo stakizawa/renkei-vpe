@@ -101,7 +101,7 @@ Commands:
     create user_name password <number>
         create a new user. If the third parameter 'number' is specified,
         the limit of the user is set as 'number'. If it is not specified,
-        user limit is 2 by default.
+        user limit is 1 by default.
 
         $ #{CMD_NAME} create user1 password1
         $ #{CMD_NAME} create user1 password1 10
@@ -214,7 +214,7 @@ when 'create'
 
   name  = ARGV[0]
   pass  = Digest::SHA1.hexdigest(ARGV[1])
-  limit = ARGV[2] || 2
+  limit = ARGV[2] || -1
   user = RenkeiVPE::User.new(RenkeiVPE::User.build_xml, client)
   rc = user.allocate(name, pass)
   if is_successful?(rc)

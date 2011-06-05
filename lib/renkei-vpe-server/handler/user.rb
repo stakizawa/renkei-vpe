@@ -240,6 +240,11 @@ module RenkeiVPE
           user = User.find_by_id(id)[0]
           raise "User[#{id}] does not exist." unless user
 
+          unless limit.kind_of? Integer
+            raise "limit attribute must be an integer: Can't use '#{limit}'"
+          end
+
+          limit = $server_config.user_limit.to_i if limit < 0
           user.vm_cnt = limit
           user.update
           [true, '']
