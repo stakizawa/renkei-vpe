@@ -118,7 +118,7 @@ module RenkeiVPE
             # already assigned to another user
             user = User.find_by_id(lease.assigned_to)[0]
             user = lease.assigned_to unless user
-            raise "Lease[#{id}] is already assigned to User[#{user}]."
+            raise "Lease[#{id}] is already assigned to User[#{user.name}]."
           end
 
           user = User.find_by_name(user_name).last
