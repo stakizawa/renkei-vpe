@@ -344,7 +344,11 @@ when 'limit'
   id = get_user_id(user_name)
   user = RenkeiVPE::User.new_with_id(id, client)
   number = ARGV.shift
-  rc = user.limit(number)
+  unless /^-?[0123456789]+$/ =~ number
+    $stderr.puts "The Second parameter must be an integer: #{number}"
+    exit 1
+  end
+  rc = user.limit(number.to_i)
   if is_successful?(rc)
     puts "Set a limit to User[#{user_name}]"
   else
