@@ -29,6 +29,9 @@ module RenkeiVPE
         meth('val publish(string, int, bool)',
              'Publishes or unpublishes an image',
              'publish')
+        meth('val description(string, int, string)',
+             'Update description of an image',
+             'description')
       end
 
 
@@ -114,7 +117,7 @@ module RenkeiVPE
           _type = 'OS' unless _type
           _public = image_def[ResourceFile::Image::PUBLIC]
           if _public
-            _public = 'YES' # yaml automatically convert 'YES' to true
+            _public = 'YES' # yaml automatically converted 'YES' to true
           else
             _public = 'NO'
           end
@@ -185,6 +188,17 @@ EOT
       def publish(session, id, published)
         task('rvpe.image.publish', session) do
           call_one_xmlrpc('one.image.publish', session, id, published)
+        end
+      end
+
+      # update description of an image.
+      # +session+         string that represents user session
+      # +id+              id of the image
+      # +new_description+ new description of the image
+      def description(session, id, new_description)
+        task('rvpe.image.description', session) do
+          call_one_xmlrpc('one.image.update', session, id,
+                          'DESCRIPTION', new_description)
         end
       end
 

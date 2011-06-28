@@ -11,6 +11,7 @@ module RenkeiVPE
             :allocate    => "image.allocate",
             :enable      => "image.enable",
             :publish     => "image.publish",
+            :description => "image.description",
             :delete      => "image.delete"
         }
 
@@ -80,6 +81,15 @@ module RenkeiVPE
         # Deletes the Image
         def delete()
             super(IMAGE_METHODS[:delete])
+        end
+
+        def description(new_desc)
+            return Error.new('ID not defined') if !@pe_id
+
+            rc = @client.call(IMAGE_METHODS[:description], @pe_id, new_desc)
+            rc = nil if !RenkeiVPE.is_error?(rc)
+
+            return rc
         end
 
         #######################################################################
