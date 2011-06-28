@@ -55,9 +55,9 @@ start() {
     fi
 
     # mount gfarm
-    $SU - $ONEADMIN -c '\
+    $SU - $ONEADMIN -c "\
       $GFARM2FS -o allow_other -o ncopy=$GF_N_REPLICAS \
-                -o modules=subdir -o subdir=$GF_LOCAL_PATH $IMAGE_REPO'
+                -o modules=subdir -o subdir=$GF_LOCAL_PATH $IMAGE_REPO"
     # $SUDO -u $ONEADMIN $GFARM2FS -o allow_other -o ncopy=$GF_N_REPLICAS \
     #     -o modules=subdir -o subdir=$GF_LOCAL_PATH $IMAGE_REPO
     if [ ! $? -eq 0 ]; then
@@ -74,7 +74,7 @@ start() {
     if [ ! $? -eq 0 ]; then
         echo 'Failed to start RENKEI-VPE: OpenNebula failed to start'
         RETVAL=1
-        $SU - $ONEADMIN -c '$FUSERMOUNT -u $IMAGE_REPO'
+        $SU - $ONEADMIN -c "$FUSERMOUNT -u $IMAGE_REPO"
         # $SUDO -u $ONEADMIN $FUSERMOUNT -u $IMAGE_REPO
         return
     fi
@@ -92,7 +92,7 @@ start() {
           source /etc/profile.d/rpop-ruby.sh; \
           source /etc/profile.d/one.sh; \
           $ONE_LOCATION/bin/one stop'
-        $SU - $ONEADMIN -c '$FUSERMOUNT -u $IMAGE_REPO'
+        $SU - $ONEADMIN -c "$FUSERMOUNT -u $IMAGE_REPO"
         # $SUDO -u $ONEADMIN $FUSERMOUNT -u $IMAGE_REPO
         return
     fi
@@ -130,7 +130,7 @@ stop() {
     fi
 
     # unmount gfarm
-    $SU - $ONEADMIN -c '$FUSERMOUNT -u $IMAGE_REPO'
+    $SU - $ONEADMIN -c "$FUSERMOUNT -u $IMAGE_REPO"
     # $SUDO -u $ONEADMIN $FUSERMOUNT -u $IMAGE_REPO
     if [ ! $? -eq 0 ]; then
         echo 'Failed to stop RENKEI-VPE: fusermount failed to umount gfarm'
