@@ -1,0 +1,146 @@
+#! /bin/env ruby
+
+##############################################################################
+# Environment Configuration
+##############################################################################
+RVPE_LOCATION = ENV['RVPE_LOCATION']
+CMD_RVPEVM    = RVPE_LOCATION + '/bin/rvpevm'
+
+##############################################################################
+# Required libraries
+##############################################################################
+require 'optparse'
+require 'fileutils'
+require 'rexml/document'
+
+##############################################################################
+# Global variables
+##############################################################################
+CMD_NAME = 'vmkiller'
+
+$exp_file = RVPE_LOCATION + '/etc/vmkiller_exceptions'
+$log_file = RVPE_LOCATION + '/var/vmkiller.log'
+$max_hours = 24
+
+##############################################################################
+# subroutine
+##############################################################################
+def logtime
+  now = Time.now
+  now.strftime("%b %e %Y %H:%M:%S")
+end
+
+##############################################################################
+# argument parser
+##############################################################################
+
+begin
+  parser = OptionParser.new
+  parser.banner = <<EOT
+Usage:
+    #{CMD_NAME} <HOURS>
+
+    If HOURS is not specified, its default is 24.
+
+Notes:
+    This command forcibly shutdowns VMs that have been running over a certain
+    hours.
+
+Options:
+EOT
+
+  parser.on('-f EXCEPTION_USERS_FILE',
+            ': Specify a file which lists users whose',
+            '  VMs are not targets of this command.',
+            '  If this option is not specified, the',
+            '  default file',
+            '    $RVPE_LOCATION/etc/vmkiller_exceptions',
+            '  is used.',
+            '  A line in the file is a name of a user.',
+            '  Example)',
+            '      user1',
+            '      user2') do |file|
+    $exp_file = file
+  end
+
+  parser.on('-l LOG_FILE',
+            ': Specify a log file. If this option is',
+            '  not specified, the default file',
+            '    $RVPE_LOCATION/var/vmkiller.log',
+            '  is used.') do |file|
+    $log_file = file
+  end
+
+  parser.parse!(ARGV)
+  unless ARGV.empty?
+    $max_hours = ARGV.shift
+    unless /^\d+$/ =~ $max_hours
+      raise 'HOURS must be an integer.'
+    end
+    unless ARGV.empty?
+      raise 'Argument error.'
+    end
+    $max_hours = $max_hours.to_i
+  end
+rescue OptionParser::ParseError
+  $stderr.puts parser.help
+  exit 1
+rescue => e
+  $stderr.puts 'Error:'
+  $stderr.puts '    ' + e.message + "\n\n"
+  $stderr.puts parser.help
+  exit 1
+end
+
+##############################################################################
+# main
+##############################################################################
+
+now = Time.now
+max_in_sec = $max_hours * 3600
+
+log_f = File.open($log_file, 'a')
+log_f.puts "[#{logtime}] Max VM hours: #{$max_hours}"
+
+# build user list
+eusers = []
+if FileTest.exist?($exp_file)
+  File.open($exp_file) do |f|
+    f.each_line do |line|
+      eusers << line.chomp
+    end
+  end
+end
+
+log_f.puts "[#{logtime}] Exceptional users: #{eusers.join(',')}"
+
+# do shutdown
+vms_xml = `#{CMD_RVPEVM} list all -x`
+doc = REXML::Document.new(vms_xml)
+doc.elements.each('VM_POOL/VM') do |elm|
+  etime = elm.elements['ETIME'].get_text.to_s
+  if etime == '0'
+    user = elm.elements['USER_NAME'].get_text.to_s
+    unless eusers.include? user
+      stime = elm.elements['STIME'].get_text.to_s
+      start = Time.at(stime.to_i)
+      runtime_in_sec = (now - start).to_i
+      if runtime_in_sec >= max_in_sec
+        vmid = elm.elements['ID'].get_text.to_s
+        system("#{CMD_RVPEVM} shutdown #{vmid}")
+        log_f.puts "[#{logtime}] VM[#{vmid}] owned by User[#{user}] is shutdown."
+      end
+    end
+  end
+end
+
+log_f.close
+
+
+
+
+### Local variables:
+### mode: Ruby
+### coding: utf-8-unix
+### indent-tabs-mode: nil
+### End:
