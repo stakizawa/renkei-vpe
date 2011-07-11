@@ -100,6 +100,7 @@ now = Time.now
 max_in_sec = $max_hours * 3600
 
 log_f = File.open($log_file, 'a')
+log_f.puts "[#{logtime}] #{CMD_NAME} starts."
 log_f.puts "[#{logtime}] Max VM hours: #{$max_hours}"
 
 # build user list
@@ -134,6 +135,7 @@ doc.elements.each('VM_POOL/VM') do |elm|
   end
 end
 
+log_f.puts "[#{logtime}] #{CMD_NAME} stops."
 log_f.close
 
 
