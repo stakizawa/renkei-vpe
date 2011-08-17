@@ -11,6 +11,7 @@ module RenkeiVPE
             :allocate    => "image.allocate",
             :enable      => "image.enable",
             :publish     => "image.publish",
+            :persistent  => "image.persistent",
             :description => "image.description",
             :delete      => "image.delete"
         }
@@ -76,6 +77,16 @@ module RenkeiVPE
         # Unplubishes the Image
         def unpublish
             set_publish(false)
+        end
+
+        # make the Image persistent
+        def persistent
+            set_persistent(true)
+        end
+
+        # make the Image nonpersistent
+        def nonpersistent
+            set_persistent(false)
         end
 
         # Deletes the Image
@@ -260,6 +271,15 @@ EOT
             return Error.new('ID not defined') if !@pe_id
 
             rc = @client.call(IMAGE_METHODS[:publish], @pe_id, published)
+            rc = nil if !RenkeiVPE.is_error?(rc)
+
+            return rc
+        end
+
+        def set_persistent(persistent)
+            return Error.new('ID not defined') if !@pe_id
+
+            rc = @client.call(IMAGE_METHODS[:persistent], @pe_id, persistent)
             rc = nil if !RenkeiVPE.is_error?(rc)
 
             return rc

@@ -40,6 +40,7 @@ list_columns = {
                 :size => 30,
                 :proc => lambda {|d,e|
                            if d["PUBLIC"].to_i == 1 then d.name
+                           elsif d["PERSISTENT"].to_i == 1 then "* " + d.name
                            else "- " + d.name end} },
   :regtime => { :name => 'REGTIME',
                 :size => 20,
@@ -95,6 +96,20 @@ Commands:
 
         $ #{CMD_NAME} unpublish centos5.5_virtio
         $ #{CMD_NAME} unpublish centos5.5_virtio 'ttylinux sample'
+
+    persistent image_names
+        make specified images persistent. image_names can be names of
+        images.
+
+        $ #{CMD_NAME} persistent centos5.5_virtio
+        $ #{CMD_NAME} persistent centos5.5_virtio 'ttylinux sample'
+
+    nonpersistent image_names
+        make specified images nonpersistent. image_names can be names
+        of images.
+
+        $ #{CMD_NAME} nonpersistent centos5.5_virtio
+        $ #{CMD_NAME} nonpersistent centos5.5_virtio 'ttylinux sample'
 
     description image_name new_description
         update description of the image.
@@ -241,6 +256,40 @@ when 'unpublish'
   end
 
 #######################################
+# make an image persistent
+when 'persistent'
+  check_parameters('persistent', 1)
+
+  ARGV.each do |img_name|
+    id = get_image_id(img_name)
+    image = RenkeiVPE::Image.new_with_id(id, client)
+    rc = image.persistent
+    if is_successful?(rc)
+      puts "Image[#{img_name}] is persistent."
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
+
+#######################################
+# make an image nonpersistent
+when 'nonpersistent'
+  check_parameters('nonpersistent', 1)
+
+  ARGV.each do |img_name|
+    id = get_image_id(img_name)
+    image = RenkeiVPE::Image.new_with_id(id, client)
+    rc = image.nonpersistent
+    if is_successful?(rc)
+      puts "Image[#{img_name}] is nonpersistent."
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
+
+#######################################
 # update description of an image
 when 'description'
   check_parameters('description', 2)
@@ -335,6 +384,13 @@ when 'show'
           public_str = "No"
         end
         puts str % ["PUBLIC", public_str]
+        # print Persistent flag
+        if image['PERSISTENT'].to_i == 1
+          persistent_str = "Yes"
+        else
+          persistent_str = "No"
+        end
+        puts str % ["PERSISTENT", persistent_str]
         # print State
         puts str % ["STATE", image.super_state_str]
       end

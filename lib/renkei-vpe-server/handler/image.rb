@@ -29,6 +29,9 @@ module RenkeiVPE
         meth('val publish(string, int, bool)',
              'Publishes or unpublishes an image',
              'publish')
+        meth('val persistent(string, int, bool)',
+             'make an image persistent or nonpersistent',
+             'persistent')
         meth('val description(string, int, string)',
              'Update description of an image',
              'description')
@@ -115,11 +118,21 @@ module RenkeiVPE
           end
           _type = image_def[ResourceFile::Image::TYPE]
           _type = 'OS' unless _type
+          if image_def[ResourceFile::Image::PUBLIC] &&
+              image_def[ResourceFile::Image::PERSISTENT]
+            raise "An image can't be public and persistent at the same time."
+          end
           _public = image_def[ResourceFile::Image::PUBLIC]
           if _public
             _public = 'YES' # yaml automatically converted 'YES' to true
           else
             _public = 'NO'
+          end
+          _persistent = image_def[ResourceFile::Image::PERSISTENT]
+          if _persistent
+            _persistent = 'YES' # yaml automatically converted 'YES' to true
+          else
+            _persistent = 'NO'
           end
           _bus = image_def[ResourceFile::Image::IO_BUS]
           _bus = 'virtio' unless _bus
@@ -143,6 +156,7 @@ NAME        = "#{_name}"
 DESCRIPTION = "#{image_def[ResourceFile::Image::DESCRIPTION]}"
 TYPE        = "#{_type}"
 PUBLIC      = "#{_public}"
+PERSISTENT  = "#{_persistent}"
 BUS         = "#{_bus}"
 DEV_PREFIX  = "#{_dev_prefix}"
 NIC_MODEL   = "#{_nic_model}"
@@ -187,7 +201,24 @@ EOT
       #             otherwise it is the image id.
       def publish(session, id, published)
         task('rvpe.image.publish', session) do
-          call_one_xmlrpc('one.image.publish', session, id, published)
+          rc = call_one_xmlrpc('one.image.publish', session, id, published)
+          raise "A persistent image can't be public." unless rc[0]
+          rc
+        end
+      end
+
+      # make an image persistent or nonpersistent.
+      # +session+   string that represents user session
+      # +id+        id of the image
+      # +persistent+ true for persistent, false for nonpersistent
+      # +return[0]+  true or false whenever is successful or not
+      # +return[1]+  if an error occurs this is error message,
+      #              otherwise it is the image id.
+      def persistent(session, id, persistent)
+        task('rvpe.image.persistent', session) do
+          rc = call_one_xmlrpc('one.image.persistent', session, id, persistent)
+          raise "A public image can't be persistent." unless rc[0]
+          rc
         end
       end
 
