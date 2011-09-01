@@ -158,6 +158,7 @@ module RenkeiVPE
           else
             raise 'NIC_MODEL attributes is not set to the image.'
           end
+          persistent_image = doc.elements['/IMAGE/PERSISTENT'].get_text.to_s
 
           # 3. get cluster name from OpenNebula
           rc = call_one_xmlrpc('one.cluster.info', session, zone.oid)
@@ -214,6 +215,10 @@ module RenkeiVPE
           File.open(ssh_key, 'w+') do |file|
             file.puts sshkey
           end
+          persistent_file = "#{vmtmpdir}/persistent"
+          File.open(persistent_file, 'w+') do |file|
+            file.puts persistent_image
+          end
 
           # 6. create VM definition file
           vm_def =<<EOS
@@ -267,7 +272,7 @@ EOS
 
           vm_def +=<<EOS
   ROOT_PUBKEY    = "root.pub",
-  FILES          = "#{init_file} #{ssh_key}",
+  FILES          = "#{init_file} #{ssh_key} #{persistent_file}",
   TARGET         = "hdc",
   CREATE_DATE    = "#{Time.new.to_i}"
 ]

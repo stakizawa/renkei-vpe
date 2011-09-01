@@ -5,6 +5,7 @@ require 'fileutils'
 ###########################################
 # check parameters
 ###########################################
+# TODO It is better not to accept any parameters
 if ARGV.size != 2
   $stderr.puts 'Two parameters are required.'
   $stderr.puts "#{File.basename(__FILE__)} context_file lock_dir"
@@ -17,6 +18,11 @@ unless FileTest.exist?(context)
 end
 $lock_dir = ARGV.shift # '/var/lib/rvpe_init'
 FileUtils.mkdir_p($lock_dir) unless FileTest.exist?($lock_dir)
+
+File.open('/mnt/persistent') do |f|
+  val = f.gets.strip.to_i
+  $persistent = (val == 1)? true : false
+end
 
 
 ###########################################
@@ -45,22 +51,31 @@ def lock(name)
   end
 end
 
+###########################################
+# do some process when nonpersistent image
+###########################################
+def nonpersistent
+  yield if !$persistent
+end
+
 
 ###########################################
 # set hostname
 ###########################################
 lock('hostname') do
-  hostname = cnt_hash['HOSTNAME']
-  system("hostname #{hostname}")
-  host_conf = '/etc/sysconfig/network'
-  FileUtils.mv(host_conf, host_conf + '.orig')
-  File.open(host_conf, 'w') do |f|
-    File.open(host_conf + '.orig') do |inf|
-      inf.each_line do |line|
-        if /^HOSTNAME=/ =~ line
-          f.puts "HOSTNAME=#{hostname}"
-        else
-          f.puts line
+  nonpersistent do
+    hostname = cnt_hash['HOSTNAME']
+    system("hostname #{hostname}")
+    host_conf = '/etc/sysconfig/network'
+    FileUtils.mv(host_conf, host_conf + '.orig')
+    File.open(host_conf, 'w') do |f|
+      File.open(host_conf + '.orig') do |inf|
+        inf.each_line do |line|
+          if /^HOSTNAME=/ =~ line
+            f.puts "HOSTNAME=#{hostname}"
+          else
+            f.puts line
+          end
         end
       end
     end
@@ -112,10 +127,12 @@ end
 ###########################################
 if cnt_hash['NAMESERVERS']
   lock('resolver') do
-    # format of NAMESERVERS is '192.168.0.1 192.168.0.2'
-    File.open('/etc/resolv.conf', 'w') do |f|
-      cnt_hash['NAMESERVERS'].split.each do |n|
-        f.puts "nameserver #{n}"
+    nonpersistent do
+      # format of NAMESERVERS is '192.168.0.1 192.168.0.2'
+      File.open('/etc/resolv.conf', 'w') do |f|
+        cnt_hash['NAMESERVERS'].split.each do |n|
+          f.puts "nameserver #{n}"
+        end
       end
     end
   end
@@ -126,17 +143,19 @@ end
 # edit /etc/hosts to add localhost
 ###########################################
 lock('hosts_file') do
-  File.open('/etc/hosts', 'w') do |f|
-    f.puts <<EOS
+  nonpersistent do
+    File.open('/etc/hosts', 'w') do |f|
+      f.puts <<EOS
 # Do not remove the following line, or various programs
 # that require network functionality will fail.
 127.0.0.1       localhost.localdomain localhost
 ::1             localhost6.localdomain6 localhost6
 
 EOS
-    short_name = cnt_hash['HOSTNAME'].split('.')[0]
-    ipaddr = (cnt_hash['PRIMARY_IPADDR'])? cnt_hash['PRIMARY_IPADDR'] : cnt_hash['ETH0_IPADDR']
-    f.puts ipaddr + "\t" + cnt_hash['HOSTNAME'] + "\t" + short_name
+      short_name = cnt_hash['HOSTNAME'].split('.')[0]
+      ipaddr = (cnt_hash['PRIMARY_IPADDR'])? cnt_hash['PRIMARY_IPADDR'] : cnt_hash['ETH0_IPADDR']
+      f.puts ipaddr + "\t" + cnt_hash['HOSTNAME'] + "\t" + short_name
+    end
   end
 end
 
@@ -146,20 +165,22 @@ end
 ###########################################
 if cnt_hash['NTPSERVERS']
   lock('ntpd') do
-    # format of NTPSERVERS is 'ntp.nict.jp 192.168.0.1'
-    servers = cnt_hash['NTPSERVERS'].split
-    ntp_conf = '/etc/ntp.conf'
-    FileUtils.mv(ntp_conf, ntp_conf + '.orig')
-    File.open(ntp_conf, 'w') do |f|
-      File.open(ntp_conf + '.orig') do |inf|
-        inf.each_line do |line|
-          unless /^server\s+(.+)/ =~ line
-            f.puts line
-          else
-            if /^127\.127\.1\.0/ =~ $1
+    nonpersistent do
+      # format of NTPSERVERS is 'ntp.nict.jp 192.168.0.1'
+      servers = cnt_hash['NTPSERVERS'].split
+      ntp_conf = '/etc/ntp.conf'
+      FileUtils.mv(ntp_conf, ntp_conf + '.orig')
+      File.open(ntp_conf, 'w') do |f|
+        File.open(ntp_conf + '.orig') do |inf|
+          inf.each_line do |line|
+            unless /^server\s+(.+)/ =~ line
               f.puts line
             else
-              f.puts "server #{servers.shift}" if servers.size > 0
+              if /^127\.127\.1\.0/ =~ $1
+                f.puts line
+              else
+                f.puts "server #{servers.shift}" if servers.size > 0
+              end
             end
           end
         end
@@ -173,13 +194,15 @@ end
 # set ssh host keys
 ###########################################
 lock('ssh_host_keys') do
-  # delete existing files
-  ssh_dir = '/etc/ssh'
-  files = [ 'ssh_host_key', 'ssh_host_rsa_key', 'ssh_host_dsa_key' ]
-  files.each do |file|
-    key_file = ssh_dir + '/' + file
-    FileUtils.rm_rf(key_file)
-    FileUtils.rm_rf(key_file + '.pub')
+  nonpersistent do
+    # delete existing files
+    ssh_dir = '/etc/ssh'
+    files = [ 'ssh_host_key', 'ssh_host_rsa_key', 'ssh_host_dsa_key' ]
+    files.each do |file|
+      key_file = ssh_dir + '/' + file
+      FileUtils.rm_rf(key_file)
+      FileUtils.rm_rf(key_file + '.pub')
+    end
   end
   # if no ssh host keys, sshd will generate them when it starts
 end
@@ -189,24 +212,26 @@ end
 # delete root password
 ###########################################
 lock('root_pass') do
-  files = [ '/etc/shadow', '/etc/shadow-' ]
-  files.each do |file|
-    orig = file + '.orig'
-    FileUtils.cp(file, orig)
-    File.open(file, 'w') do |f|
-      File.open(orig) do |inf|
-        inf.each_line do |line|
-          if /^root/ =~ line
-            r_args = line.chomp.split(':')
-            r_args[1] = '*'
-            f.puts r_args.join(':') + ':::'
-          else
-            f.puts line
+  nonpersistent do
+    files = [ '/etc/shadow', '/etc/shadow-' ]
+    files.each do |file|
+      orig = file + '.orig'
+      FileUtils.cp(file, orig)
+      File.open(file, 'w') do |f|
+        File.open(orig) do |inf|
+          inf.each_line do |line|
+            if /^root/ =~ line
+              r_args = line.chomp.split(':')
+              r_args[1] = '*'
+              f.puts r_args.join(':') + ':::'
+            else
+              f.puts line
+            end
           end
         end
       end
+      FileUtils.rm_f(orig)
     end
-    FileUtils.rm_f(orig)
   end
 end
 
@@ -216,9 +241,11 @@ end
 ###########################################
 if FileTest.exist?("/mnt/#{cnt_hash['ROOT_PUBKEY']}")
   lock('root_sshpubkey') do
-    FileUtils.mkdir_p('/root/.ssh')
-    FileUtils.cp("/mnt/#{cnt_hash['ROOT_PUBKEY']}", '/root/.ssh/authorized_keys')
-    FileUtils.chmod_R(0600, '/root/.ssh')
+    nonpersistent do
+      FileUtils.mkdir_p('/root/.ssh')
+      FileUtils.cp("/mnt/#{cnt_hash['ROOT_PUBKEY']}", '/root/.ssh/authorized_keys')
+      FileUtils.chmod_R(0600, '/root/.ssh')
+    end
   end
 end
 
