@@ -14,6 +14,10 @@
 # limitations under the License.                                             #
 #--------------------------------------------------------------------------- #
 
+# Set to 1 to disable adding files to context image other than context.sh
+# itself or http url's
+SECURE_CONTEXT=0
+
 # ruby interpreter path
 RUBY=/usr/rpop/ruby/bin/ruby
 
