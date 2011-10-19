@@ -10,7 +10,9 @@ module RenkeiVPE
       :adddns   => 'vn.add_dns',
       :rmdns    => 'vn.remove_dns',
       :addntp   => 'vn.add_ntp',
-      :rmntp    => 'vn.remove_ntp'
+      :rmntp    => 'vn.remove_ntp',
+      :addlease => 'vn.add_lease',
+      :rmlease  => 'vn.remove_lease'
     }
 
     # Creates a VirtualNetwork description with just its identifier
@@ -66,16 +68,26 @@ module RenkeiVPE
       call_rpc_for_target(VN_METHODS[:rmntp], servers_str)
     end
 
+    # Adds a VM lease
+    def addlease(name, ip_addr)
+      call_rpc_for_target(VN_METHODS[:addlease], name, ip_addr)
+    end
+
+    # Removes a VM lease
+    def rmlease(name)
+      call_rpc_for_target(VN_METHODS[:rmlease], name)
+    end
+
     ##########################################################################
     # Helpers
     ##########################################################################
 
     private
 
-    def call_rpc_for_target(method, target)
+    def call_rpc_for_target(method, *target)
       return Error.new('ID not defined') if !@pe_id
 
-      rc = @client.call(method, @pe_id, target)
+      rc = @client.call(method, @pe_id, *target)
       rc = nil if !RenkeiVPE.is_error?(rc)
 
       return rc

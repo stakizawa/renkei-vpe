@@ -47,7 +47,7 @@ list_columns = {
 ##############################################################################
 # Functions
 ##############################################################################
-def send_vnet(args, method, client)
+def send_servers_to_vnet(args, method, client)
   zone_name = args.shift
   vnet_name = args.shift
   servers   = args.join(' ')
@@ -65,15 +65,44 @@ def send_vnet(args, method, client)
   end
 end
 
+def send_lease_to_vnet(args, method, client)
+  zone_name = args.shift
+  vnet_name = args.shift
+  id = get_vn_id(vnet_name, zone_name)
+  vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
+  rc = vnet.send(method, *args)
+
+  if is_successful?(rc)
+    vn_uqname = "VirtualNetwork[#{zone_name}::#{vnet_name}]"
+    yield(vn_uqname, args)
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+end
+
 def add_servers(args, method, client)
-  send_vnet(args, method, client) do |vn_name, servers|
-    puts "#{servers} added to VNet[#{vn_name}]."
+  send_servers_to_vnet(args, method, client) do |vn_name, servers|
+    puts "#{servers} added to #{vn_name}."
   end
 end
 
 def remove_servers(args, method, client)
-  send_vnet(args, method, client) do |vn_name, servers|
-    puts "#{servers} removed from VNet[#{vn_name}]."
+  send_servers_to_vnet(args, method, client) do |vn_name, servers|
+    puts "#{servers} removed from #{vn_name}."
+  end
+end
+
+def add_lease(args, method, client)
+  send_lease_to_vnet(args, method, client) do |vn_name, lease_info|
+    lease = lease_info[0] + '(' + lease_info[1] + ')'
+    puts "#{lease} added to #{vn_name}."
+  end
+end
+
+def remove_lease(args, method, client)
+  send_lease_to_vnet(args, method, client) do |vn_name, lease_info|
+    puts "#{lease_info[0]} removed from #{vn_name}."
   end
 end
 
@@ -219,6 +248,19 @@ Commands:
         $ #{CMD_NAME} listntp 'tokyo tech' csi_grid 'campus net1'
 
 
+    addlease zone_name vnet_name lease_name lease_address
+        add a vm lease to the specified virtual network in the specified
+        zone.
+
+        $ #{CMD_NAME} addlease 'tokyo tech' csi_grid \\
+        > vm00.titech.ac.jp 131.112.5.24
+
+    removelease zone_name vnet_name lease_name
+        remove a vm lease from the specified virtual network in the
+        specified zone.
+
+        $ #{CMD_NAME} removelease 'tokyo tech' csi_grid vm00.titech.ac.jp
+
     leases zone_name <vnet_names>
         list virtual host leases that belong to the specified virtual
         networks in the specified zone.
@@ -313,6 +355,20 @@ when 'listntp'
 
   list_servers(ARGV, 'NTP', client)
   puts
+
+#######################################
+# add a virtual host lease
+when 'addlease'
+  check_parameters('addlease', 4)
+
+  add_lease(ARGV, :addlease, client)
+
+#######################################
+# remove a virtual host lease
+when 'removelease'
+  check_parameters('removelease', 3)
+
+  remove_lease(ARGV, :rmlease, client)
 
 #######################################
 # list virtual host leases

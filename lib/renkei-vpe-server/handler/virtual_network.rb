@@ -30,6 +30,12 @@ module RenkeiVPE
         meth('val remove_ntp(string, int, string)',
              'remove ntp servers from the virtual network',
              'remove_ntp')
+        meth('val add_lease(string, int, string, string)',
+             'add a lease to the virtual network',
+             'add_lease')
+        meth('val remove_lease(string, int, string)',
+             'remove a lease from the virtual network',
+             'remove_lease')
       end
 
       ########################################################################
@@ -152,6 +158,135 @@ module RenkeiVPE
 
           remove_servers_from_vnet(vnet, :ntp, ntps)
         end
+      end
+
+      # add a vm lease to this virtual network.
+      # +session+   string that represents user session
+      # +id+        id of the virtual network
+      # +name+      name of the lease, typicaly a server name
+      # +ip_addr+   ip address of the lease
+      # +return[0]+ true or false whenever is successful or not
+      # +return[1]+ if an error occurs this is error message,
+      #             otherwise it is the virtual network id.
+      def add_lease(session, id, name, ip_addr)
+        task('rvpe.vn.add_lease', session, true) do
+          vnet = VirtualNetwork.find_by_id(id)[0]
+          raise "VirtualNetwork[#{id}] is not found." unless vnet
+
+          # TODO check the format of ip_addr
+
+          # create a lease on OpenNebula
+          query = "LEASES=[IP=#{ip_addr}]"
+          rc = call_one_xmlrpc('one.vn.addleases', session, vnet.oid, query)
+          raise rc[1] unless rc[0]
+
+          begin
+            VNetHandler.add_lease_to_vnet(name, ip_addr, vnet)
+          rescue => e
+            call_one_xmlrpc('one.vn.rmleases', session, vnet.oid, query)
+            raise e
+          end
+
+          [true, vnet.id]
+        end
+      end
+
+      # remove a vm lease from this virtual network.
+      # +session+   string that represents user session
+      # +id+        id of the virtual network
+      # +name+      name of the lease, typicaly a server name
+      # +return[0]+ true or false whenever is successful or not
+      # +return[1]+ if an error occurs this is error message,
+      #             otherwise it is the virtual network id.
+      def remove_lease(session, id, name)
+        task('rvpe.vn.remove_lease', session, true) do
+          vnet = VirtualNetwork.find_by_id(id)[0]
+          raise "VirtualNetwork[#{id}] is not found." unless vnet
+          l = Lease.find_by_name(name).last
+          raise "Lease[#{name}] is not found." unless l
+          raise "Lease[#{name}] is used." if l.used == 1
+          unless vnet.include_lease?(l.id)
+            vnet_un = vnet.zone_name + ATTR_SEPARATOR + vnet.name
+            raise "Lease[#{name}] is not included in VirtualNetwork[#{vnet_un}]"
+          end
+
+          err_msg = ''
+          begin
+            VNetHandler.remove_lease_from_vnet(name, vnet)
+          rescue => e
+            err_msg = (err_msg.size == 0)? e.message : err_msg + '; ' + e.message
+          end
+
+          query = "LEASES=[IP=#{l.address}]"
+          rc = call_one_xmlrpc('one.vn.rmleases', session, vnet.oid, query)
+          unless rc[0]
+            err_msg = (err_msg.size == 0)? rc[1] : err_msg + '; ' + rc[1]
+          end
+
+          result = (err_msg.size == 0)? true : false
+          [result, err_msg]
+        end
+      end
+
+
+      # +lease_name+  name of lease
+      # +lease_addr+  ip address of lease
+      # +vnet+        instance of vnet
+      # +return+      id of lease
+      def self.add_lease_to_vnet(lease_name, lease_addr, vnet)
+        l = Lease.find_by_name(lease_name).last
+        raise "Lease[#{lease_name}] already exists." if l
+
+        # create a virtual host record
+        l = Lease.new
+        l.name    = lease_name
+        l.address = lease_addr
+        l.vnetid  = vnet.id
+        l.create
+
+        # update the virtual network record
+        begin
+          vnet.add_lease(l.id)
+          vnet.update
+        rescue => e
+          # delete lease
+          begin; l.delete; rescue; end
+          raise e
+        end
+
+        return l.id
+      end
+
+      # +lease+     id or name of lease
+      # +vnet+      vnet where the lease belongs
+      # +return+    lease id in integer
+      def self.remove_lease_from_vnet(lease, vnet)
+        if lease.kind_of?(Integer)
+          l = Lease.find_by_id(lease)[0]
+        elsif lease.kind_of?(String)
+          l = Lease.find_by_name(lease).last
+        end
+        raise "Lease[#{lease}] does not exist." unless l
+
+        err_msg = ''
+
+        # remove lease from the vnet record
+        begin
+          vnet.remove_lease(l.id)
+          vnet.update
+        rescue => e
+          err_msg = (err_msg.size == 0)? e.message : err_msg +'; '+ e.message
+        end
+
+        # remove lease record
+        begin
+          l.delete
+        rescue => e
+          err_msg = (err_msg.size == 0)? e.message : err_msg +'; '+ e.message
+        end
+
+        raise err_msg unless err_msg.size == 0
+        return l.id
       end
 
 

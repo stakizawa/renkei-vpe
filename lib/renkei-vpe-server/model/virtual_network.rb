@@ -191,6 +191,13 @@ SQL
         @leases = leases.join(' ') + ' '
       end
 
+      # It returns true, if the specified id lease is included in this vnet.
+      # +l_id+  id of lease to be checked.
+      def include_lease?(l_id)
+        leases = leases_in_array
+        leases.include?(l_id)
+      end
+
       # It adds a type-ed server
       def add_server(type, server)
         servers_s = self.send(type)
