@@ -450,9 +450,10 @@ VN_DEF
         # 3. create leases that belong to the vnet
         begin
           vnet_def[ResourceFile::VirtualNetwork::LEASE].each do |l|
-            add_lease_to_vnet(l[ResourceFile::VirtualNetwork::LEASE_NAME],
-                              l[ResourceFile::VirtualNetwork::LEASE_ADDRESS],
-                              vn)
+            VNetHandler.
+              add_lease_to_vnet(l[ResourceFile::VirtualNetwork::LEASE_NAME],
+                                l[ResourceFile::VirtualNetwork::LEASE_ADDRESS],
+                                vn)
           end
         rescue => e
           # delete the vnet
@@ -506,7 +507,7 @@ VN_DEF
         # 2. remove leases that belong to the vnet
         vnet.leases_in_array.each do |lid|
           begin
-            remove_lease_from_vnet(lid, vnet)
+            VNetHandler.remove_lease_from_vnet(lid, vnet)
           rescue => e
             err_msg = (err_msg.size == 0)? e.message : err_msg + '; ' + e.message
           end
@@ -527,69 +528,6 @@ VN_DEF
 
         raise err_msg unless err_msg.size == 0
         return vnet.id
-      end
-
-      # +lease_name+  name of lease
-      # +lease_addr+  ip address of lease
-      # +vnet+        instance of vnet
-      # +return+      id of lease
-      def add_lease_to_vnet(lease_name, lease_addr, vnet)
-        l = Lease.find_by_name(lease_name).last
-        raise "Lease[#{lease_name}] already exists." if l
-
-        # create a virtual host record
-        l = Lease.new
-        l.name    = lease_name
-        l.address = lease_addr
-        l.vnetid  = vnet.id
-        l.create
-
-        # update the virtual network record
-        begin
-          vnet.add_lease(l.id)
-          vnet.update
-        rescue => e
-          # delete lease
-          begin; l.delete; rescue; end
-          raise e
-        end
-
-        return l.id
-      end
-
-      # +lease_id+  id of lease
-      # +vnet+      vnet where the lease belongs
-      # +return+    lease id in integer
-      def remove_lease_from_vnet(lease_id, vnet)
-        l = Lease.find_by_id(lease_id)[0]
-        raise "Lease[#{lease_id}] does not exist." unless l
-
-        err_msg = ''
-
-        # remove lease from the vnet record
-        begin
-          old_leases = vnet.leases_in_array
-          vnet.remove_lease(lease_id)
-          new_leases = vnet.leases_in_array
-          unless old_leases.size > new_leases.size
-            vnet_un = vnet.zone_name + ATTR_SEPARATOR + vnet.name
-
-            raise "Lease[#{lease_id}] is not in VirtualNetwork[#{vnet_un}]."
-          end
-          vnet.update
-        rescue => e
-          err_msg = (err_msg.size == 0)? e.message : err_msg +'; '+ e.message
-        end
-
-        # remove lease record
-        begin
-          l.delete
-        rescue => e
-          err_msg = (err_msg.size == 0)? e.message : err_msg +'; '+ e.message
-        end
-
-        raise err_msg unless err_msg.size == 0
-        return l.id
       end
 
     end
