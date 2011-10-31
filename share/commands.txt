@@ -57,8 +57,8 @@ rvpevnet
   removentp    zone_name vnet_name ntp_server_names
   listntp      zone_name <vnet_names>
 
-#  addlease     zone_name vnet_name vhost_name vhost_addr
-#  removelease  zone_name vnet_name vhost_name
+  addlease     zone_name vnet_name lease_name lease_addr
+  removelease  zone_name vnet_name lease_name
   leases       zone_name <vnet_names>
 
   show         zone_name <vnet_names>
