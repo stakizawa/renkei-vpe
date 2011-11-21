@@ -19,7 +19,12 @@ end
 $lock_dir = ARGV.shift # '/var/lib/rvpe_init'
 FileUtils.mkdir_p($lock_dir) unless FileTest.exist?($lock_dir)
 
-File.open('/mnt/persistent') do |f|
+psst_file = '/mnt/persistent'
+unless FileTest.exist?(psst_file)
+  $stderr.puts "File does not exist: #{psst_file}"
+  exit 1
+end
+File.open(psst_file) do |f|
   val = f.gets.strip.to_i
   $persistent = (val == 1)? true : false
 end
