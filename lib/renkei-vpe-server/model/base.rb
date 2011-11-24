@@ -207,7 +207,7 @@ module RenkeiVPE
         # check if table has been created
         sql = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='#{@table_name}'"
         Database.execute(sql) do |row|  # TODO log
-          return false if row[0] != '0'
+          return false if row[0].to_i != 0
         end
 
         Database.transaction(@table_schema)
