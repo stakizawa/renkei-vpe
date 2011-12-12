@@ -222,7 +222,7 @@ when 'create'
 
   name  = ARGV[0]
   pass  = Digest::SHA1.hexdigest(ARGV[1])
-  limit = check_if_integer?(ARGV[2]) ? ARGV[2].to_i : -1
+  limit = check_if_integer?(ARGV[2]) ? ARGV[2].to_i : 1
   user = RenkeiVPE::User.new(RenkeiVPE::User.build_xml, client)
   rc = user.allocate(name, pass)
   if is_successful?(rc)
