@@ -226,9 +226,10 @@ when 'create'
   user = RenkeiVPE::User.new(RenkeiVPE::User.build_xml, client)
   rc = user.allocate(name, pass)
   if is_successful?(rc)
+    puts "User[#{user.name}] is created."
     rc = user.limit(limit)
     if is_successful?(rc)
-      puts "User[#{user.name}] is created."
+      puts "Limit is set to #{limit}."
     else
       $stderr.puts rc.message
       exit 1
@@ -358,7 +359,7 @@ when 'limit'
   end
   rc = user.limit(number.to_i)
   if is_successful?(rc)
-    puts "Set a limit to User[#{user_name}]"
+    puts "User[#{user_name}] is now limited to run upto #{number} VMs."
   else
     $stderr.puts rc.message
     exit 1
