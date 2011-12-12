@@ -78,6 +78,14 @@ def print_user(user, xml_output, verbose=false)
   end
 end
 
+def check_if_integer?(obj)
+  return true if obj.kind_of?(Integer)
+  if obj.instance_of?(String)
+    return true if /^-?[0123456789]+$/ =~ obj
+  end
+  return false
+end
+
 ##############################################################################
 # main
 ##############################################################################
@@ -214,7 +222,7 @@ when 'create'
 
   name  = ARGV[0]
   pass  = Digest::SHA1.hexdigest(ARGV[1])
-  limit = ARGV[2] || -1
+  limit = check_if_integer?(ARGV[2]) ? ARGV[2].to_i : -1
   user = RenkeiVPE::User.new(RenkeiVPE::User.build_xml, client)
   rc = user.allocate(name, pass)
   if is_successful?(rc)
@@ -344,7 +352,7 @@ when 'limit'
   id = get_user_id(user_name)
   user = RenkeiVPE::User.new_with_id(id, client)
   number = ARGV.shift
-  unless /^-?[0123456789]+$/ =~ number
+  unless check_if_integer?(number)
     $stderr.puts "The Second parameter must be an integer: #{number}"
     exit 1
   end
