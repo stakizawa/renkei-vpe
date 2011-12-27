@@ -1,4 +1,4 @@
-#! /usr/rpop/ruby/bin/ruby
+#! /usr/bin/env ruby
 
 require 'fileutils'
 
