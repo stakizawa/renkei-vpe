@@ -24,9 +24,24 @@ _init_after_erase()
 	_init
 }
 
+_mount_cdrom()
+{
+	# check redhat version
+	major_v=`awk '{print $3}' /etc/redhat-release | awk -F. '{print $1}'`
+	if [ "$major_v" == "6" ]; then
+		mount -t iso9660 -o ro /dev/sr0 /mnt
+	elif [ "$major_v" == "5" ]; then
+		mount -t iso9660 /dev/hdc /mnt
+	else
+		echo "Unsupported version of CentOS."
+		exit 1
+	fi
+}
+
+
 start()
 {
-	mount -t iso9660 /dev/hdc /mnt
+	_mount_cdrom
 	if [ -f $new_context ]; then
 		if [ ! -f $old_context ]
 		then
