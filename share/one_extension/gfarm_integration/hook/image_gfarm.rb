@@ -65,7 +65,7 @@ vm.each('TEMPLATE/DISK') do |disk|
                 client)
         result = image.info
         if !OpenNebula.is_error?(result)
-            dest_path = image['SOURCE']
+            dest_path = image['SOURCE'].gsub(/\/\/+/, '/')
             dest_gf_path = dest_path.gsub(GFARM_MOUNT_POINT, GFARM_DIR)
             system("#{GFMV} #{source_path} #{dest_gf_path}")
             system("/bin/chmod 0660 #{dest_path}")

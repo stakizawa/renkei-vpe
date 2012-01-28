@@ -279,10 +279,12 @@ EOS
 
 REQUIREMENTS = "CLUSTER = \\"#{one_cluster}\\""
 
-# GRAPHICS = [
-#   TYPE   = "vnc",
-#   KEYMAP = "ja"
-# ]
+GRAPHICS = [
+  TYPE   = "vnc",
+  LISTEN = "0.0.0.0",
+  PORT   = "-1",
+  KEYMAP = "ja"
+]
 EOS
 
           # 7. run VM
