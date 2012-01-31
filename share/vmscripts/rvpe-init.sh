@@ -27,7 +27,7 @@ _init_after_erase()
 _mount_cdrom()
 {
 	# check redhat version
-	major_v=`awk '{print $3}' /etc/redhat-release | awk -F. '{print $1}'`
+	major_v=`cat /etc/redhat-release | sed -e 's/^.*\([0-9]\)\.[0-9].*$/\1/'`
 	if [ "$major_v" == "6" ]; then
 		mount -t iso9660 -o ro /dev/sr0 /mnt
 	elif [ "$major_v" == "5" ]; then
