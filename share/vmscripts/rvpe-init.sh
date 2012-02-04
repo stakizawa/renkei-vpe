@@ -24,6 +24,15 @@ _init_after_erase()
 	_init
 }
 
+_finalize()
+{
+	# TODO use external script (e.g. ruby) file
+	echo -n > /etc/udev/rules.d/70-persistent-net.rules
+	mv /etc/sysconfig/network-scripts/ifcfg-eth0 /tmp/ifcfg-eth0
+	sed -e '/HWADDR/d' /tmp/ifcfg-eth0 > /etc/sysconfig/network-scripts/ifcfg-eth0
+	rm -f /tmp/ifcfg-eth0
+}
+
 _mount_cdrom()
 {
 	# check redhat version
@@ -53,11 +62,12 @@ start()
 		fi
 	fi
 	umount /mnt
+	touch /var/lock/subsys/rvpe-init
 }
 
 stop()
 {
-	:
+	_finalize
 }
 
 case "$1" in

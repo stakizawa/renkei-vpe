@@ -5,7 +5,6 @@ require 'fileutils'
 ###########################################
 # check parameters
 ###########################################
-# TODO It is better not to accept any parameters
 if ARGV.size != 2
   $stderr.puts 'Two parameters are required.'
   $stderr.puts "#{File.basename(__FILE__)} context_file lock_dir"
@@ -22,11 +21,13 @@ FileUtils.mkdir_p($lock_dir) unless FileTest.exist?($lock_dir)
 psst_file = '/mnt/persistent'
 unless FileTest.exist?(psst_file)
   $stderr.puts "File does not exist: #{psst_file}"
-  exit 1
-end
-File.open(psst_file) do |f|
-  val = f.gets.strip.to_i
-  $persistent = (val == 1)? true : false
+  $stderr.puts 'I assume that VM is a non-persistent VM.'
+  $persistent = false
+else
+  File.open(psst_file) do |f|
+    val = f.gets.strip.to_i
+    $persistent = (val == 1)? true : false
+  end
 end
 
 
@@ -38,7 +39,7 @@ if FileTest.exist?(context)
   File.open(context) do |f|
     f.each_line do |line|
       next if /^#/ =~ line
-      key,val = line.chomp.split('=')
+      key,val = line.chomp.split('=', 2)
       cnt_hash[key] = val.sub(/^"(.+)"$/, '\1')
     end
   end
