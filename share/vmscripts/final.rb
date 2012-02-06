@@ -40,7 +40,9 @@ FileUtils.mkdir_p($lock_dir) unless FileTest.exist?($lock_dir)
 ###########################################
 class Finalizer
   def final
-    # by default, do nothing
+    on_shutdown do
+      FileUtils.rm_rf($lock_dir)
+    end
   end
 
   protected
@@ -64,9 +66,26 @@ end
 
 
 ##############################################
-# Default VM Finalizer (do nothing)
+# CentOS5.x VM Finalizer (do nothing)
 ##############################################
-class CentOS5 < Finalizer
+class CentOS5 < Finalizer; end
+
+
+##############################################
+# CentOS6.x VM Finalizer
+##############################################
+class CentOS6 < Finalizer
+  def final
+    on_shutdown do
+      FileUtils.rm_rf($lock_dir)
+
+      # delete network configuration files only on shutdown
+      FileUtils.rm('/etc/udev/rules.d/70-persistent-net.rules')
+      Dir::glob('/etc/sysconfig/network-scripts/ifcfg-eth*') do |f|
+        FileUtils.rm(f)
+      end
+    end
+  end
 end
 
 
@@ -78,11 +97,13 @@ if FileTest.exist?(centos_file)
   centos_ver = $1 if /^.+(\d+)\.\d+.*$/ =~ `cat #{centos_file}`
   if centos_ver == '5'
     CentOS5.new.final
+  elsif centos_ver == '6'
+    CentOS6.new.final
   else
-    $stderr.puts "currently not supported"
+    $stderr.puts "Not supported Linux"
   end
 else
-  $stderr.puts "currently not supported"
+  $stderr.puts "Not supported Linux"
 end
 
 

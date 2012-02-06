@@ -101,7 +101,7 @@ class Initializer
   # utility functions
   #########################################
 
-  # lock files
+  # lock files not to update existing ones
   def lock(name)
     lock_file = $lock_dir + '/' + name
     unless FileTest.exist?(lock_file)
@@ -300,6 +300,12 @@ EOS
 end
 
 
+##############################################
+# VM initializer for CentOS 6.x compatible OS
+##############################################
+class CentOS6 < CentOS5; end
+
+
 ###########################################
 # main
 ###########################################
@@ -308,11 +314,13 @@ if FileTest.exist?(centos_file)
   centos_ver = $1 if /^.+(\d+)\.\d+.*$/ =~ `cat #{centos_file}`
   if centos_ver == '5'
     CentOS5.new.init
+  elsif centos_ver == '6'
+    CentOS6.new.init
   else
-    $stderr.puts "currently not supported"
+    $stderr.puts "Not supported Linux"
   end
 else
-  $stderr.puts "currently not supported"
+  $stderr.puts "Not supported Linux"
 end
 
 

@@ -66,6 +66,7 @@ stop()
 	_mount_cdrom
 	_finalize
 	umount /mnt
+	rm -f /var/lock/subsys/rvpe-init
 }
 
 case "$1" in
