@@ -207,10 +207,11 @@ module RenkeiVPE
           prime_lease = leases[0]
 
           # 5. create file paths and ssh public key file
-          init_file = "#{$rvpe_path}/share/vmscripts/init.rb"
-          vmtmpdir  = "#{$rvpe_path}/var/#{prime_lease.name}"
+          init_file  = "#{$rvpe_path}/share/vmscripts/init.rb"
+          final_file = "#{$rvpe_path}/share/vmscripts/final.rb"
+          vmtmpdir   = "#{$rvpe_path}/var/#{prime_lease.name}"
           FileUtils.mkdir_p(vmtmpdir)
-#          FileUtils.chmod(0750, vmtmpdir)   TODO uncomment this line
+#          FileUtils.chmod(0750, vmtmpdir)   TODO uncomment this line, this is just for running renkei-vpe on my develop machine
           ssh_key   = "#{vmtmpdir}/root.pub"
           File.open(ssh_key, 'w+') do |file|
             file.puts sshkey
@@ -272,7 +273,7 @@ EOS
 
           vm_def +=<<EOS
   ROOT_PUBKEY    = "root.pub",
-  FILES          = "#{init_file} #{ssh_key} #{persistent_file}",
+  FILES          = "#{init_file} #{final_file} #{ssh_key} #{persistent_file}",
   TARGET         = "hdc",
   CREATE_DATE    = "#{Time.new.to_i}"
 ]

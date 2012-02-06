@@ -14,7 +14,7 @@ if ARGV.size != 2
   exit 1
 end
 
-context   = ARGV.shift # '/mnt/context.sh'
+context = ARGV.shift # '/mnt/context.sh'
 unless FileTest.exist?(context)
   $stderr.puts "File does not exist: #{context}"
   exit 1
@@ -314,7 +314,6 @@ if FileTest.exist?(centos_file)
 else
   $stderr.puts "currently not supported"
 end
-
 
 
 ### Local variables:

@@ -26,11 +26,7 @@ _init_after_erase()
 
 _finalize()
 {
-	# TODO use external script (e.g. ruby) file
-	echo -n > /etc/udev/rules.d/70-persistent-net.rules
-	mv /etc/sysconfig/network-scripts/ifcfg-eth0 /tmp/ifcfg-eth0
-	sed -e '/HWADDR/d' /tmp/ifcfg-eth0 > /etc/sysconfig/network-scripts/ifcfg-eth0
-	rm -f /tmp/ifcfg-eth0
+	/mnt/final.rb $new_context $lib_dir
 }
 
 _mount_cdrom()
@@ -67,7 +63,9 @@ start()
 
 stop()
 {
+	_mount_cdrom
 	_finalize
+	umount /mnt
 }
 
 case "$1" in
