@@ -216,10 +216,6 @@ module RenkeiVPE
           File.open(ssh_key, 'w+') do |file|
             file.puts sshkey
           end
-          persistent_file = "#{vmtmpdir}/persistent"
-          File.open(persistent_file, 'w+') do |file|
-            file.puts persistent_image
-          end
 
           # 6. create VM definition file
           vm_def =<<EOS
@@ -273,8 +269,9 @@ EOS
 
           vm_def +=<<EOS
   ROOT_PUBKEY    = "root.pub",
-  FILES          = "#{init_file} #{final_file} #{ssh_key} #{persistent_file}",
+  FILES          = "#{init_file} #{final_file} #{ssh_key}",
   TARGET         = "hdc",
+  PERSISTENT     = "#{persistent_image}",
   CREATE_DATE    = "#{Time.new.to_i}"
 ]
 

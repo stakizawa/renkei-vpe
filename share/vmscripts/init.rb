@@ -34,17 +34,10 @@ end
 $lock_dir = ARGV.shift # '/var/lib/rvpe_init'
 FileUtils.mkdir_p($lock_dir) unless FileTest.exist?($lock_dir)
 
-# TODO not to use a separated file
-psst_file = '/mnt/persistent'
-unless FileTest.exist?(psst_file)
-  $stderr.puts "File does not exist: #{psst_file}"
-  $stderr.puts 'I assume that VM is a non-persistent VM.'
-  $persistent = false
+if $cnt_hash['PERSISTENT']
+  $persistent = ($cnt_hash['PERSISTENT'] == '1')? true : false
 else
-  File.open(psst_file) do |f|
-    val = f.gets.strip.to_i
-    $persistent = (val == 1)? true : false
-  end
+  $persistent = false
 end
 
 
