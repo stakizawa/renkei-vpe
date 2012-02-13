@@ -3,7 +3,7 @@ require 'fileutils'
 
 # if true, this script remains some original config files and
 # doesn't delete root password
-$DEBUG_MODE = true
+$DEBUG_MODE = false
 
 ###########################################
 # check parameters
