@@ -92,15 +92,16 @@ end
 ###########################################
 # main
 ###########################################
-centos_file = '/etc/redhat-release'
-if FileTest.exist?(centos_file)
-  centos_ver = $1 if /^.+(\d+)\.\d+.*$/ =~ `cat #{centos_file}`
-  if centos_ver == '5'
+dist_name = `lsb_release -si`.strip
+if dist_name == 'CentOS'
+  # when CentOS
+  major_v = $1 if /^(\d+)\.\d+$/ =~ `lsb_release -sr`.strip
+  if major_v == '5'
     CentOS5.new.final
-  elsif centos_ver == '6'
+  elsif major_v == '6'
     CentOS6.new.final
   else
-    $stderr.puts "Not supported Linux"
+    $stderr.puts "Not supported CentOS Linux"
   end
 else
   $stderr.puts "Not supported Linux"
