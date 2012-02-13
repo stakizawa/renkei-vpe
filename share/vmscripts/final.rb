@@ -68,8 +68,18 @@ end
 ##############################################
 # CentOS5.x VM Finalizer (do nothing)
 ##############################################
-class CentOS5 < Finalizer; end
+class CentOS5 < Finalizer
+  def final
+    on_shutdown do
+      FileUtils.rm_rf($lock_dir)
 
+      # delete network configuration files only on shutdown
+      Dir::glob('/etc/sysconfig/network-scripts/ifcfg-eth*') do |f|
+        FileUtils.rm(f)
+      end
+    end
+  end
+end
 
 ##############################################
 # CentOS6.x VM Finalizer
