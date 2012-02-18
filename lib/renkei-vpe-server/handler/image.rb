@@ -217,7 +217,7 @@ EOT
       def persistent(session, id, persistent)
         task('rvpe.image.persistent', session) do
           rc = call_one_xmlrpc('one.image.persistent', session, id, persistent)
-          raise "A public image can't be persistent." unless rc[0]
+          raise "A public or used image can't be persistent." unless rc[0]
           rc
         end
       end
