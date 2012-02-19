@@ -12,20 +12,25 @@ rvpeuser
 
   list
   show          user_names
+  info
 
 
 
 rvpeimage
-  import      definition_file
-  export      image_name  file_name
-  delete      image_names
+  import        definition_file
+  export        image_name  file_name
+  delete        image_names
 
-  publish     image_names
-  unpublish   image_names
-  description image_name new_description
+  publish       image_names
+  unpublish     image_names
+
+  persistent    image_names
+  nonpersistent image_names
+
+  description   image_name new_description
 
   list
-  show        image_names
+  show          image_names
 
 
 
@@ -61,6 +66,7 @@ rvpevnet
   removelease  zone_name vnet_name lease_name
   leases       zone_name <vnet_names>
 
+  list
   show         zone_name <vnet_names>
 
 
@@ -69,6 +75,7 @@ rvpehost
   enable   zone_name host_names
   disable  zone_name host_names
 
+  list
   show     zone_name <host_names>
 
 
@@ -88,6 +95,8 @@ rvpevm
   shutdown  vm_name
   suspend   vm_name
   resume    vm_name
+  restart   vm_name
+  delete    vm_name
 
   mark_save vm_name image_name <image_description>
 
