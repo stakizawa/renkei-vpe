@@ -1,8 +1,8 @@
 * Version number Rules
 Format of version number: x.y.z
 
-'x' is major version that is periodicaly released.
+'x' is major version that is periodically released.
 'y' is minor version that contains small changes to the major version.
 'z' is a version number that contains bug fixes to 'x.y'.
 
-The assosiated tag name on the git repository is 'vx.y.z'.
+The associated tag name on the git repository is 'vx.y.z'.
