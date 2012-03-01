@@ -34,7 +34,6 @@ _status() {
 
     # check status of RENKEI-VPE
     $SU - $RVPEADMIN -c '\
-      source /etc/profile.d/rpop-ruby.sh; \
       source /etc/profile.d/one.sh; \
       source /etc/profile.d/renkei-vpe.sh; \
       $RVPE_LOCATION/sbin/rvped status 1>/dev/null 2>/dev/null'
@@ -65,7 +64,6 @@ start() {
 
     # start OpenNebula
     $SU - $ONEADMIN -c '\
-      source /etc/profile.d/rpop-ruby.sh; \
       source /etc/profile.d/one.sh; \
       $ONE_LOCATION/bin/one -b start'
     if [ ! $? -eq 0 ]; then
@@ -77,7 +75,6 @@ start() {
 
     # start RENKEI-VPE
     $SU - $RVPEADMIN -c '\
-      source /etc/profile.d/rpop-ruby.sh; \
       source /etc/profile.d/one.sh; \
       source /etc/profile.d/renkei-vpe.sh; \
       $RVPE_LOCATION/sbin/rvped start'
@@ -85,7 +82,6 @@ start() {
         echo 'Failed to start RENKEI-VPE.'
         RETVAL=1
         $SU - $ONEADMIN -c '\
-          source /etc/profile.d/rpop-ruby.sh; \
           source /etc/profile.d/one.sh; \
           $ONE_LOCATION/bin/one stop'
         $SU - $ONEADMIN -c "$FUSERMOUNT -u $IMAGE_REPO"
@@ -105,7 +101,6 @@ stop() {
 
     # stop RENKEI-VPE
     $SU - $RVPEADMIN -c '\
-      source /etc/profile.d/rpop-ruby.sh; \
       source /etc/profile.d/one.sh; \
       source /etc/profile.d/renkei-vpe.sh; \
       $RVPE_LOCATION/sbin/rvped stop'
@@ -116,7 +111,6 @@ stop() {
 
     # stop OpenNebula
     $SU - $ONEADMIN -c '\
-      source /etc/profile.d/rpop-ruby.sh; \
       source /etc/profile.d/one.sh; \
       $ONE_LOCATION/bin/one stop'
     if [ ! $? -eq 0 ]; then
