@@ -6,6 +6,7 @@
 # description: rvpe starts/stops/statuses RENKEI-VPE.
 
 . /etc/profile.d/one.sh
+. /etc/profile.d/renkei-vpe.sh
 
 RETVAL=0
 
@@ -132,7 +133,8 @@ status() {
     _status
     RETVAL=$?
     if [ $RETVAL -eq 0 ]; then
-        echo "RENKEI-VPE is running..."
+        PID=`cat $RVPE_LOCATION/var/rvped.pid`
+        echo "RENKEI-VPE (pid $PID) is running..."
     elif [ $RETVAL -eq 1 ]; then
         echo "RENKEI-PVE is not running: OpenNebula is not running"
     elif [ $RETVAL -eq 2 ]; then
