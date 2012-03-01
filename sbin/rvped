@@ -50,6 +50,9 @@ def start_server(is_daemon)
     FileUtils.rm(PID_FILE)
   end
 
+  vardir = File::dirname(PID_FILE)
+  FileUtils.mkdir_p(vardir) unless FileTest.exist?(vardir)
+
   config = RenkeiVPE::ServerConfig.read_config(CNF_FILE)
   server = RenkeiVPE::Server.new(config)
   if is_daemon
