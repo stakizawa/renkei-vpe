@@ -10,6 +10,7 @@
 
 RETVAL=0
 
+# Command path
 SU=/bin/su
 GFARM2FS=/usr/bin/gfarm2fs
 FUSERMOUNT=/usr/bin/fusermount
@@ -23,6 +24,23 @@ IMAGE_REPO=$ONE_LOCATION/var/images
 RVPEADMIN=popadmin
 GF_LOCAL_PATH=/work/one_images
 GF_N_REPLICAS=3
+
+
+# Check over-write of RENKEI-VPE parameters
+_update_by_user_value() {
+    # $1: parameter name
+    # $2: current value
+    VAL_LINE=`grep -v '^#' $RVPE_LOCATION/etc/rvped.conf | grep $1`
+    VAL=`echo $VAL_LINE | cut -d ':' -f2 | tr -d '[:blank:]'`
+    if [ $VAL ]; then
+        echo $VAL
+    else
+        echo $2
+    fi
+}
+GF_LOCAL_PATH=`_update_by_user_value 'gfarm_local_path' $GF_LOCAL_PATH`
+GF_N_REPLICAS=`_update_by_user_value 'gfarm_replica_count' $GF_N_REPLICAS`
+
 
 _status() {
     # check status of OpenNebula
