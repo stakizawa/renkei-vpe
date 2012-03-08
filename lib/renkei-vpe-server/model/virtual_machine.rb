@@ -98,16 +98,10 @@ SQL
         else
           zone_name = no_data_msg
         end
-        prime_lease = Lease.find_by_id(@lease_id)[0]
-        if prime_lease
-          prime_lease_name = prime_lease.name
-          prime_lease_address = prime_lease.address
-        else
-          prime_lease_name = no_data_msg
-          prime_lease_address = no_data_msg
-        end
+        prime_lease_name = @name
+        prime_lease_address = Lease.find_by_name(@name)[0].address
         type = VMType.find_by_id(@type_id)[0]
-        if zone
+        if type
           type_name = type.name
         else
           type_name = no_data_msg
