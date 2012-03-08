@@ -147,6 +147,7 @@ module RenkeiVPE
           rc = call_one_xmlrpc('one.image.info', session, image_id)
           raise rc[1] unless rc[0]
           doc = REXML::Document.new(rc[1])
+          image_name = doc.elements['/IMAGE/NAME'].get_text.to_s
           if doc.elements['/IMAGE/TEMPLATE/BUS']
             bus_type = doc.elements['/IMAGE/TEMPLATE/BUS'].get_text
             dev_pref = doc.elements['/IMAGE/TEMPLATE/DEV_PREFIX'].get_text
@@ -300,6 +301,9 @@ EOS
             vm.type_id  = type.id
             vm.image_id = image_id
             vm.leases   = leases.map{ |l| l.id }.join(ITEM_SEPARATOR)
+            vm.info     = VirtualMachine.gen_info_text(user, zone,
+                                                       image_id, image_name,
+                                                       type, leases)
             vm.create
           rescue => e
             call_one_xmlrpc('one.vm.action', session, 'finalize', rc[1])

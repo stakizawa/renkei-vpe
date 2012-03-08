@@ -1,4 +1,5 @@
 require 'renkei-vpe-server/model/base'
+require 'yaml'
 
 module RenkeiVPE
   ############################################################################
@@ -21,7 +22,8 @@ CREATE TABLE #{@table_name} (
   lease_id    INTEGER,
   type_id     INTEGER,
   image_id    INTEGER,
-  leases      VARCHAR(256)
+  leases      VARCHAR(256),
+  info        TEXT
 );
 SQL
 
@@ -43,6 +45,8 @@ SQL
       attr_accessor(:image_id) { |v| v.to_i }
       # ids of all leases the VM use
       attr_accessor(:leases)
+      # information of the VM
+      attr_accessor(:info)
 
       def initialize
         super
@@ -54,6 +58,7 @@ SQL
         @type_id  = -1
         @image_id = -1
         @leases   = ''
+        @info     = ''
       end
 
       def to_s
@@ -66,45 +71,77 @@ SQL
           "lease_id=#{@lease_id}," +
           "type_id=#{@type_id},"   +
           "image_id=#{@image_id}," +
-          "leases=#{@leases}"      +
+          "leases=#{@leases},"     +
+          "info=#{@info}"          +
           ">"
       end
 
       def to_xml_element(one_session)
         # get Data
+        data = YAML.load(@info)
         no_data_msg = 'Missing, manually deleted.'
-        # one vm
-        rc = call_one_xmlrpc('one.vm.info', one_session, @oid)
-        raise rc[1] unless rc[0]
-        onevm_doc = REXML::Document.new(rc[1])
-        # one image
-        rc = call_one_xmlrpc('one.image.info', one_session, @image_id)
-        if rc[0]
-          oneimg_doc = REXML::Document.new(rc[1])
-          image_name = oneimg_doc.elements['/IMAGE/NAME'].get_text
+        # user name
+        if data.instance_of?(Hash) && data['USER']['NAME']
+          user_name = data['USER']['NAME']
         else
-          image_name = no_data_msg
+          # for supporting old version
+          user = User.find_by_id(@user_id)[0]
+          if user
+            user_name = user.name
+          else
+            user_name = no_data_msg
+          end
         end
-        # from Renkei VPE DB
-        user = User.find_by_id(@user_id)[0]
-        if user
-          user_name = user.name
+        # zone name
+        if data.instance_of?(Hash) && data['ZONE']['NAME']
+          zone_name = data['ZONE']['NAME']
         else
-          user_name = no_data_msg
+          # for supporting old version
+          zone = Zone.find_by_id(@zone_id)[0]
+          if zone
+            zone_name = zone.name
+          else
+            zone_name = no_data_msg
+          end
         end
-        zone = Zone.find_by_id(@zone_id)[0]
-        if zone
-          zone_name = zone.name
+        # image name
+        if data.instance_of?(Hash) && data['IMAGE']['NAME']
+          image_name = data['IMAGE']['NAME']
         else
-          zone_name = no_data_msg
+          # for supporting old version
+          rc = call_one_xmlrpc('one.image.info', one_session, @image_id)
+          if rc[0]
+            oneimg_doc = REXML::Document.new(rc[1])
+            image_name = oneimg_doc.elements['/IMAGE/NAME'].get_text
+          else
+            image_name = no_data_msg
+          end
         end
-        prime_lease_name = @name
-        prime_lease_address = Lease.find_by_name(@name)[0].address
-        type = VMType.find_by_id(@type_id)[0]
-        if type
-          type_name = type.name
+        # vm type name
+        if data.instance_of?(Hash) && data['TYPE']['NAME']
+          type_name = data['TYPE']['NAME']
         else
-          type_name = no_data_msg
+          # for supporting old version
+          type = VMType.find_by_id(@type_id)[0]
+          if type
+            type_name = type.name
+          else
+            type_name = no_data_msg
+          end
+        end
+        # prime lease name & address
+        if data.instance_of?(Hash) && data['LEASES'][0]
+          prime_lease_name = data['LEASES'][0]['NAME']
+          prime_lease_address = data['LEASES'][0]['ADDRESS']
+        else
+          # for supporting old version
+          prime_lease_name = @name
+          l = Lease.find_by_name(@name)[0]
+          if l
+            prime_lease_address = l.address
+          else
+            prime_lease_address = no_data_msg
+          end
         end
 
         # toplevel VNET element
@@ -167,30 +204,55 @@ SQL
 
         # set all leases
         ls_e = REXML::Element.new('LEASES')
-        @leases.split(ITEM_SEPARATOR).map{ |i| i.to_i }.each do |lid|
-          l = Lease.find_by_id(lid)[0]
-          if l
-            lname = l.name
-            laddr = l.address
-          else
-            lname = no_data_msg
-            laddr = no_data_msg
+        if data.instance_of?(Hash) && data['LEASES']
+          data['LEASES'].each do |l|
+            lid   = l['ID']
+            lname = l['NAME']
+            laddr = l['ADDRESS']
+
+            l_e = REXML::Element.new('LEASE')
+            e = REXML::Element.new('ID')
+            e.add(REXML::Text.new(lid.to_s))
+            l_e.add(e)
+            e = REXML::Element.new('NAME')
+            e.add(REXML::Text.new(lname))
+            l_e.add(e)
+            e = REXML::Element.new('ADDRESS')
+            e.add(REXML::Text.new(laddr))
+            l_e.add(e)
+            ls_e.add(l_e)
           end
-          l_e = REXML::Element.new('LEASE')
-          e = REXML::Element.new('ID')
-          e.add(REXML::Text.new(lid.to_s))
-          l_e.add(e)
-          e = REXML::Element.new('NAME')
-          e.add(REXML::Text.new(lname))
-          l_e.add(e)
-          e = REXML::Element.new('ADDRESS')
-          e.add(REXML::Text.new(laddr))
-          l_e.add(e)
-          ls_e.add(l_e)
+        else
+          # for supporting old version
+          @leases.split(ITEM_SEPARATOR).map{ |i| i.to_i }.each do |lid|
+            l = Lease.find_by_id(lid)[0]
+            if l
+              lname = l.name
+              laddr = l.address
+            else
+              lname = no_data_msg
+              laddr = no_data_msg
+            end
+
+            l_e = REXML::Element.new('LEASE')
+            e = REXML::Element.new('ID')
+            e.add(REXML::Text.new(lid.to_s))
+            l_e.add(e)
+            e = REXML::Element.new('NAME')
+            e.add(REXML::Text.new(lname))
+            l_e.add(e)
+            e = REXML::Element.new('ADDRESS')
+            e.add(REXML::Text.new(laddr))
+            l_e.add(e)
+            ls_e.add(l_e)
+          end
         end
         vm_e.add(ls_e)
 
         # set elements from one vm xml
+        rc = call_one_xmlrpc('one.vm.info', one_session, @oid)
+        raise rc[1] unless rc[0]
+        onevm_doc = REXML::Document.new(rc[1])
         targets = [
                    '/VM/LAST_POLL',
                    '/VM/STATE',
@@ -213,6 +275,34 @@ SQL
         return vm_e
       end
 
+      # It generates text for info field.
+      def self.gen_info_text(user, zone, image_id, image_name, type, leases)
+        info = {}
+        info['USER'] = {}
+        info['USER']['ID'] = user.id
+        info['USER']['NAME'] = user.name
+        info['ZONE'] = {}
+        info['ZONE']['ID'] = zone.id
+        info['ZONE']['NAME'] = zone.name
+        info['IMAGE'] = {}
+        info['IMAGE']['ID'] = image_id
+        info['IMAGE']['NAME'] = image_name
+        info['TYPE'] = {}
+        info['TYPE']['ID'] = type.id
+        info['TYPE']['NAME'] = type.name
+
+        info['LEASES'] = []
+        leases.each do |l|
+          lh = {}
+          lh['ID'] = l.id
+          lh['NAME'] = l.name
+          lh['ADDRESS'] = l.address
+          info['LEASES'] << lh
+        end
+
+        return YAML.dump(info)
+      end
+
       protected
 
       def check_fields
@@ -224,6 +314,7 @@ SQL
         raise_if_nil_and_not_class(@type_id,  'type_id',  Integer)
         raise_if_nil_and_not_class(@image_id, 'image_id', Integer)
         raise_if_nil_and_not_class(@leases,   'leases',   String)
+        raise_if_nil_and_not_class(@leases,   'info',     String)
       end
 
       def to_create_record_str
@@ -234,7 +325,8 @@ SQL
           "#{@lease_id}," +
           "#{@type_id},"  +
           "#{@image_id}," +
-          "'#{@leases}'"
+          "'#{@leases}'," +
+          "'#{@info}'"
       end
 
       def to_find_id_str
@@ -249,11 +341,12 @@ SQL
           "lease_id=#{@lease_id}," +
           "type_id=#{@type_id},"   +
           "image_id=#{@image_id}," +
-          "leases='#{@leases}'"
+          "leases='#{@leases}',"   +
+          "info='#{@info}'"
       end
 
       def self.setup_attrs(vm, attrs)
-        return vm unless attrs.size == 9
+        return vm unless attrs.size == 10
         vm.instance_eval do
           @id       = attrs[0].to_i
         end
@@ -265,6 +358,7 @@ SQL
         vm.type_id  = attrs[6]
         vm.image_id = attrs[7]
         vm.leases   = attrs[8] || ''
+        vm.info     = attrs[9] || ''
         return vm
       end
 
