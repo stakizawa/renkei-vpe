@@ -212,7 +212,7 @@ module RenkeiVPE
           final_file = "#{$rvpe_path}/share/vmscripts/final.rb"
           vmtmpdir   = "#{$rvpe_path}/var/#{prime_lease.name}"
           FileUtils.mkdir_p(vmtmpdir)
-#          FileUtils.chmod(0750, vmtmpdir)   TODO uncomment this line, this is just for running renkei-vpe on my develop machine
+          FileUtils.chmod(0750, vmtmpdir)
           ssh_key   = "#{vmtmpdir}/root.pub"
           File.open(ssh_key, 'w+') do |file|
             file.puts sshkey
