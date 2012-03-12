@@ -1,3 +1,4 @@
 TODOs for next release.
 
 - use gfarm auto replication mechanism to create replicas of OS images
+- implement an installer
