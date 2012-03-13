@@ -121,25 +121,23 @@ module RenkeiVPE
             if RenkeiVPE.is_error?(result)
                 return result
             end
-
             if self['TEMPLATE/PATH']
+                result = nil
                 file_path = self['TEMPLATE/PATH']
                 if !File.exist?(file_path)
                     error_msg = "Image file could not be found, aborting."
                     result = RenkeiVPE::Error.new(error_msg)
+                else
+                    begin
+                        FileUtils.copy(file_path, self['SOURCE'])
+                        FileUtils.chmod(0660, self['SOURCE'])
+                    rescue Exception => e
+                        result = RenkeiVPE::Error.new(e.message)
+                    end
                 end
-
-                begin
-                    FileUtils.copy(file_path, self['SOURCE'])
-                    FileUtils.chmod(0660, self['SOURCE'])
-                rescue Exception => e
-                    result = RenkeiVPE::Error.new(e.message)
-                end
-              result = nil
             else
                 result = RenkeiVPE::Error.new('Failed to copy image file')
             end
-
 
             if RenkeiVPE.is_successful?(result)
                 self.enable
