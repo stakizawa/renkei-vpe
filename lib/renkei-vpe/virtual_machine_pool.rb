@@ -1,48 +1,48 @@
 require 'renkei-vpe/pool'
 
 module RenkeiVPE
-    class VirtualMachinePool < Pool
-        #######################################################################
-        # Constants and Class attribute accessors
-        #######################################################################
+  class VirtualMachinePool < Pool
+    #######################################################################
+    # Constants and Class attribute accessors
+    #######################################################################
 
-        VM_POOL_METHODS = {
-            :info   => "vm.pool",
-            :ask_id => "vm.ask_id"
-        }
+    VM_POOL_METHODS = {
+      :info   => "vm.pool",
+      :ask_id => "vm.ask_id"
+    }
 
-        #######################################################################
-        # Class constructor & Pool Methods
-        #######################################################################
+    #######################################################################
+    # Class constructor & Pool Methods
+    #######################################################################
 
-        # +client+ a Client object that represents a XML-RPC connection
-        def initialize(client, user_id=-1, history=-1)
-            super('VM_POOL','VM',client)
+    # +client+ a Client object that represents a XML-RPC connection
+    def initialize(client, user_id=-1, history=-1)
+      super('VM_POOL','VM',client)
 
-            @user_id = user_id
-            @history = history
-        end
-
-        # Factory Method for the VirtualMachine Pool
-        def factory(element_xml)
-            RenkeiVPE::VirtualMachine.new(element_xml,@client)
-        end
-
-        #######################################################################
-        # XML-RPC Methods for the VirtualMachine Pool
-        #######################################################################
-
-        # Retrieves all the VMs in the pool.
-        def info
-            super(VM_POOL_METHODS[:info], @user_id, @history)
-        end
-
-        # Retrieves the id of the given-named vm.
-        # +name+  name of a vm
-        def ask_id(name)
-            super(VM_POOL_METHODS[:ask_id], name)
-        end
+      @user_id = user_id
+      @history = history
     end
+
+    # Factory Method for the VirtualMachine Pool
+    def factory(element_xml)
+      RenkeiVPE::VirtualMachine.new(element_xml,@client)
+    end
+
+    #######################################################################
+    # XML-RPC Methods for the VirtualMachine Pool
+    #######################################################################
+
+    # Retrieves all the VMs in the pool.
+    def info
+      super(VM_POOL_METHODS[:info], @user_id, @history)
+    end
+
+    # Retrieves the id of the given-named vm.
+    # +name+  name of a vm
+    def ask_id(name)
+      super(VM_POOL_METHODS[:ask_id], name)
+    end
+  end
 end
 
 
