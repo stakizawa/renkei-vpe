@@ -254,8 +254,11 @@ module RenkeiVPE
       end
 
       # It iterates all records stored in db.
-      def self.each
+      def self.each(condition=nil)
         sql = "SELECT * FROM #{@table_name}"
+        if condition
+          sql += " WHERE #{condition}"
+        end
         Database.execute(sql) do |row|
           yield gen_instance(row)
         end

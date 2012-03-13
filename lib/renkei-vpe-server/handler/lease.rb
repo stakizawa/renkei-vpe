@@ -50,14 +50,16 @@ module RenkeiVPE
           else # flag == -1
           end
 
+          # lease search condition
+          l_cond = nil
+          if flag == -1
+            l_cond = "assigned_to=#{user.id} OR (assigned_to=-1 AND used=0)"
+          elsif flag >= 0
+            l_cond = "assigned_to=#{flag}"
+          end
+
           pool_e = REXML::Element.new('LEASE_POOL')
-          Lease.each do |lease|
-            if flag == -1
-              next if lease.assigned_to == -1 && lease.used == 1
-              next if lease.assigned_to >=  0 && lease.assigned_to != user.id
-            elsif flag >= 0
-              next if lease.assigned_to != flag
-            end
+          Lease.each(l_cond) do |lease|
             lease_e = lease.to_xml_element(session)
             pool_e.add(lease_e)
           end

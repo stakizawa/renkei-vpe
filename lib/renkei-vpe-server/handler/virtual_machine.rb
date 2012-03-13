@@ -54,13 +54,16 @@ module RenkeiVPE
             admin_session(session) do; end
           end
 
+          # vm search condition
+          vm_cond = nil
+          if flag == -1
+            vm_cond = "user_id=#{user.id}"
+          elsif flag >= 0
+            vm_cond = "user_id=#{flag}"
+          end
+
           pool_e = REXML::Element.new('VM_POOL')
-          VirtualMachine.each do |vm|
-            if flag == -1
-              next if vm.user_id != user.id
-            elsif flag >= 0
-              next if vm.user_id != flag
-            end
+          VirtualMachine.each(vm_cond) do |vm|
             vm_e = vm.to_xml_element(session)
             stat = vm_e.get_elements('STATE')[0].text.to_i
             next if stat == 6 && history != 1
