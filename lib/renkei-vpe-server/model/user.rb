@@ -56,7 +56,7 @@ SQL
           "enabled=#{@enabled}," +
           "zones='#{@zones}',"   +
           "vm_cnt=#{@vm_cnt},"   +
-          "limits=#{@limits}"    +
+          "limits='#{@limits}'"  +
           ">"
       end
 
@@ -167,7 +167,7 @@ SQL
           "#{@enabled}," +
           "'#{@zones}'," +
           "#{@vm_cnt},"  +
-          "#{@limits}"
+          "'#{@limits}'"
       end
 
       def to_find_id_str
