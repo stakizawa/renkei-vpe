@@ -1,14 +1,13 @@
 rvpeuser
-  create        user_name  password <number>
+  create        user_name  password
   delete        user_name
   passwd        user_name  password
 
   enable        user_names
   disable       user_names
 
-  enable_zone   user_name  zone_names
+  enable_zone   user_name  zone_name  <vm_limit>
   disable_zone  user_name  zone_names
-  limit         user_name  number
 
   list
   show          user_names

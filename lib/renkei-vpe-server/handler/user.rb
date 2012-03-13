@@ -30,12 +30,9 @@ module RenkeiVPE
         meth('val passwd(string, int, string)',
              'Changes password for the given user',
              'passwd')
-        meth('val enable_zone(string, int, bool, int)',
+        meth('val enable_zone(string, int, bool, int, int)',
              'Enables or disables a user to use a zone',
              'enable_zone')
-        meth('val limit(string, int, int)',
-             'Set the maximum number of VMs the user can run',
-             'limit')
       end
 
       ########################################################################
@@ -214,40 +211,25 @@ module RenkeiVPE
       # +id+        id for the user
       # +enabled+   enable to use zone if true, otherwise disable to use
       # +zone_id+   id of zone
+      # +limit+     maximum number of VMs the user can run in the zone
       # +return[0]+ true or false whenever is successful or not
       # +return[1]+ if an error occurs this is error message,
-      #             otherwise it does not exist.
-      def enable_zone(session, id, enabled, zone_id)
+      #             otherwise it is maximum number of VMs when enabled is
+      #             true and it does not exist when enabled is false.
+      def enable_zone(session, id, enabled, zone_id, limit)
         task('rvpe.user.enable_zone', session, true) do
           user = User.find_by_id(id)[0]
           raise "User[#{id}] does not exist." unless user
 
-          user.modify_zones(zone_id, enabled)
-          user.update
-          [true, '']
-        end
-      end
-
-      # Set the maximum number of VMs the user can run
-      # +session+   string that represents user session
-      # +id+        id for the user
-      # +limit+     maximum number of VMs a user can run
-      # +return[0]+ true or false whenever is successful or not
-      # +return[1]+ if an error occurs this is error message,
-      #             otherwise it does not exist.
-      def limit(session, id, limit)
-        task('rvpe.user.limit', session, true) do
-          user = User.find_by_id(id)[0]
-          raise "User[#{id}] does not exist." unless user
-
           unless limit.kind_of? Integer
-            raise "limit attribute must be an integer: Can't use '#{limit}'"
+            raise "limit attribute must be an integer: Can't specify '#{limit}'"
           end
-
           limit = $server_config.user_limit.to_i if limit < 0
-          user.vm_cnt = limit
+
+          user.modify_zone(zone_id, enabled, limit)
           user.update
-          [true, '']
+
+          [true, enabled ? limit : '']
         end
       end
 
@@ -255,7 +237,7 @@ module RenkeiVPE
       private
 
       # It releases all leases assigned to the user
-      # FIXME it might be better if it can work with enable_zone
+      # TODO it might be better if it can work with enable_zone
       def release_all_leases(task_name, user)
         targets = []
         Lease.each do |lease|

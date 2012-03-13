@@ -248,6 +248,14 @@ def is_successful?(result)
   !RenkeiVPE.is_error?(result)
 end
 
+def is_integer?(obj)
+  return true if obj.kind_of?(Integer)
+  if obj.instance_of?(String)
+    return true if /^-?[0123456789]+$/ =~ obj
+  end
+  return false
+end
+
 def check_parameters(name, number)
   if ARGV.length < number
     print "Command #{name} requires "

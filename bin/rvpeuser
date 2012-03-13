@@ -63,12 +63,18 @@ def print_user(user, xml_output, verbose=false)
     else
       enable_str = 'No'
     end
-    puts str % ['ENABLE', enable_str]
-    # print VM_CNT
-    puts str % ['LIMIT', user['VM_CNT']]
+    puts str % ['ENABLE', enable_str]                if verbose
     # print Zones
-    puts str % ['ZONE IDS', user['ZONE_IDS']]       if verbose
-    zones = user['ZONE_NAMES'].split(RenkeiVPE::Const::ITEM_SEPARATOR)
+    zones = []
+    zones_i = user['ZONE_IDS'].split(RenkeiVPE::Const::ITEM_SEPARATOR)
+    zones_n = user['ZONE_NAMES'].split(RenkeiVPE::Const::ITEM_SEPARATOR)
+    zones_l = user['ZONE_LIMITS'].split(RenkeiVPE::Const::ITEM_SEPARATOR)
+    zones_i.size.times do |i|
+      zone = zones_n[i] + '  ('
+      zone += "ID:#{zones_i[i]}  "                   if verbose
+      zone += "LIMIT:#{zones_l[i]})"
+      zones << zone
+    end
     puts str % ['ZONES', zones.shift]
     zones.each do |zone|
       puts str % ['', zone]
@@ -76,14 +82,6 @@ def print_user(user, xml_output, verbose=false)
     # print Password
     puts str % ['PASSWORD HASH', user['PASSWORD']]  if verbose
   end
-end
-
-def check_if_integer?(obj)
-  return true if obj.kind_of?(Integer)
-  if obj.instance_of?(String)
-    return true if /^-?[0123456789]+$/ =~ obj
-  end
-  return false
 end
 
 ##############################################################################
@@ -106,13 +104,10 @@ Commands:
         $ #{CMD_NAME} info
 
 
-    create user_name password <number>
-        create a new user. If the third parameter 'number' is specified,
-        the limit of the user is set as 'number'. If it is not specified,
-        user limit is 1 by default.
+    create user_name password
+        create a new user with the specified password.
 
         $ #{CMD_NAME} create user1 password1
-        $ #{CMD_NAME} create user1 password1 10
 
     delete user_name
         delete a user from the system. site_name can be name or id of
@@ -143,11 +138,12 @@ Commands:
         $ #{CMD_NAME} disable 1
 
 
-    enable_zone user_name zone_names
-        allow the specified user to use the zone. When a user is enaled,
-        the user can run VMs in the zone. zone_names can be names of zones.
+    enable_zone user_name zone_name <vm_limit>
+        allow the specified user to run VMs in the zone. When a user is
+        enaled, the user can run VMs in the zone upto vm_limit count.
+        Default of vm_limit is 1.
 
-        $ #{CMD_NAME} enable_zone user1 'tokyo tech'
+        $ #{CMD_NAME} enable_zone user1 'tokyo tech' 10
 
     disable_zone user_name zone_names
         prohibit the specified user to use the zone. When a user is
@@ -155,13 +151,6 @@ Commands:
         zone_names can be names of zones.
 
         $ #{CMD_NAME} disable_zone user1 'tokyo tech'
-
-    limit user_name number
-        set a maximum number of VMs a user can run.
-        user_name is name or if of a user.
-        number is maximum number of VMs the user can run.
-
-        $ #{CMD_NAME} limit user1 5
 
 
     list <-x>
@@ -222,18 +211,10 @@ when 'create'
 
   name  = ARGV[0]
   pass  = Digest::SHA1.hexdigest(ARGV[1])
-  limit = check_if_integer?(ARGV[2]) ? ARGV[2].to_i : 1
   user = RenkeiVPE::User.new(RenkeiVPE::User.build_xml, client)
   rc = user.allocate(name, pass)
   if is_successful?(rc)
     puts "User[#{user.name}] is created."
-    rc = user.limit(limit)
-    if is_successful?(rc)
-      puts "Limit is set to #{limit}."
-    else
-      $stderr.puts rc.message
-      exit 1
-    end
   else
     $stderr.puts rc.message
     exit 1
@@ -311,18 +292,20 @@ when 'disable'
 when 'enable_zone'
   check_parameters('enable_zone', 2)
 
-  user_name = ARGV.shift
+  user_name = ARGV[0]
   id = get_user_id(user_name)
   user = RenkeiVPE::User.new_with_id(id, client)
-  ARGV.each do |zone_name|
-    zone_id = get_zone_id(zone_name)
-    rc = user.enable_zone zone_id
-    if is_successful?(rc)
-      puts "User[#{user_name}] enabled to use Zone[#{zone_name}]"
-    else
-      $stderr.puts rc.message
-      exit 1
-    end
+  zone_name = ARGV[1]
+  zone_id = get_zone_id(zone_name)
+  zone_limit = ARGV[2].nil? ? -1 : is_integer?(ARGV[2]) ? ARGV[2].to_i : ARGV[2]
+
+  rc = user.enable_zone(zone_id, zone_limit)
+  if is_successful?(rc)
+    puts "User[#{user_name}] enabled to use Zone[#{zone_name}]" +
+      " with Limit[#{rc}]"
+  else
+    $stderr.puts rc.message
+    exit 1
   end
 
 #######################################
@@ -342,27 +325,6 @@ when 'disable_zone'
       $stderr.puts rc.message
       exit 1
     end
-  end
-
-#######################################
-# limit a user
-when 'limit'
-  check_parameters('limit', 2)
-
-  user_name = ARGV.shift
-  id = get_user_id(user_name)
-  user = RenkeiVPE::User.new_with_id(id, client)
-  number = ARGV.shift
-  unless check_if_integer?(number)
-    $stderr.puts "The Second parameter must be an integer: #{number}"
-    exit 1
-  end
-  rc = user.limit(number.to_i)
-  if is_successful?(rc)
-    puts "User[#{user_name}] is now limited to run upto #{number} VMs."
-  else
-    $stderr.puts rc.message
-    exit 1
   end
 
 #######################################

@@ -292,7 +292,7 @@ module RenkeiVPE
 
         # delete zone from user records
         User.each(session) do |user|
-          user.modify_zones(zone.id, false)
+          user.modify_zone(zone.id, false, -1)
           user.update
         end
 

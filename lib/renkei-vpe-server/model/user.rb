@@ -18,7 +18,8 @@ CREATE TABLE #{@table_name} (
   name    VARCHAR(256) UNIQUE,
   enabled INTEGER,
   zones   TEXT,
-  vm_cnt  INTEGER
+  vm_cnt  INTEGER,
+  limits  TEXT
 );
 SQL
 
@@ -32,8 +33,10 @@ SQL
       attr_accessor(:enabled) { |v| v.to_i }
       # names of zones the user can use
       attr_accessor :zones
-      # number of VM a user can run
+      # [OBSOLETE] number of VM a user can run
       attr_accessor(:vm_cnt)  { |v| v.to_i }
+      # number of VMs the user can run on each zone in 'zones'
+      attr_accessor :limits
 
       def initialize
         super
@@ -42,6 +45,7 @@ SQL
         @enabled =  1
         @zones   = ''
         @vm_cnt  = -1
+        @limits  = ''
       end
 
       def to_s
@@ -51,7 +55,8 @@ SQL
           "name='#{@name}',"     +
           "enabled=#{@enabled}," +
           "zones='#{@zones}',"   +
-          "vm_cnt=#{@vm_cnt}"    +
+          "vm_cnt=#{@vm_cnt},"   +
+          "limits=#{@limits}"    +
           ">"
       end
 
@@ -84,11 +89,6 @@ SQL
         e.add(REXML::Text.new(@enabled.to_s))
         user_e.add(e)
 
-        # set number of VMs
-        e = REXML::Element.new('VM_CNT')
-        e.add(REXML::Text.new(@vm_cnt.to_s))
-        user_e.add(e)
-
         # set zones in id
         e = REXML::Element.new('ZONE_IDS')
         e.add(REXML::Text.new(@zones))
@@ -105,29 +105,49 @@ SQL
         e.add(REXML::Text.new(zones.chop))
         user_e.add(e)
 
+        # set limits
+        e = REXML::Element.new('ZONE_LIMITS')
+        e.add(REXML::Text.new(@limits))
+        user_e.add(e)
+
         return user_e
       end
 
-      # It modifies zones fields.
+      # It modifies zones and their limits.
       # +zone_id+  id of zone to be enabled or disabled
       # +enabled+  enable zone if true, otherwise disable zone
-      def modify_zones(zone_id, enabled)
-        zids = @zones.strip.split(ITEM_SEPARATOR).map { |i| i.to_i }
+      # +limit+    maximum number of VMs the user can run in the zone.
+      #            It has effects only when enabled is true.
+      def modify_zone(zone_id, enabled, limit)
+        zids = zones_in_array
+        lmts = limits_in_array
+
         if enabled
           unless zids.include? zone_id
             zids << zone_id
+            lmts << limit
+          else
+            lmts[zids.index(zone_id)] = limit
           end
         else
           if zids.include? zone_id
-            zids.delete(zone_id)
+            idx = zids.index(zone_id)
+            zids.delete_at(idx)
+            lmts.delete_at(idx)
           end
         end
         @zones = zids.join(ITEM_SEPARATOR)
+        @limits = lmts.join(ITEM_SEPARATOR)
       end
 
       # It returns an array containing zone ids in integer.
       def zones_in_array
         @zones.strip.split(ITEM_SEPARATOR).map { |i| i.to_i }
+      end
+
+      # It returns an array containing limits on each zone in integer.
+      def limits_in_array
+        @limits.strip.split(ITEM_SEPARATOR).map { |i| i.to_i }
       end
 
       protected
@@ -138,6 +158,7 @@ SQL
         raise_if_nil_and_not_class(@enabled, 'enabled', Integer)
         raise_if_nil_or_not_class( @zones,   'zones',   String)
         raise_if_nil_and_not_class(@vm_cnt,  'vm_cnt',  Integer)
+        raise_if_nil_or_not_class( @limits,  'limits',  String)
       end
 
       def to_create_record_str
@@ -145,7 +166,8 @@ SQL
           "'#{@name}',"  +
           "#{@enabled}," +
           "'#{@zones}'," +
-          "#{@vm_cnt}"
+          "#{@vm_cnt},"  +
+          "#{@limits}"
       end
 
       def to_find_id_str
@@ -157,7 +179,8 @@ SQL
           "name='#{@name}',"     +
           "enabled=#{@enabled}," +
           "zones='#{@zones}',"   +
-          "vm_cnt=#{@vm_cnt}"
+          "vm_cnt=#{@vm_cnt},"   +
+          "limits='#{@limits}'"
       end
 
       def self.each(one_session)
@@ -174,7 +197,7 @@ SQL
       end
 
       def self.setup_attrs(u, attrs)
-        return u unless attrs.size == 6
+        return u unless attrs.size == 7
         u.instance_eval do
           @id      = attrs[0].to_i
         end
@@ -183,6 +206,7 @@ SQL
         u.enabled = attrs[3]
         u.zones   = attrs[4]
         u.vm_cnt  = attrs[5]
+        u.limits  = attrs[6]
         return u
       end
 

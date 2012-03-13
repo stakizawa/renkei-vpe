@@ -12,7 +12,6 @@ module RenkeiVPE
       :passwd        => "user.passwd",
       :enable        => "user.enable",
       :enable_zone   => "user.enable_zone",
-      :limit         => "user.limit",
     }
 
     # Creates a User description with just its identifier
@@ -93,23 +92,13 @@ module RenkeiVPE
     end
 
     # Enables the User to use the Zone
-    def enable_zone(zone)
-      set_zone_enabled(true, zone)
+    def enable_zone(zone, limit)
+      set_zone_enabled(true, zone, limit)
     end
 
     # Disables the User to use the Zone
     def disable_zone(zone)
       set_zone_enabled(false, zone)
-    end
-
-    # Set a limit to the User
-    def limit(number)
-      return Error.new('ID not defined') if !@pe_id
-
-      rc = @client.call(USER_METHODS[:limit], @pe_id, number)
-      rc = nil if !RenkeiVPE.is_error?(rc)
-
-      return rc
     end
 
     private
@@ -123,11 +112,11 @@ module RenkeiVPE
       return rc
     end
 
-    def set_zone_enabled(enabled, zone)
+    def set_zone_enabled(enabled, zone, limit=-1)
       return Error.new('ID not defined') if !@pe_id
 
-      rc = @client.call(USER_METHODS[:enable_zone], @pe_id, enabled, zone)
-      rc = nil if !RenkeiVPE.is_error?(rc)
+      rc = @client.call(USER_METHODS[:enable_zone], @pe_id, enabled,
+                        zone, limit)
 
       return rc
     end

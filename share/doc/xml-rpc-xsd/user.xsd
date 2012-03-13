@@ -11,9 +11,9 @@
         <xs:element name="NAME" type="xs:string"/>
         <xs:element name="PASSWORD" type="xs:string"/>
         <xs:element name="ENABLED" type="xs:integer"/>
-        <xs:element name="VM_CNT" type="xs:integer"/>
         <xs:element name="ZONE_IDS" type="xs:string"/>
         <xs:element name="ZONE_NAMES" type="xs:string"/>
+        <xs:element name="ZONE_LIMITS" type="xs:string"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
