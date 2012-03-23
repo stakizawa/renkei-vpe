@@ -1,4 +1,6 @@
 #! /bin/env ruby
+require 'rubygems'
+require 'sqlite3'
 
 mgrt_name = File.basename(__FILE__).split('.')[0]
 
@@ -24,7 +26,13 @@ unless found
   print "    Is this OK to apply? [Y/n]:"
   str = STDIN.gets
   if str[0] == ?y || str[0] == ?Y ||str[0] == ?\n
-    system("sqlite3 #{dbfile} 'ALTER TABLE virtual_machines ADD info TEXT;' 2>/dev/null")
+    # add 'info' field
+    begin
+      db = SQLite3::Database.new(dbfile)
+      db.execute('ALTER TABLE virtual_machines ADD info TEXT')
+    ensure
+      db.close
+    end
     puts "    Migration is done."
   else
     puts "    Migration is canceled."

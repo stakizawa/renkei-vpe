@@ -31,23 +31,37 @@ unless found
   print "    Is this OK to apply? [Y/n]:"
   str = STDIN.gets
   if str[0] == ?y || str[0] == ?Y ||str[0] == ?\n
-    system("sqlite3 #{dbfile} 'ALTER TABLE users ADD limits TEXT;' 2>/dev/null")
-
+    # add 'limits' field
     begin
       db = SQLite3::Database.new(dbfile)
-      rows = db.execute('select * from users')
+      db.execute('ALTER TABLE users ADD limits TEXT')
     ensure
       db.close
     end
-    rows.each do |user|
+
+    # set initial values to 'limits' field
+    begin
+      db = SQLite3::Database.new(dbfile)
+      users = db.execute('SELECT * FROM users')
+    ensure
+      db.close
+    end
+    users.each do |user|
       zids = user[4].strip.split(';')
+      lmts_str = ''
       if zids.size > 0
         lmts = []
         zids.size.times do |i|
           lmts << '1'
         end
         lmts_str = lmts.join(';')
-        system("sqlite3 #{dbfile} 'UPDATE users SET limits=\"#{lmts_str}\" where id=#{user[0]};' 2>/dev/null")
+      end
+
+      begin
+        db = SQLite3::Database.new(dbfile)
+        users = db.execute("UPDATE users SET limits='#{lmts_str}' WHERE id=#{user[0]}")
+      ensure
+        db.close
       end
     end
     puts "    Migration is done."
