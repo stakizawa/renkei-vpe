@@ -33,14 +33,14 @@ fi
 
 count=0
 while [ $(virsh --connect $LIBVIRT_URI --readonly dominfo $deploy_id > /dev/null 2>&1; echo $?) = "0" ]
-do 
-	sleep $POLL_INTERVAL
-	if [ "$count" -gt "$TIMEOUT" ]
-	then
-		virsh --connect $LIBVIRT_URI destroy $deploy_id
-		exit 0
-	fi
-	let count=count+$POLL_INTERVAL
+do
+    sleep $POLL_INTERVAL
+    if [ "$count" -gt "$TIMEOUT" ]
+    then
+        virsh --connect $LIBVIRT_URI destroy $deploy_id
+        exit 0
+    fi
+    let count=count+$POLL_INTERVAL
 done
 
 sleep 4
