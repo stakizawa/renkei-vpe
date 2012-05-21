@@ -393,6 +393,8 @@ when 'show'
           value = Time.at(value).strftime("%m/%d %H:%M:%S")
         end
         puts str % ["REGISTER TIME", value]
+        # print Image size
+        puts str % ["SIZE", image['SIZE']]
         # print Public flag
         if image['PUBLIC'].to_i == 1
           public_str = "Yes"

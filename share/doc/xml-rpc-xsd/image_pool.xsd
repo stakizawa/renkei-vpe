@@ -26,6 +26,7 @@
         <xs:element name="STATE" type="xs:integer"/>
         <xs:element name="RUNNING_VMS" type="xs:integer"/>
         <xs:element name="TEMPLATE" type="xs:anyType"/>
+        <xs:element name="SIZE" type="xs:string"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>

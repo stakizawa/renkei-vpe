@@ -72,7 +72,10 @@ module RenkeiVPE
           else # flag == -1
           end
 
-          call_one_xmlrpc('one.imagepool.info', session, flag)
+          rc = call_one_xmlrpc('one.imagepool.info', session, flag)
+          raise rc[1] unless rc[0]
+          doc = weave_image_size_to_xml(rc[1], 'IMAGE_POOL/')
+          [true, doc.to_s]
         end
       end
 
@@ -113,7 +116,10 @@ module RenkeiVPE
       #             about the image
       def info(session, id)
         task('rvpe.image.info', session) do
-          call_one_xmlrpc('one.image.info', session, id)
+          rc = call_one_xmlrpc('one.image.info', session, id)
+          raise rc[1] unless rc[0]
+          doc = weave_image_size_to_xml(rc[1])
+          [true, doc.to_s]
         end
       end
 
@@ -248,6 +254,29 @@ EOT
           call_one_xmlrpc('one.image.update', session, id,
                           'DESCRIPTION', new_description)
         end
+      end
+
+      private
+
+      # It weaves 'SIZE' element that represents image size to the
+      # specified xml string.
+      def weave_image_size_to_xml(xmlstr, xpath_prefix='')
+        doc = REXML::Document.new(xmlstr)
+        doc.elements.each(xpath_prefix + 'IMAGE') do |img_e|
+          img_file_path = nil
+          img_e.each_element('SOURCE') do |src_e|
+            img_file_path = src_e.get_text.to_s
+          end # img_file_path must not be nil
+          size_e = REXML::Element.new('SIZE')
+          if FileTest.exist?(img_file_path)
+            text = File.size(img_file_path).to_s
+          else
+            text = '-'
+          end
+          size_e.add(REXML::Text.new(text))
+          img_e.add(size_e)
+        end
+        doc
       end
 
     end

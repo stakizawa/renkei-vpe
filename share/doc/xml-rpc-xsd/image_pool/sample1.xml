@@ -20,6 +20,7 @@
       <PATH><![CDATA[/work/vms/rpop-vms/vm00/disk.img]]></PATH>
       <TYPE><![CDATA[OS]]></TYPE>
     </TEMPLATE>
+    <SIZE>591140864</SIZE>
   </IMAGE>
   <IMAGE>
     <ID>8</ID>
@@ -42,5 +43,6 @@
       <PATH><![CDATA[/work/vms/rpop-vms/vm02-sl309/disk.img]]></PATH>
       <TYPE><![CDATA[OS]]></TYPE>
     </TEMPLATE>
+    <SIZE>599851008</SIZE>
   </IMAGE>
 </IMAGE_POOL>
