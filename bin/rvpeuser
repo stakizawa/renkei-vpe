@@ -36,6 +36,7 @@ $: << RUBY_LIB_LOCATION
 require 'renkei-vpe'
 require 'client_utilities'
 require 'optparse'
+require 'stringio'
 
 ##############################################################################
 # Global variables
@@ -211,10 +212,31 @@ when 'info'
   user = RenkeiVPE::User.new_with_id(uid, client)
   rc = user.info
   if is_successful?(rc)
+    # redirect output to a StringIO object
+    sio = StringIO.new
+    $stdout = sio
     print_user(user, xml_output, false)
-    puts
-    print_header("%-80s", "ASSIGNED VM LEASES", true)
-    system("rvpelease list #{name}")
+    unless xml_output
+      puts
+      print_header("%-80s", "ASSIGNED VM LEASES", true)
+    end
+    # print lease list assigned to the user
+    opts = (xml_output)? ' -x' : ''
+    lease_str = `rvpelease list #{name} #{opts}`
+    sio << lease_str
+
+    # output the results
+    $stdout = STDOUT
+    if xml_output
+      doc = REXML::Document.new('<USER_INFO>' + sio.string + '</USER_INFO>')
+      formatter = REXML::Formatters::Pretty.new
+      formatter.compact = true
+      xml_str = ''
+      formatter.write(doc.root, xml_str)
+      puts xml_str
+    else
+      puts sio.string
+    end
   else
     $stderr.puts rc.message
     exit 1
