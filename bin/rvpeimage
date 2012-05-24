@@ -69,93 +69,113 @@ list_columns = {
 }
 
 ##############################################################################
+# Functions
+##############################################################################
+def exit_on_parse_error(errmsg=nil)
+  $stderr.puts errmsg if errmsg
+  $stderr.puts
+  $stderr.puts "Run '#{CMD_NAME} help' to see the usage."
+  exit 1
+end
+
+##############################################################################
 # main
 ##############################################################################
 
 begin
   parser = OptionParser.new
   parser.banner = <<EOT
-Usage:
-    #{CMD_NAME} command <options>
+Name
+    #{CMD_NAME} - manipulate OS images on RENKEI-VPE
 
-Commands:
-    import definition_file
-        import an image to the system which is defined in definition_file.
+Synopsis
+    #{CMD_NAME} <command> [ options ]
+
+Description
+    This command  manipulates  OS images on RENKEI-VPE.  The function this
+    command  offers are  register/unregister/export  OS images, publish/
+    unpublish and make is persistent/nonpersistent them.  It also provides
+    a way to modify the description of OS images, show and list them.
+
+    The <command> is a name of a subcommand of #{CMD_NAME} command.
+
+Commands
+    import <definition_file>
+        Import an OS image to the system whose context is defined in
+        <definition_file>.
 
         $ #{CMD_NAME} import centos.dsk
 
-    export image_name file_name
-        export an image named image_name to a file named file_name.
-        It generates one directory containing two files. The directory
-        name is file_name.
-        In the directory, there are the following two files.
-          disk.img : disk image for RENKEI-VPE
+    export <image_name> <file_name>
+        Export an OS image named <image_name> to a file named <file_name>.
+        It generates one directory containing two files.  The directory is
+        created with  <file_name> name.  In the directory,  the following
+        two files are stored.
+          disk.img : disk image file
           attr.txt : a file contains attributes of the disk image
 
         $ #{CMD_NAME} export centos5.5_virtio centos5.5_backup
 
-    delete image_names
-        delete specified images. image_names can be names of images.
+    delete <image_name> [ <image_name> ... ]
+        Delete specified OS images.
 
         $ #{CMD_NAME} delete centos5.5_virtio
         $ #{CMD_NAME} delete centos5.5_virtio 'ttylinux sample'
 
 
-    publish image_names
-        publish specified images. image_names can be names of images.
+    publish <image_name> [ <image_name> ... ]
+        Publish specified OS images.
 
         $ #{CMD_NAME} publish centos5.5_virtio
         $ #{CMD_NAME} publish centos5.5_virtio 'ttylinux sample'
 
-    unpublish image_names
-        unpublish specified images. image_names can be names of images.
+    unpublish
+        Unpublish specified images.
 
         $ #{CMD_NAME} unpublish centos5.5_virtio
         $ #{CMD_NAME} unpublish centos5.5_virtio 'ttylinux sample'
 
-    persistent image_names
-        make specified images persistent. image_names can be names of
-        images.
+    persistent <image_name> [ <image_name> ... ]
+        Make specified OS images persistent.
 
         $ #{CMD_NAME} persistent centos5.5_virtio
         $ #{CMD_NAME} persistent centos5.5_virtio 'ttylinux sample'
 
-    nonpersistent image_names
-        make specified images nonpersistent. image_names can be names
-        of images.
+    nonpersistent <image_name> [ <image_name> ... ]
+        Make specified OS images nonpersistent.
 
         $ #{CMD_NAME} nonpersistent centos5.5_virtio
         $ #{CMD_NAME} nonpersistent centos5.5_virtio 'ttylinux sample'
 
-    description image_name new_description
-        update description of the image.
+    description <image_name> <new_description>
+        Update description of the OS image.
 
         $ #{CMD_NAME} description centos5.5 'Updated CentOS 5.5 image'
 
 
-    list <-x> <-v> <all|mine|user_name>
-        list registered images you can use.
-        If one of all(a), mine(m) and user_name is specified, it lists,
-           all(a)    : all public images and user's images
-           mine(m)   : user's images
-           user_name : images belong to the user
+    list [ -x ] [ -v]  [ all|mine|<user_name> ]
+        List registered OS images.
+
+        If one of all(a), mine(m) and <user_name> is given, it lists
+           all(a)      : all public images and user's images
+           mine(m)     : user's images
+           <user_name> : images belong to the user
 
         If none of them are specified, it assumes that 'mine' is specified.
-        'all' and user_name can be specified only by the administrator.
-        'user_name' can be name or id of a user.
+        'all' and <user_name> can be specified only by the administrator.
+        <user_name> can be name or id of a user.
 
-    show <-x> <-v> image_names
-        show information about specified images. image_names can be names
-        of images.
+    show [ -x ] [ -v ] <image_name> [ <image_name> ... ]
+        Show information about specified OS images.
 
         $ #{CMD_NAME} show centos5.5_virtio
         $ #{CMD_NAME} show centos5.5_virtio 'ttylinux sample'
 
 
     help
-        show this message.
+        Show this message.
 
-Options:
+Options
 EOT
 
   parser.on('-x', '--xml', ': xml output mode') do
@@ -166,14 +186,16 @@ EOT
     verbose = true
   end
 
+  parser.on('-h', '--help', ': Show this message') do
+    puts parser.help
+    exit 0
+  end
+
   parser.parse!(ARGV)
-rescue OptionParser::ParseError
-  $stderr.puts parser.help
-  exit 1
+rescue OptionParser::ParseError => e
+  exit_on_parse_error(e.message)
 rescue => e
-  $stderr.puts e.message + "\n\n"
-  $stderr.puts parser.help
-  exit 1
+  exit_on_parse_error(e.message)
 end
 
 command = ARGV.shift
@@ -424,8 +446,7 @@ when 'help'
   puts parser.help
 
 else
-  $stderr.puts "Unknown command: #{command}"
-  $stderr.puts parser.help
+  exit_on_parse_error("Unknown command: #{command}")
 
 end
 

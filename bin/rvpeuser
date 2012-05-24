@@ -101,6 +101,13 @@ def print_user(user, xml_output, verbose=false)
   end
 end
 
+def exit_on_parse_error(errmsg=nil)
+  $stderr.puts errmsg if errmsg
+  $stderr.puts
+  $stderr.puts "Run '#{CMD_NAME} help' to see the usage."
+  exit 1
+end
+
 ##############################################################################
 # main
 ##############################################################################
@@ -108,97 +115,106 @@ end
 begin
   parser = OptionParser.new
   parser.banner = <<EOT
-Usage:
-    #{CMD_NAME} command <options>
+Name
+    #{CMD_NAME} - show and edit user information
 
-Notes:
-    This command can be used only by administrator.
+Synopsis
+    #{CMD_NAME} <command> [ options ]
 
-Commands:
+Description
+    This command shows and edits information of users who use RENKEI-VPE.
+    The administrator of RENKEI-VPE can create, delete, enable, disable and
+    show  specified  users  and list all users.  The administrator can also
+    change  password of users and  grant/rob  permissions  to use specified
+    zones.  A user can see his/her information.
+
+    The <command> is a name of a subcommand of #{CMD_NAME} command.
+
+Commands
     info
-        show my information.
+        Show user's information.
 
         $ #{CMD_NAME} info
 
 
-    create user_name password
-        create a new user with the specified password.
+    create <user_name> <password>
+        Create a new user with the specified password.
 
         $ #{CMD_NAME} create user1 password1
 
-    delete user_name
-        delete a user from the system. site_name can be name or id of
-        the user.
+    delete <user_name>
+        Delete a user.  <user_name> can be name or id of the user.
 
         $ #{CMD_NAME} delete user1
         $ #{CMD_NAME} delete 1
 
-    passwd user_name password
-        change password of the user. user_name can be name or id of the
+    passwd <user_name> <password>
+        Change password of the user.  <user_name> can be name or id of the
         user.
 
         $ #{CMD_NAME} passwd user1 password1
 
 
-    enable user_names
-        enable users. An enabled user can use the system. user_names can
-        be names or ids of users.
+    enable <user_name> [ <user_name> ... ]
+        Enable users.  An enabled user can use the system. <user_name> can
+        be name or id of a user.
 
         $ #{CMD_NAME} enable user1 user2
         $ #{CMD_NAME} enable 1
 
-    disable user_names
-        disable users. A disabled user can not use the system. user_names
-        can be names or ids of users.
+    disable <user_name> [ <user_name> ... ]
+        Disable users.  A disabled user can not use the system. <user_name>
+        can be name or id of a user.
 
         $ #{CMD_NAME} disable user1 user2
         $ #{CMD_NAME} disable 1
 
 
-    enable_zone user_name zone_name <vm_limit>
-        allow the specified user to run VMs in the zone. When a user is
-        enaled, the user can run VMs in the zone upto vm_limit count.
-        Default of vm_limit is 1.
+    enable_zone <user_name> <zone_name> [ <vm_limit> ]
+        Allow  the specified user  to run VMs in the zone.  When a user is
+        enaled,  the user  can run VMs  in the zone  upto <vm_limit> count.
+        Default of <vm_limit> is 1.
 
         $ #{CMD_NAME} enable_zone user1 'tokyo tech' 10
 
-    disable_zone user_name zone_names
-        prohibit the specified user to use the zone. When a user is
+    disable_zone <user_name> <zone_name> [ <zone_name> ... ]
+        Prohibit  the specified user  to use the zone.  When a user is
         prohibited, the user can not run VMs in the zone.
-        zone_names can be names of zones.
 
         $ #{CMD_NAME} disable_zone user1 'tokyo tech'
 
 
-    list <-x>
+    list [ -x ]
         list registered users.
 
-    show <-x> user_names
-        show information about specified users. user_names can be names
-        or ids of users.
+    show [ -x ] <user_name> [ <user_name> ... ]
+        Show information about specified users. <user_name> can be name or
+        id of a user.
 
         $ #{CMD_NAME} show user1 user2
         $ #{CMD_NAME} show 1 2
 
 
     help
-        show this message.
+        Show this message.
 
-Options:
+Options
 EOT
 
-  parser.on('-x', '--xml', ': xml output mode') do
+  parser.on('-x', '--xml', ': Output in xml') do
     xml_output = true
   end
 
+  parser.on('-h', '--help', ': Show this message') do
+    puts parser.help
+    exit 0
+  end
+
   parser.parse!(ARGV)
-rescue OptionParser::ParseError
-  $stderr.puts parser.help
-  exit 1
+rescue OptionParser::ParseError => e
+  exit_on_parse_error(e.message)
 rescue => e
-  $stderr.puts e.message + "\n\n"
-  $stderr.puts parser.help
-  exit 1
+  exit_on_parse_error(e.message)
 end
 
 command = ARGV.shift
@@ -405,8 +421,7 @@ when 'help'
   puts parser.help
 
 else
-  $stderr.puts "Unknown command: #{command}"
-  $stderr.puts parser.help
+  exit_on_parse_error("Unknown command: #{command}")
 
 end
 

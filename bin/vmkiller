@@ -46,6 +46,13 @@ def logtime
   now.strftime("%b %e %Y %H:%M:%S")
 end
 
+def exit_on_parse_error(errmsg=nil)
+  $stderr.puts errmsg if errmsg
+  $stderr.puts
+  $stderr.puts "Run '#{CMD_NAME} help' to see the usage."
+  exit 1
+end
+
 ##############################################################################
 # argument parser
 ##############################################################################
@@ -53,16 +60,18 @@ end
 begin
   parser = OptionParser.new
   parser.banner = <<EOT
-Usage:
-    #{CMD_NAME} <HOURS>
+Name
+    #{CMD_NAME} - automatically shutdown VMs
 
-    If HOURS is not specified, its default is 24.
+Synopsis
+    #{CMD_NAME} [ <HOURS> ]
 
-Notes:
+Description
     This command forcibly shutdowns VMs that have been running over a certain
-    hours.
+    hours.  If <HOURS> is not specified, its default is 24.  This command can
+    be run only by the RENKEI-VPE administrator.
 
-Options:
+Options
 EOT
 
   parser.on('-f EXCEPTION_USERS_FILE',
@@ -87,6 +96,11 @@ EOT
     $log_file = file
   end
 
+  parser.on('-h', '--help', ': Show this message') do
+    puts parser.help
+    exit 0
+  end
+
   parser.parse!(ARGV)
   unless ARGV.empty?
     $max_hours = ARGV.shift
@@ -99,13 +113,9 @@ EOT
     $max_hours = $max_hours.to_i
   end
 rescue OptionParser::ParseError
-  $stderr.puts parser.help
-  exit 1
+  exit_on_parse_error(e.message)
 rescue => e
-  $stderr.puts 'Error:'
-  $stderr.puts '    ' + e.message + "\n\n"
-  $stderr.puts parser.help
-  exit 1
+  exit_on_parse_error(e.message)
 end
 
 ##############################################################################
@@ -153,8 +163,6 @@ end
 
 log_f.puts "[#{logtime}] #{CMD_NAME} stops."
 log_f.close
-
-
 
 
 ### Local variables:

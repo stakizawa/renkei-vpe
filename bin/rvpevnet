@@ -203,6 +203,13 @@ def list_leases(args, verbose, client)
   end
 end
 
+def exit_on_parse_error(errmsg=nil)
+  $stderr.puts errmsg if errmsg
+  $stderr.puts
+  $stderr.puts "Run '#{CMD_NAME} help' to see the usage."
+  exit 1
+end
+
 ##############################################################################
 # main
 ##############################################################################
@@ -210,102 +217,106 @@ end
 begin
   parser = OptionParser.new
   parser.banner = <<EOT
-Usage:
-    #{CMD_NAME} command <options>
+Name
+    #{CMD_NAME} - manipulate virtual networks
 
-Commands:
-    adddns zone_name vnet_name dns_server_names
-        add dns servers referred by VMs that belong to the specified
-        virtual network and run on hosts in the specified zone.
-        dns_server_names can be names of dns servers.
+Synopsis
+    #{CMD_NAME} <command> [ options ]
+
+Description
+    This command manipulates virtual networks.  The administrator can add/
+    remove dns/ntp servers,  add/delete leases  to/from virtual networks.
+    Users can list dns/ntp servers and show leases and information of the
+    virtual networks.
+
+    The <command> is a name of a subcommand of #{CMD_NAME} command.
+
+Commands
+    adddns <zone_name> <vnet_name> <dns_server_name> \\
+           [ <dns_server_name> ... ]
+        Add  dns servers  referred by VMs  that belong  to the specified
+        virtual network in the specified zone.
 
         $ #{CMD_NAME} adddns 'tokyo tech' csi_grid  131.112.5.20
 
-    removedns zone_name vnet_name dns_server_names
-        remove dns servers referred by VMs that belong to the specified
-        virtual network and run on hosts in the specified zone.
-        dns_server_names can be names of dns servers.
+    removedns <zone_name> <vnet_name> <dns_server_name> \\
+              [ <dns_server_name> ... ]
+        Remove  dns servers referred by VMs that belong to the specified
+        virtual network in the specified zone.
 
         $ #{CMD_NAME} removedns 'tokyo tech' csi_grid 131.112.5.20
 
-    listdns zone_name <vnet_names>
-        list dns servers referred by VMs that belong to the specified
-        virtual networks and run on hosts in the specified zone.
-        vnet_names can be names of virtual networks. If vnet_names are
-        not given, it lists dns servers in all virtual networks in the
-        zone.
+    listdns <zone_name> [ <vnet_name> ... ]
+        List  dns servers  referred by VMs  that belong to the specified
+        virtual networks in the specified zone.  If <vnet_name> are not
+        given, it lists dns servers in all virtual networks in the zone.
 
         $ #{CMD_NAME} listdns 'tokyo tech' csi_grid
         $ #{CMD_NAME} listdns 'tokyo tech' csi_grid 'campus net1'
 
 
-    addntp zone_name vnet_name ntp_server_names
-        add ntp servers referred by VMs that belong to the specified
-        virtual network and run on hosts in the specified zone.
-        ntp_server_names can be names of ntp servers.
+    addntp <zone_name> <vnet_name> <ntp_server_name> \\
+           [ <ntp_server_name> ... ]
+        Add  ntp servers  referred by VMs  that belong to the specified
+        virtual network in the specified zone.
 
         $ #{CMD_NAME} addntp 'tokyo tech' csi_grid 131.112.5.20
 
-    removentp zone_name vnet_name ntp_server_names
-        remove ntp servers referred by VMs that belong to the specified
-        virtual network and run on hosts in the specified zone.
-        ntp_server_names can be names of ntp servers.
+    removentp <zone_name> <vnet_name> <ntp_server_name> \\
+              [ <ntp_server_name> ... ]
+        Remove  ntp servers referred by VMs that belong to the specified
+        virtual network in the specified zone.
 
         $ #{CMD_NAME} removentp 'tokyo tech' csi_grid 131.112.5.20
 
-    listntp zone_name <vnet_names>
-        list ntp servers referred by VMs that belong to the specified
-        virtual networks and run on hosts in the specified zone.
-        vnet_names can be names of virtual networks. If vnet_names are
-        not given, it lists ntp servers in all virtual networks in the
-        zone.
+    listntp <zone_name> [ <vnet_name> ... ]
+        List  ntp servers referred by VMs  that belong to the specified
+        virtual networks in the specified zone.  If <vnet_name> are not
+        given, it lists ntp servers in all virtual networks in the zone.
 
         $ #{CMD_NAME} listntp 'tokyo tech' csi_grid
         $ #{CMD_NAME} listntp 'tokyo tech' csi_grid 'campus net1'
 
 
-    addlease zone_name vnet_name lease_name lease_address
-        add a vm lease to the specified virtual network in the specified
+    addlease <zone_name> <vnet_name> <lease_name> <lease_address>
+        Add a VM lease to the specified virtual network in the specified
         zone.
 
         $ #{CMD_NAME} addlease 'tokyo tech' csi_grid \\
         > vm00.titech.ac.jp 131.112.5.24
 
-    removelease zone_name vnet_name lease_name
-        remove a vm lease from the specified virtual network in the
+    removelease <zone_name> <vnet_name> <lease_name>
+        Remove  a VM lease  from the specified  virtual network in the
         specified zone.
 
         $ #{CMD_NAME} removelease 'tokyo tech' csi_grid vm00.titech.ac.jp
 
-    leases zone_name <vnet_names>
-        list virtual host leases that belong to the specified virtual
-        networks in the specified zone.
-        vnet_names can be names of virtual networks. If vnet_names are
-        not given, it lists all leases in all virtual networks in the
-        zone.
+    leases <zone_name> [ <vnet_name> ... ]
+        List  virtual host leases  that belong to the specified virtual
+        networks in the specified zone.  If <vnet_name> are not given,
+        it lists all leases in all virtual networks in the zone.
 
         $ #{CMD_NAME} leases 'tokyo tech' csi_grid
         $ #{CMD_NAME} leases 'tokyo tech' csi_grid 'campus net1'
 
 
-    show <-x> <-v> zone_name <vnet_names>
-        show information about virtual networks under the specified zone.
-        If vnet_names, which can be names of virtual networks, are given,
-        show information about given VNs.
+    show [ -x ] [ -v ] <zone_name> [ <vnet_name> ... ]
+        Show information  about virtual networks  in the specified zone.
+        If <vnet_name>, which can be names of virtual networks, are given,
+        show information about them.
 
         $ #{CMD_NAME} show 'tokyo tech' csi_grid
         $ #{CMD_NAME} show 'tokyo tech' csi_grid 'campus net1'
 
 
-    list <-x>
-        list all virtual networks.
-        This is a debug-purpose command for #{CMD_NAME}.
+    list [ -x ]
+        List all virtual networks. This command is used for debugging.
 
 
     help
-        show this message.
+        Show this message.
 
-Options:
+Options
 EOT
 
   parser.on('-v', ': verbose output mode') do
@@ -316,14 +327,16 @@ EOT
     xml_output = true
   end
 
+  parser.on('-h', '--help', ': Show this message') do
+    puts parser.help
+    exit 0
+  end
+
   parser.parse!(ARGV)
-rescue OptionParser::ParseError
-  $stderr.puts parser.help
-  exit 1
+rescue OptionParser::ParseError => e
+  exit_on_parse_error(e.message)
 rescue => e
-  $stderr.puts e.message + "\n\n"
-  $stderr.puts parser.help
-  exit 1
+  exit_on_parse_error(e.message)
 end
 
 command = ARGV.shift
@@ -461,8 +474,7 @@ when 'help'
   puts parser.help
 
 else
-  $stderr.puts "Unknown command: #{command}"
-  $stderr.puts parser.help
+  exit_on_parse_error("Unknown command: #{command}")
 
 end
 

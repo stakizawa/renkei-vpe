@@ -83,6 +83,13 @@ def print_networks(zone, print_zone_name=false)
                   'no networks', print_zone_name)
 end
 
+def exit_on_parse_error(errmsg=nil)
+  $stderr.puts errmsg if errmsg
+  $stderr.puts
+  $stderr.puts "Run '#{CMD_NAME} help' to see the usage."
+  exit 1
+end
+
 ##############################################################################
 # main
 ##############################################################################
@@ -90,76 +97,84 @@ end
 begin
   parser = OptionParser.new
   parser.banner = <<EOT
-Usage:
-    #{CMD_NAME} command <options>
+Name
+    #{CMD_NAME} - manipulate zones
 
-Commands:
-    create definition_file
-        create a zone and register it into the system.
+Synopsis
+    #{CMD_NAME} <command> [ options ]
+
+Description
+    This command manipulate zones where VM runs.  The administrator can 1)
+    create/delete zones, 2) add/remove physical hosts to/from zones and 3)
+    add/remove virtual networks to/from zones.  Users can show information
+    about zones, such as list of physical hosts, list of virtual networks.
+
+    The <command> is a name of a subcommand of #{CMD_NAME} command.
+
+Commands
+    create <definition_file>
+        Create a zone.
 
         $ #{CMD_NAME} create titech_site.vpe
 
-    delete zone_name
-        delete a zone from the system.
+    delete <zone_name>
+        Delete a zone.
 
         $ #{CMD_NAME} delete 'tokyo tech'
 
 
-    addhost zone_name host_names
-        add specified hosts which run VMs to the specified zone.
-        host_names can be names of hosts.
+    addhost <zone_name> <host_name> [ <host_name> ... ]
+        Add specified physical hosts to the specified zone.
 
         $ #{CMD_NAME} addhost 'tokyo tech' rpop-titech.cc.titech.ac.jp
 
-    removehost zone_name host_names
-        remove specified hosts from the specified zone. host_names can be
-        names of hosts.
+    removehost <zone_name> <host_name> [ <host_name> ... ]
+        Remove specified hosts from the specified zone.
 
         $ #{CMD_NAME} deletehost 'tokyo tech' rpop-titech.cc.titech.ac.jp
 
-    listhost zone_name
-        list hosts that belong to the specified zone whose name is
-        zone_name.
+    listhost <zone_name>
+        List physical hosts that belong to the specified zone whose name is
+        <zone_name>.
 
         $ #{CMD_NAME} listhost 'tokyo tech'
 
 
-    addvnet zone_name definition_file
-        add a virtual network to the specified zone.
+    addvnet <zone_name> <definition_file>
+        Add a virtual network to the specified zone.
 
         $ #{CMD_NAME} addvnet 'tokyo tech' titech_vnet1.vpe
 
-    removevnet zone_name vnet_names
-        remove virtual networks from the specified zone. vnet_names can
-        be names of virtual networks.
+    removevnet <zone_name> <vnet_name> [ <vnet_name> ... ]
+        Remove virtual networks from the specified zone.
 
         $ #{CMD_NAME} removevnet 'tokyo tech' vnet1
 
-    listvnet zone_name
-        list virtual networks which blong to the specified zone.
+    listvnet <zone_name>
+        List virtual networks which blong to the specified zone.
 
         $ #{CMD_NAME} listvnet 'tokyo tech'
 
 
     sync
-        synchronizes probes with remote hosts in all zones.
+        Synchronizes probes with remote hosts in all zones.  This is an
+        administration command.
 
 
-    list <-x>
-        list registered zones you can use.
+    list [ -x ]
+        List registered zones.
 
-    show <-x> <-v> zone_names
-        show information about specified zones. zone_names can be names
-        of zones.
+    show [ -x ] [ -v ] <zone_name> [ <zone_name> ... ]
+        Show information about specified zones.
 
         $ #{CMD_NAME} show 'tokyo tech'
         $ #{CMD_NAME} show 'tokyo tech' nii
 
 
     help
-        show this message.
+        Show this message.
 
-Options:
+Options
 EOT
 
   parser.on('-x', '--xml', ': xml output mode') do
@@ -170,14 +185,16 @@ EOT
     verbose = true
   end
 
+  parser.on('-h', '--help', ': Show this message') do
+    puts parser.help
+    exit 0
+  end
+
   parser.parse!(ARGV)
-rescue OptionParser::ParseError
-  $stderr.puts parser.help
-  exit 1
+rescue OptionParser::ParseError => e
+  exit_on_parse_error(e.message)
 rescue => e
-  $stderr.puts e.message + "\n\n"
-  $stderr.puts parser.help
-  exit 1
+  exit_on_parse_error(e.message)
 end
 
 command = ARGV.shift
@@ -403,8 +420,7 @@ when 'help'
   puts parser.help
 
 else
-  $stderr.puts "Unknown command: #{command}"
-  $stderr.puts parser.help
+  exit_on_parse_error("Unknown command: #{command}")
 
 end
 

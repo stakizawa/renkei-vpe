@@ -136,6 +136,13 @@ def server_pid
   File.read(PID_FILE).to_i
 end
 
+def exit_on_parse_error(errmsg=nil)
+  $stderr.puts errmsg if errmsg
+  $stderr.puts
+  $stderr.puts "Run '#{CMD_NAME} help' to see the usage."
+  exit 1
+end
+
 ##############################################################################
 # main
 ##############################################################################
@@ -144,40 +151,46 @@ daemon_mode = true
 begin
   parser = OptionParser.new
   parser.banner = <<EOT
-Usage:
-    #{CMD_NAME} command <options>
+NAME
+    #{CMD_NAME} - RENKEI-VPE service
 
-Commands:
-    start <-f>
-        start daemon.
+Synopsis
+    #{CMD_NAME} <command> [ options ]
+
+Commands
+    start [ -f ]
+        Start daemon.
 
         $ #{CMD_NAME} start
 
     stop
-        stop daemon.
+        Stop daemon.
 
         $ #{CMD_NAME} stop
 
     status
-        ask status the daemon.
+        Ask the daemon its status.
 
         $ #{CMD_NAME} status
 
-Options:
+Options
 EOT
 
   parser.on('-f', '--foreground', ": run #{CMD_NAME} in foreground") do
     daemon_mode = false
   end
 
+  parser.on('-h', '--help', ': Show this message') do
+    puts parser.help
+    exit 0
+  end
+
   parser.parse!(ARGV)
-rescue OptionParser::ParseError
+rescue OptionParser::ParseError => e
+  exit_on_parse_error(e.message)
   $stderr.puts parser.help
-  exit 1
 rescue => e
-  $stderr.puts e.message + "\n\n"
-  $stderr.puts parser.help
-  exit 1
+  exit_on_parse_error(e.message)
 end
 
 exit_code = 0
@@ -222,8 +235,7 @@ when 'help'
   puts parser.help
 
 else
-  $stderr.puts "Unknown command: #{command}"
-  $stderr.puts parser.help
+  exit_on_parse_error("Unknown command: #{command}")
 
 end
 

@@ -72,121 +72,142 @@ list_columns = {
 }
 
 ##############################################################################
+# Functions
+##############################################################################
+def exit_on_parse_error(errmsg=nil)
+  $stderr.puts errmsg if errmsg
+  $stderr.puts
+  $stderr.puts "Run '#{CMD_NAME} help' to see the usage."
+  exit 1
+end
+
+##############################################################################
 # main
 ##############################################################################
 
 begin
   parser = OptionParser.new
   parser.banner = <<EOT
-Usage:
-    #{CMD_NAME} command <options>
+Name
+    #{CMD_NAME} - manipulate virtual machines
 
-Commands:
-    create vm_type image_name root_key_file zone network1<#lease1> \\
-                                                 <networkN<#leaseN>>
-        create a VM with the specified 'vm_type' in the specified 'zone'.
-        The VM uses an OS image whose name is 'image_name' and connects
-        to the specified networks, such as 'network1' etc. The default
-        gateway for the VM is provided from the first network. A user can
-        log in the VM with a ssh key whose public key is 'root_key_file'.
-        If an additional option 'lease', which is manually assigned by
-        the administrator to a user, is specified, the VM uses the lease
-        for its hostname and ip address.
+Synopsis
+    #{CMD_NAME} <command> [ options ]
 
-        vm_type can be name or id of a VM type.
-        image_name can be name or id of an OS image.
-        root_key_file is name of file.
-        zone_name can be name or id of a zone.
-        network can be name or id of a network in the zone.
-        lease can be name or id of a lease in the network.
+Description
+    This command manipulates VMs.  It provides the following functions;
+    1) create/shutdown VMs,  2) suspend/resume VMs,  3)forcibly shutdown/
+    restart VMs,  4) save the status of VMs,  and 5)show running VMs and
+    history.
+
+    The <command> is a name of a subcommand of #{CMD_NAME} command.
+
+Commands
+    create <vm_type> <image_name> <root_key_file> <zone> \\
+           <network1>[#<lease1>] [ <network2>[#<lease2>] ... ]
+        Create a VM  with the specified <vm_type>  in the specified <zone>.
+        The VM  uses  an OS image whose name is <image_name>  and connects
+        to  the specified networks,  such as  <network1>  etc.  The default
+        gateway  for the VM is provided from the first network.  A user can
+        log-in  to  the VM  with a ssh key  whose associated public key is
+        <root_key_file>. If an additional option <lease>, which is manually
+        assigned  by the administrator  to a user,  is specified  after '#'
+        delimiter, the VM uses the lease for its hostname and IP address.
+
+        <vm_type>       can be name or id of a VM type.
+        <image_name>    can be name or id of an OS image.
+        <root_key_file> is name of ssh public key file.
+        <zone_name>     can be name or id of a zone.
+        <network>       can be name or id of a network in the zone.
+        <lease>         can be name or id of a lease in the network.
 
         $ #{CMD_NAME} create small centos5.5 ./ssh_pubkey 'tokyo tech' \\
         > csi-grid
         $ #{CMD_NAME} create small centos5.5 ./ssh_pubkey 'tokyo tech' \\
         > csi-grid#vm00.cc.titech.ac.jp
 
-    shutdown vm_name
-        shutdown the specified VM. If a VM shutdowns all its files are
-        deleted.
-        vm_name can be name or id of a VM.
+    shutdown <vm_name>
+        Shutdown the specified VM.  If a VM shutdowns, all its files are
+        deleted.  <vm_name> can be name or id of a VM.
 
         $ #{CMD_NAME} shutdown vm00-nii
 
-    delete vm_name
-        delete the specified VM. It stops and unregister the VM from
-        Renkei VPE. Information about accounting still remains.
-        This command should be used only when the status of VM is
-        'unknown'.
+    delete <vm_name>
+        Delete  the specified VM.  It  stops and unregisters  the VM  from
+        RENKEI-VPE.  Information about accounting still remains on the DB.
+        This command should be used only when the status of VM is 'unknown'.
 
         $ #{CMD_NAME} delete vm00-nii
 
-    restart vm_name
-        restart the specified VM. This command should be used only when
+    restart <vm_name>
+        Restart the specified VM.  This command  should be used only when
         the status of VM is 'unknown'.
 
         $ #{CMD_NAME} restart vm00-nii
 
 
-    suspend vm_name
-        suspend the specified VM. A suspended VM can be resumed.
-        vm_name can be name or id of a VM.
+    suspend <vm_name>
+        Suspend the specified VM.  A suspended VM can be resumed. <vm_name>
+        can be name or id of a VM.
 
         $ #{CMD_NAME} suspend vm00-nii
 
-    resume vm_name
-        resume the specified VM.
-        vm_name can be name or id of a VM.
+    resume <vm_name>
+        Resume the specified suspended VM.  <vm_name> can be name or id of
+        a VM.
 
         $ #{CMD_NAME} resume vm00-nii
 
 
-    mark_save vm_name image_name <image_description>
-        mark a running VM to be seved on its shutdown. It just marks as
-        to save the OS image the specified VM uses, not actually saves.
-        vm_name can be name or id of a VM.
-        image_name is name of saved image.
-        image_description can be empty or a string that represents a
-        simple description of the saved image.
+    mark_save <vm_name> <image_name> [ <image_description> ]
+        Mark a running VM  to be seved on its shutdown.  It just marks and
+        do not actually saves the VM status as an OS image.
+
+        <vm_name>           can be name or id of a VM.
+        <image_name>        is name of saved image.
+        <image_description> can be empty or a string that contains a simple
+                            description of the saved image.
 
         $ #{CMD_NAME} mark_save vm00-nii saved_vm00-nii
         $ #{CMD_NAME} mark_save vm00-nii saved_vm00-nii 'test'
 
 
-    list <-x> <-v> <all|mine|user_name>
-        list VMs.
-        If one of all(a), mine(m) and user_name is specified, it lists,
-           all(a)    : all VMs
-           mine(m)   : user's VMs
-           user_name : VMs belong to the user
+    list [ -x ] [ -v ] [ all|mine|<user_name> ]
+        List VMs.
+
+        If one of all(a), mine(m) and <user_name> is given, it lists
+           all(a)      : all VMs
+           mine(m)     : user's VMs
+           <user_name> : VMs belong to the user
 
         If none of them are specified, it assumes that 'mine' is specified.
-        'all' and user_name can be specified only by the administrator.
-        'user_name' can be name or id of a user.
+        'all' and <user_name> can be specified only by the administrator.
+        <user_name> can be name or id of a user.
 
     history <-x> <-v> <all|mine|user_name>
-        list VMs including previously executed and finished ones.
-        If one of all(a), mine(m) and user_name is specified, it lists,
-           all(a)    : all VMs
-           mine(m)   : user's VMs
-           user_name : VMs belong to the user
+        List VMs including previously executed and finished ones.
+
+        If one of all(a), mine(m) and <user_name> is specified, it lists
+           all(a)      : all VMs
+           mine(m)     : user's VMs
+           <user_name> : VMs belong to the user
 
         If none of them are specified, it assumes that 'mine' is specified.
-        'all' and user_name can be specified only by the administrator.
-        'user_name' can be name or id of a user.
+        'all' and <user_name> can be specified only by the administrator.
+        <user_name> can be name or id of a user.
 
 
-    show <-x> <-v> <-V> vm_names
-        show information about specified VMs. vm_names can be names or
-        ids of VMs.
+    show [ -x ] [ -v ] [ -V ] <vm_name> [ <vm_name> ... ]
+        Show information about specified VMs.
 
         $ #{CMD_NAME} show vm00-nii
         $ #{CMD_NAME} show vm00-nii vm00-titech
 
 
     help
-        show this message.
+        Show this message.
 
-Options:
+Options
 EOT
 
   parser.on('-x', '--xml', ': xml output mode') do
@@ -201,14 +222,16 @@ EOT
     super_verbose = true
   end
 
+  parser.on('-h', '--help', ': Show this message') do
+    puts parser.help
+    exit 0
+  end
+
   parser.parse!(ARGV)
-rescue OptionParser::ParseError
-  $stderr.puts parser.help
-  exit 1
+rescue OptionParser::ParseError => e
+  exit_on_parse_error(e.message)
 rescue => e
-  $stderr.puts e.message + "\n\n"
-  $stderr.puts parser.help
-  exit 1
+  exit_on_parse_error(e.message)
 end
 
 verbose ||= super_verbose
@@ -516,8 +539,7 @@ when 'help'
   puts parser.help
 
 else
-  $stderr.puts "Unknown command: #{command}"
-  $stderr.puts parser.help
+  exit_on_parse_error("Unknown command: #{command}")
 
 end
 

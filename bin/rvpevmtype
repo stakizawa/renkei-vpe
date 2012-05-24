@@ -68,45 +68,61 @@ list_columns = {
 }
 
 ##############################################################################
+# Functions
+##############################################################################
+def exit_on_parse_error(errmsg=nil)
+  $stderr.puts errmsg if errmsg
+  $stderr.puts
+  $stderr.puts "Run '#{CMD_NAME} help' to see the usage."
+  exit 1
+end
+
+##############################################################################
 # main
 ##############################################################################
 
 begin
   parser = OptionParser.new
   parser.banner = <<EOT
-Usage:
-    #{CMD_NAME} command <options>
+Name
+    #{CMD_NAME} - manipulate virtual machine type configuration
 
-Notes:
-    This command can be used only by administrator.
+Synopsis
+    #{CMD_NAME} <command> [ options ]
 
-Commands:
-    create definition_file
-        create a new VM type
+Description
+    This command manipulate VM type configuration.  VM type containts 1)name,
+    2)number of CPUs,  3)amount of memory and  4)its short description.  The
+    administrator can create/delete VM type and the user can show them.
+
+    The <command> is a name of a subcommand of #{CMD_NAME} command.
+
+Commands
+    create <definition_file>
+        Create a new VM type
 
         $ #{CMD_NAME} create definition_file
 
-    delete type_name
-        delete a VM type from the system. type_name can be name or id
-        of VM type.
+    delete <type_name>
+        Delete a VM type from the system.  <type_name> can be name or id of
+        VM type.
 
         $ #{CMD_NAME} delete small
         $ #{CMD_NAME} delete 1
 
 
-    list <-x> <-v>
-        list registered VM types.
+    list [ -x ] [ -v ]
+        List registered VM types.
 
-    show <-x> <-v> type_names
-        show information about specified VM types. type_names can be
-        names or ids of VM types.
+    show [ -x ] [ -v ] <type_name> [ <type_name> ... ]
+        Show information about specified VM types.
 
         $ #{CMD_NAME} show small large
         $ #{CMD_NAME} show 1 2
 
 
     help
-        show this message.
+        Show this message.
 
 Options:
 EOT
@@ -119,14 +135,16 @@ EOT
     xml_output = true
   end
 
+  parser.on('-h', '--help', ': Show this message') do
+    puts parser.help
+    exit 0
+  end
+
   parser.parse!(ARGV)
-rescue OptionParser::ParseError
-  $stderr.puts parser.help
-  exit 1
+rescue OptionParser::ParseError => e
+  exit_on_parse_error(e.message)
 rescue => e
-  $stderr.puts e.message + "\n\n"
-  $stderr.puts parser.help
-  exit 1
+  exit_on_parse_error(e.message)
 end
 
 command = ARGV.shift
@@ -225,8 +243,7 @@ when 'help'
   puts parser.help
 
 else
-  $stderr.puts "Unknown command: #{command}"
-  $stderr.puts parser.help
+  exit_on_parse_error("Unknown command: #{command}")
 
 end
 

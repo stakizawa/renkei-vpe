@@ -64,46 +64,63 @@ list_columns = {
 }
 
 ##############################################################################
+# Functions
+##############################################################################
+def exit_on_parse_error(errmsg=nil)
+  $stderr.puts errmsg if errmsg
+  $stderr.puts
+  $stderr.puts "Run '#{CMD_NAME} help' to see the usage."
+  exit 1
+end
+
+##############################################################################
 # main
 ##############################################################################
 
 begin
   parser = OptionParser.new
   parser.banner = <<EOT
-Usage:
-    #{CMD_NAME} command <options>
+Name
+    #{CMD_NAME} - show and edit physical host information
 
-Commands:
-    enable zone_name host_names
-        enable hosts. An enabled host can run VMs on it. host_names can
-        be names of hosts.
+Synopsis
+    #{CMD_NAME} <command> [ <options> ]
+
+Description
+    This command  shows and enables/disables to use the specified physical
+    hosts which are registered as VM hosting servers.
+
+    The <command> is a name of a subcommand of #{CMD_NAME} command.
+
+Commands
+    enable <zone_name> <host_name> [ <host_name> ... ]
+        Enable hosts.  An enabled host can run VMs on it.
 
         $ #{CMD_NAME} enable 'tokyo tech' rpop-titech.cc.titech.ac.jp
 
-    disable zone_name host_names
-        disable hosts. A disabled host can not run VMs. host_names can
-        be names of hosts.
+    disable <zone_name> <host_name> [ <host_name> ... ]
+        Disable hosts.  A disabled host can not run VMs.
 
         $ #{CMD_NAME} disable 'tokyo tech' rpop-titech.cc.titech.ac.jp
 
 
-    show <-v> <-x> zone_name <host_names>
-        show information abount specified hosts in the specified zone.
-        If host_names, which can be names of hosts, are given, it shows
+    show [ -v ] [ -x ] <zone_name> [ <host_name> ... ]
+        Show information  about specified hosts  in the specified zone.
+        If <host_name>, which can be names of hosts, are given, it shows
         information about given hosts.
 
         $ #{CMD_NAME} show 'tokyo tech' rpop-titech.cc.titech.ac.jp
 
 
-    list <-x>
-        list all hosts that run VMs on them.
-        This is a debug-purpose command for #{CMD_NAME}.
+    list [ -x ]
+        List all hosts registered to th system.  This command is used for
+        debugging.
 
 
     help
-        show this message.
+        Show this message.
 
-Options:
+Options
 EOT
 
   parser.on('-x', '--xml', ': xml output mode') do
@@ -114,14 +131,16 @@ EOT
     verbose = true
   end
 
+  parser.on('-h', '--help', ': Show this message') do
+    puts parser.help
+    exit 0
+  end
+
   parser.parse!(ARGV)
-rescue OptionParser::ParseError
-  $stderr.puts parser.help
-  exit 1
+rescue OptionParser::ParseError => e
+  exit_on_parse_error(e.message)
 rescue => e
-  $stderr.puts e.message + "\n\n"
-  $stderr.puts parser.help
-  exit 1
+  exit_on_parse_error(e.message)
 end
 
 command = ARGV.shift
@@ -246,8 +265,7 @@ when 'help'
   puts parser.help
 
 else
-  $stderr.puts "Unknown command: #{command}"
-  $stderr.puts parser.help
+  exit_on_parse_error("Unknown command: #{command}")
 
 end
 

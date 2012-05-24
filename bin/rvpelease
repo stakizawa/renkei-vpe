@@ -67,54 +67,80 @@ list_columns = {
 }
 
 ##############################################################################
+# Functions
+##############################################################################
+def exit_on_parse_error(errmsg=nil)
+  $stderr.puts errmsg if errmsg
+  $stderr.puts
+  $stderr.puts "Run '#{CMD_NAME} help' to see the usage."
+  exit 1
+end
+
+##############################################################################
 # main
 ##############################################################################
 
 begin
   parser = OptionParser.new
   parser.banner = <<EOT
-Usage:
-    #{CMD_NAME} command <options>
+NAME
+    #{CMD_NAME} - manage the assignment of IP address
 
-Commands:
-    assign lease_name user_name
-        assign a lease whose name is 'lease_name' to a user whose name
-        is 'user_name'.
+Synopsis
+    #{CMD_NAME} <command> [ options ]
+
+Description
+    This command manages and shows assignments of IP address to users.  The
+    administrator can assing/release IP addresses to/from users.  The user
+    can just see his/her IP address assginment.
+
+    The <command> is a name of a subcommand of #{CMD_NAME} command.
+
+    In the following command explanation, I use the word 'lease' that means
+    IP address assignment.  A 'lease' has two important attributes; 1) name
+    of lease that equals to DNS hostname,  and 2) IP address that mapped to
+    the hostname.
+
+Commands
+    assign <lease_name> <user_name>
+        Assign a lease whose name is <lease_name>  to a user whose name is
+        <user_name>.
         Only the administrator can execute this command.
 
         $ #{CMD_NAME} assign vm00.cc.titech.ac.jp user1
 
-    release lease_name
-        release a lease whose name is 'lease_name' from the assigned user
+    release <lease_name>
+        Release a lease whose name is <lease_name> from the assigned user.
         Only the administrator can execute this command.
 
         $ #{CMD_NAME} release vm00.cc.titech.ac.jp
 
 
-    show <-v> <-x> lease_names
-        show information abount leases.
-        lease_names can be names or ids of leases.
+    show [ -v ] [ -x ] <lease_name> [ <lease_name> ... ]
+        Show information abount leases.
 
+        $ #{CMD_NAME} show vm00.cc.titech.ac.jp
         $ #{CMD_NAME} show vm00.cc.titech.ac.jp vm01.cc.titech.ac.jp
 
 
-    list <-v> <-x> <all|mine|user_name>
-        list leases.
-        If one of all(a), mine(m) and user_name is specified, it lists,
-           all(a)    : all leases
-           mine(m)   : leases assgined to a user who runs this command
-                       and ones that have not been assigned
-           user_name : leases assgined to the specified user
+    list [ -v ] [ -x ] [ all|mine|<user_name> ]
+        List leases.
+
+        If one of all(a), mine(m) and <user_name> is given, it lists
+           all(a)      : all leases
+           mine(m)     : leases assgined to a user who runs this command
+                         and ones that have not been assigned
+           <user_name> : leases assgined to the specified user
 
         If none of them are specified, it assumes that 'mine' is specified.
-        'all' and user_name can be specified only by the administrator.
-        'user_name' can be name or id of a user.
+        'all' and <user_name> can be specified only by the administrator.
+        <user_name> can be name or id of a user.
 
 
     help
-        show this message.
+        Show this message.
 
-Options:
+Options
 EOT
 
   parser.on('-x', '--xml', ': xml output mode') do
@@ -125,14 +151,16 @@ EOT
     verbose = true
   end
 
+  parser.on('-h', '--help', ': Show this message') do
+    puts parser.help
+    exit 0
+  end
+
   parser.parse!(ARGV)
-rescue OptionParser::ParseError
-  $stderr.puts parser.help
-  exit 1
+rescue OptionParser::ParseError => e
+  exit_on_parse_error(e.message)
 rescue => e
-  $stderr.puts e.message + "\n\n"
-  $stderr.puts parser.help
-  exit 1
+  exit_on_parse_error(e.message)
 end
 
 command = ARGV.shift
@@ -249,8 +277,7 @@ when 'help'
   puts parser.help
 
 else
-  $stderr.puts "Unknown command: #{command}"
-  $stderr.puts parser.help
+  exit_on_parse_error("Unknown command: #{command}")
 
 end
 
