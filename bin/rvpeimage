@@ -94,8 +94,8 @@ Synopsis
 Description
     This command  manipulates  OS images on RENKEI-VPE.  The function this
     command  offers are  register/unregister/export  OS images, publish/
-    unpublish and make is persistent/nonpersistent them.  It also provides
-    a way to modify the description of OS images, show and list them.
+    unpublish and make persistent/nonpersistent them.  It also provides  a
+    way to modify the description of OS images, show and list them.
 
     The <command> is a name of a subcommand of #{CMD_NAME} command.
 
