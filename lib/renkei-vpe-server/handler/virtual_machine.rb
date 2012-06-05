@@ -412,7 +412,18 @@ EOS
           # It always saves Disk whose ID is 0 (OS image).
           disk_id = 0
 
-          # 1. check if the VM is already marked
+          # 1. check if an image whose name is equal to 'image_name' exists
+          rc = call_one_xmlrpc('one.imagepool.info', session, -2)
+          raise rc[1] unless rc[0]
+          doc = REXML::Document.new(rc[1])
+          doc.elements.each('IMAGE_POOL/IMAGE') do |e|
+            db_name = e.elements['NAME'].get_text
+            if db_name == image_name
+              raise "Image[#{image_name}] already exists.  Use another name."
+            end
+          end
+
+          # 2. check if the VM is already marked
           rc = call_one_xmlrpc('one.vm.info', session, vm.oid)
           raise rc[1] unless rc[0]
           doc = REXML::Document.new(rc[1])
@@ -422,7 +433,7 @@ EOS
             raise "VM[#{vm.id}] is already marked to save its OS image as Image[#{save.text}]"
           end
 
-          # 2. create a template for the saved image
+          # 3. create a template for the saved image
           dev_prefix = doc.elements["#{xml_prefix}/TARGET"].get_text.to_s[0, 2]
           bus = doc.elements["#{xml_prefix}/BUS"].get_text.to_s
           nic_model = doc.elements['/VM/TEMPLATE/NIC/MODEL'].get_text.to_s
@@ -435,7 +446,7 @@ DEV_PREFIX  = "#{dev_prefix}"
 NIC_MODEL   = "#{nic_model}"
 EOS
 
-          # 3. allocate ONE image
+          # 4. allocate ONE image
           rc = call_one_xmlrpc('one.image.allocate', session, template)
           raise rc[1] unless rc[0]
           image_id = rc[1]
