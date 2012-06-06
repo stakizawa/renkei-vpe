@@ -413,14 +413,9 @@ EOS
           disk_id = 0
 
           # 1. check if an image whose name is equal to 'image_name' exists
-          rc = call_one_xmlrpc('one.imagepool.info', session, -2)
-          raise rc[1] unless rc[0]
-          doc = REXML::Document.new(rc[1])
-          doc.elements.each('IMAGE_POOL/IMAGE') do |e|
-            db_name = e.elements['NAME'].get_text
-            if db_name == image_name
-              raise "Image[#{image_name}] already exists.  Use another name."
-            end
+          img = Image.find_by_name(image_name, session, -2).last
+          if img
+            raise "Image[#{image_name}] already exists.  Use another name."
           end
 
           # 2. check if the VM is already marked

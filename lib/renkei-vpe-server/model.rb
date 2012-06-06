@@ -17,6 +17,7 @@
 
 require 'renkei-vpe-server/model/base'
 require 'renkei-vpe-server/model/user'
+require 'renkei-vpe-server/model/image'
 require 'renkei-vpe-server/model/virtual_machine'
 require 'renkei-vpe-server/model/virtual_network'
 require 'renkei-vpe-server/model/lease'

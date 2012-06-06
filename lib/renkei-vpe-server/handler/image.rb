@@ -89,21 +89,10 @@ module RenkeiVPE
         task('rvpe.image.ask_id', session) do
           flag = -1
           admin_session(session, false) { flag = -2 }
-          rc = call_one_xmlrpc('one.imagepool.info', session, flag)
-          raise rc[1] unless rc[0]
+          img = Image.find_by_name(name, session, flag).last
+          raise "Image[#{name}] is not found. " unless img
 
-          id = nil
-          doc = REXML::Document.new(rc[1])
-          doc.elements.each('IMAGE_POOL/IMAGE') do |e|
-            db_name = e.elements['NAME'].get_text
-            if db_name == name
-              id = e.elements['ID'].get_text.to_s.to_i
-              break
-            end
-          end
-          raise "Image[#{name}] is not found. " unless id
-
-          [true, id]
+          [true, img.id]
         end
       end
 
@@ -138,6 +127,9 @@ module RenkeiVPE
           _name = image_def[ResourceFile::Image::NAME]
           unless _name
             raise 'Specify ' + ResourceFile::Image::NAME + err_msg_suffix
+          end
+          unless Image.find_by_name(_name, session, -2).empty?
+            raise "Image[#{_name}] already exists.  Use another name."
           end
           _type = image_def[ResourceFile::Image::TYPE]
           _type = 'OS' unless _type
