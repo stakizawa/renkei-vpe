@@ -92,7 +92,8 @@ module RenkeiVPE
         end
       end
 
-      # return id of the given-named virtual machine.
+      # return id of the latest given-named virtual machine the session
+      # owner owns.
       # +session+   string that represents user session
       # +name+      name of a virtual machine
       # +return[0]+ true or false whenever is successful or not
@@ -100,7 +101,10 @@ module RenkeiVPE
       #             if successful this is the id of the virtual machine.
       def ask_id(session, name)
         task('rvpe.vm.ask_id', session) do
-          vm = VirtualMachine.find_by_name(name).last
+          uname = get_user_from_session(session)
+          user = User.find_by_name(uname).last
+          condition = "user_id=#{user.id} AND name='#{name}'"
+          vm = VirtualMachine.find(condition).last
           raise "VirtualMachine[#{name}] is not found." unless vm
 
           [true, vm.id]
