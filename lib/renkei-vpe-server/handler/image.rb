@@ -107,6 +107,14 @@ module RenkeiVPE
         task('rvpe.image.info', session) do
           rc = call_one_xmlrpc('one.image.info', session, id)
           raise rc[1] unless rc[0]
+
+          unless image_is_public?(rc[1])
+            unless image_is_owned_by_session_owner?(rc[1], session)
+              msg = "You don't have permission to access the image."
+              admin_session(session, true, msg) do; end
+            end
+          end
+
           doc = weave_image_size_to_xml(rc[1])
           [true, doc.to_s]
         end
@@ -189,7 +197,8 @@ EOT
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it does not exist.
       def delete(session, id)
-        task('rvpe.image.delete', session) do
+        auth_emsg = "You don't have permission to delete the image."
+        mod_task('rvpe.image.delete', session, id, auth_emsg) do
           call_one_xmlrpc('one.image.delete', session, id)
         end
       end
@@ -202,7 +211,8 @@ EOT
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it is the image id.
       def enable(session, id, enabled)
-        task('rvpe.image.enable', session) do
+        auth_emsg = "You don't have permission to enable/disable the image."
+        mod_task('rvpe.image.enable', session, id, auth_emsg) do
           call_one_xmlrpc('one.image.enable', session, id, enabled)
         end
       end
@@ -215,7 +225,8 @@ EOT
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it is the image id.
       def publish(session, id, published)
-        task('rvpe.image.publish', session) do
+        auth_emsg = "You don't have permission to publish/unpublish the image."
+        mod_task('rvpe.image.publish', session, id, auth_emsg) do
           rc = call_one_xmlrpc('one.image.publish', session, id, published)
           raise "A persistent image can't be public." unless rc[0]
           rc
@@ -230,7 +241,8 @@ EOT
       # +return[1]+  if an error occurs this is error message,
       #              otherwise it is the image id.
       def persistent(session, id, persistent)
-        task('rvpe.image.persistent', session) do
+        auth_emsg = "You don't have permission to make the image persistent."
+        mod_task('rvpe.image.persistent', session, id, auth_emsg) do
           rc = call_one_xmlrpc('one.image.persistent', session, id, persistent)
           raise "A public or used image can't be persistent." unless rc[0]
           rc
@@ -242,13 +254,27 @@ EOT
       # +id+              id of the image
       # +new_description+ new description of the image
       def description(session, id, new_description)
-        task('rvpe.image.description', session) do
+        auth_emsg = "You don't have permission to modify the description " +
+          'of the image.'
+        mod_task('rvpe.image.description', session, id, auth_emsg) do
           call_one_xmlrpc('one.image.update', session, id,
                           'DESCRIPTION', new_description)
         end
       end
 
       private
+
+      # It is an iterator that does a task that modify/update an image.
+      def mod_task(name, session, id, auth_emsg=nil)
+        task(name, session) do
+          rc = call_one_xmlrpc('one.image.info', session, id)
+          raise rc[1] unless rc[0]
+          unless image_is_owned_by_session_owner?(rc[1], session)
+            admin_session(session, true, auth_emsg) do; end
+          end
+          yield
+        end
+      end
 
       # It weaves 'SIZE' element that represents image size to the
       # specified xml string.
@@ -269,6 +295,40 @@ EOT
           img_e.add(size_e)
         end
         doc
+      end
+
+      # It return true if the image is public.
+      def image_is_public?(xmlstr)
+        pblc = false
+        doc = REXML::Document.new(xmlstr)
+        doc.elements.each('IMAGE') do |img_e|
+          img_e.each_element('PUBLIC') do |pub_e|
+            pub_f = pub_e.get_text.to_s.to_i
+            pblc = true if pub_f == 1
+          end
+        end
+        pblc
+      end
+
+      # It return true if the image represented by __xmlstr__ is owned by
+      # the __session__ owner.
+      def image_is_owned_by_session_owner?(xmlstr, session)
+        uname = get_user_from_session(session)
+        user = User.find_by_name(uname).last
+
+        uid = -1
+        doc = REXML::Document.new(xmlstr)
+        doc.elements.each('IMAGE') do |img_e|
+          img_e.each_element('UID') do |uid_e|
+            uid = uid_e.get_text.to_s.to_i
+          end # uid must not be -1
+        end
+
+        if uid == user.oid
+          true
+        else
+          false
+        end
       end
 
     end

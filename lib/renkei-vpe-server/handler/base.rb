@@ -87,10 +87,10 @@ module RenkeiVPE
         one_auth(session, admin_auth, &block)
       end
 
-      def admin_session(session, will_raise=true)
+      def admin_session(session, will_raise=true, msg=nil)
         rc = __authenticate(session)
         if rc[0] != 0
-          msg = 'The operation requires the admin privilege.'
+          msg ||= 'The operation requires the admin privilege.'
           @log.warn msg
           raise msg if will_raise
           return

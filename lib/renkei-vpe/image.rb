@@ -73,7 +73,7 @@ module RenkeiVPE
     #
     # +description+ A string containing the template of the Image.
     def allocate(description)
-      super(IMAGE_METHODS[:allocate],description)
+      super(IMAGE_METHODS[:allocate], description)
     end
 
     # Enables an Image
