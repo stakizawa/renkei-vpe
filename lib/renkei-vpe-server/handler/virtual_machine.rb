@@ -119,10 +119,8 @@ module RenkeiVPE
       #             if successful this is the string with the information
       #             about the virtual machine
       def info(session, id)
-        task('rvpe.vm.info', session) do
-          vm = VirtualMachine.find_by_id(id)[0]
-          raise "VirtualMachine[#{id}] is not found." unless vm
-
+        msg = "You don't have permission to query info. of the VM."
+        mod_task('rvpe.vm.info', session, id, msg) do |vm|
           vm_e = vm.to_xml_element(session)
           doc = REXML::Document.new
           doc.add(vm_e)
@@ -375,10 +373,8 @@ EOS
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it does not exist.
       def action(session, id, action)
-        task('rvpe.vm.action', session) do
-          vm = VirtualMachine.find_by_id(id)[0]
-          raise "VirtualMachine[#{id}] is not found." unless vm
-
+        msg = "You don't have permission to make any action to the VM."
+        mod_task('rvpe.vm.action', session, id, msg) do |vm|
           rc = call_one_xmlrpc('one.vm.action', session, action, vm.oid)
           raise rc[1] unless rc[0]
 
@@ -409,10 +405,8 @@ EOS
       # +return[1]+         if an error occurs this is error message,
       #                     otherwise it does not exist.
       def mark_save(session, id, image_name, image_description)
-        task('rvpe.vm.mark_save', session) do
-          vm = VirtualMachine.find_by_id(id)[0]
-          raise "VirtualMachine[#{id}] is not found." unless vm
-
+        msg = "You don't have permission to save status of the VM."
+        mod_task('rvpe.vm.mark_save', session, id, msg) do |vm|
           # It always saves Disk whose ID is 0 (OS image).
           disk_id = 0
 
@@ -459,6 +453,31 @@ EOS
           end
 
           [true, '']
+        end
+      end
+
+      private
+
+      # It is an iterator that does a task that modify/update a VM.
+      def mod_task(name, session, vm_id, auth_emsg=nil)
+        task(name, session) do
+          vm = VirtualMachine.find_by_id(vm_id)[0]
+          raise "VirtualMachine[#{vm_id}] is not found." unless vm
+          unless vm_is_owned_by_session_owner?(vm, session)
+            admin_session(session, true, auth_emsg) do; end
+          end
+          yield vm
+        end
+      end
+
+      # It returns true if the __vm__ is owned by the __session__ owner.
+      def vm_is_owned_by_session_owner?(vm, session)
+        uname = get_user_from_session(session)
+        user = User.find_by_name(uname).last
+        if vm.user_id == user.id
+          true
+        else
+          false
         end
       end
 

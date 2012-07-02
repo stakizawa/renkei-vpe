@@ -109,10 +109,8 @@ module RenkeiVPE
       #             if successful this is the string with the information
       #             about the user
       def info(session, id)
-        task('rvpe.lease.info', session) do
-          lease = Lease.find_by_id(id)[0]
-          raise "Lease[#{id}] is not found." unless lease
-
+        msg = "You don't have permission to query info. of the VM."
+        mod_task('rvpe.lease.info', session, id, msg) do |lease|
           lease_e = lease.to_xml_element(session)
           doc = REXML::Document.new
           doc.add(lease_e)
@@ -168,6 +166,31 @@ module RenkeiVPE
           lease.assigned_to = -1
           lease.update
           [true, '']
+        end
+      end
+
+      private
+
+      # It is an iterator that does a task that modify/update a lease.
+      def mod_task(name, session, l_id, auth_emsg=nil)
+        task(name, session) do
+          lease = Lease.find_by_id(l_id)[0]
+          raise "Lease[#{l_id}] does not exist." unless lease
+          unless lease_is_owned_by_session_owner?(lease, session)
+            admin_session(session, true, auth_emsg) do; end
+          end
+          yield lease
+        end
+      end
+
+      # It returns true if the __lease__ is owned by the __session__ owner.
+      def lease_is_owned_by_session_owner?(lease, session)
+        uname = get_user_from_session(session)
+        user = User.find_by_name(uname).last
+        if lease.assigned_to == user.id
+          true
+        else
+          false
         end
       end
 

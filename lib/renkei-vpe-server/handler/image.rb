@@ -310,7 +310,7 @@ EOT
         pblc
       end
 
-      # It return true if the image represented by __xmlstr__ is owned by
+      # It returns true if the image represented by __xmlstr__ is owned by
       # the __session__ owner.
       def image_is_owned_by_session_owner?(xmlstr, session)
         uname = get_user_from_session(session)
