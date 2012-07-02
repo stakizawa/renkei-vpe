@@ -59,7 +59,7 @@ module RenkeiVPE
             rc = [false, e.message]
             log_msg = [false, e]
           end
-          log_result(task_name, log_msg)
+          log_result(task_name, get_user_from_session(session), log_msg)
           return rc
         end
       end
@@ -101,22 +101,23 @@ module RenkeiVPE
 
       # It log rpc call result.
       # +task_name+  name of called method
+      # +user+       name of user who executes this rpc call
       # +result[0]+  true or false
       # +result[1]+  a string representing error if result[0] is false,
       #              otherwise undefined
-      def log_result(task_name, result)
+      def log_result(task_name, user, result)
         if result[0]
-          log_success(task_name)
+          log_success(user, task_name)
         else
-          log_fail(task_name, result[1])
+          log_fail(user, task_name, result[1])
         end
       end
 
-      def log_success(task_name)
-        @log.info "'#{task_name}' is successfully executed."
+      def log_success(user, task_name)
+        @log.info "User[#{user}] successfully executes TASK[#{task_name}]."
       end
 
-      def log_fail(task_name, msg)
+      def log_fail(user, task_name, msg)
         newmsg = ''
         case msg
         when ::String
@@ -127,7 +128,7 @@ module RenkeiVPE
         else
           newmsg = msg.inspect
         end
-        @log.error "'#{task_name}' is failed.\n" + newmsg
+        @log.error "User[#{user}] failes to execute TASK[#{task_name}].\n" + newmsg
       end
 
     end

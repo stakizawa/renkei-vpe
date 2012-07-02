@@ -71,10 +71,13 @@ module RenkeiVPE
 
     def call_one_xmlrpc(method, session, *args)
       rc = call_one_xmlrpc_nolog(method, session, *args)
+      user = session.split(':')[0]
       if rc[0]
-        @@log.debug("'#{method}' is successfully executed.")
+        @@log.debug("User[#{user}] successfully calls " +
+                    "ONERPC[#{method}(#{args.join(', ')})].")
       else
-        @@log.error("'#{method}' is failed.\n#{rc[1]}")
+        @@log.error("User[#{user}] fails to call " +
+                    "ONERPC[#{method}(#{args.join(', ')})].")
       end
       return rc
     end
