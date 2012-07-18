@@ -1,0 +1,67 @@
+#+STARTUP: nofold
+
+* Host
+  (shown by 'rvpehost list' or 'rvpehost show')
+
+| Number | Meaning    | Short Name |
+|      0 | INIT       | on         |
+|      1 | MONITORING | on         |
+|      2 | MONITORED  | on         |
+|      3 | ERROR      | err        |
+|      4 | DISABLED   | off        |
+
+If a host is stable, its state is 'MONITORED'.
+
+
+* Image
+  (shown by 'rvpeimage list' or 'rvpeimage show')
+
+| Number | Meaning  | Short Name |
+|      0 | INIT     | init       |
+|      1 | READY    | rdy        |
+|      2 | USED     | used       |
+|      3 | DISABLED | disa       |
+
+If an image is stable, its state is 'READY' or 'USED'.
+
+
+* Virtual Machine
+
+VM State ('STATE' line in 'rvpevm show')
+| Number | Meaning   | Short Name |
+|      0 | INIT      | init       |
+|      1 | PENDING   | pend       |
+|      2 | HOLD      | hold       |
+|      3 | ACTIVE    | actv       |
+|      4 | STOPPED   | stop       |
+|      5 | SUSPENDED | susp       |
+|      6 | DONE      | done       |
+|      7 | FAILED    | fail       |
+
+Life-cycle State ('STAT' column in 'rvpevm list')
+| Number | Meaning        | Short Name |
+|      0 | LCM_INIT       |            | unused
+|      1 | PROLOG         | prol       |
+|      2 | BOOT           | boot       |
+|      3 | RUNNING        | runn       |
+|      4 | MIGRATE        | migr       |
+|      5 | SAVE_STOP      | save       |
+|      6 | SAVE_SUSPEND   | save       |
+|      7 | SAVE_MIGRATE   | save       |
+|      8 | PROLOG_MIGRATE | migr       |
+|      9 | PROLOG_RESUME  | prol       |
+|     10 | EPILOG_STOP    | epil       |
+|     11 | EPILOG         | epil       |
+|     12 | SUTDOWN        | shut       |
+|     13 | CANCEL         | shut       |
+|     14 | FAILURE        | fail       |
+|     15 | CLEANUP        | clea       |
+|     16 | UNKNOWN        | unkn       |
+
+
+
+# Local Variables:
+# mode: Org
+# truncate-lines: t
+# indent-tabs-mode: nil
+# End:
