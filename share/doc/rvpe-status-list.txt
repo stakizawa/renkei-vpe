@@ -38,7 +38,7 @@ VM State ('STATE' line in 'rvpevm show')
 |      6 | DONE      | done       |
 |      7 | FAILED    | fail       |
 
-Life-cycle State ('STAT' column in 'rvpevm list')
+Life-cycle State ('STAT' column in 'rvpevm list' and 'rvpevm history')
 | Number | Meaning        | Short Name |
 |      0 | LCM_INIT       |            | unused
 |      1 | PROLOG         | prol       |
