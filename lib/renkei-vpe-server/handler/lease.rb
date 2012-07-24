@@ -58,7 +58,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             if successful this is the information string
       def pool(session, flag)
-        task('rvpe.lease.pool', session) do
+        read_task('rvpe.lease.pool', session) do
           uname = get_user_from_session(session)
           user = User.find_by_name(uname).last
 
@@ -93,7 +93,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             if successful this is the id of the lease
       def ask_id(session, name)
-        task('rvpe.lease.ask_id', session) do
+        read_task('rvpe.lease.ask_id', session) do
           l = Lease.find_by_name(name).last
           raise "Lease[#{name}] is not found. " unless l
 
@@ -109,13 +109,15 @@ module RenkeiVPE
       #             if successful this is the string with the information
       #             about the user
       def info(session, id)
-        msg = "You don't have permission to query info. of the VM."
-        mod_task('rvpe.lease.info', session, id, msg) do |lease|
-          lease_e = lease.to_xml_element(session)
-          doc = REXML::Document.new
-          doc.add(lease_e)
+        read_task('rvpe.lease.info', session) do |lease|
+          err_msg = "You don't have permission to query info. of the VM."
+          sanity_check(session, id, err_msg) do |lease|
+            lease_e = lease.to_xml_element(session)
+            doc = REXML::Document.new
+            doc.add(lease_e)
 
-          [true, doc.to_s]
+            [true, doc.to_s]
+          end
         end
       end
 
@@ -127,7 +129,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is the error message,
       #             otherwise it does not exist.
       def assign(session, id, user_name)
-        task('rvpe.lease.allocate', session, true) do
+        write_task('rvpe.lease.allocate', session, true) do
           lease = Lease.find_by_id(id)[0]
           raise "Lease[#{id}] is not found." unless lease
 
@@ -154,7 +156,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it does not exist.
       def release(session, id)
-        task('rvpe.lease.delete', session, true) do
+        write_task('rvpe.lease.delete', session, true) do
           lease = Lease.find_by_id(id)[0]
           raise "Lease[#{id}] does not exist." unless lease
 
@@ -171,16 +173,14 @@ module RenkeiVPE
 
       private
 
-      # It is an iterator that does a task that modify/update a lease.
-      def mod_task(name, session, l_id, auth_emsg=nil)
-        task(name, session) do
-          lease = Lease.find_by_id(l_id)[0]
-          raise "Lease[#{l_id}] does not exist." unless lease
-          unless lease_is_owned_by_session_owner?(lease, session)
-            admin_session(session, true, auth_emsg) do; end
-          end
-          yield lease
+      # It checks access permission
+      def sanity_check(session, l_id, err_msg=nil)
+        lease = Lease.find_by_id(l_id)[0]
+        raise "Lease[#{l_id}] does not exist." unless lease
+        unless lease_is_owned_by_session_owner?(lease, session)
+          admin_session(session, true, err_msg) do; end
         end
+        yield lease
       end
 
       # It returns true if the __lease__ is owned by the __session__ owner.

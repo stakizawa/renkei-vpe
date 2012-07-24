@@ -63,7 +63,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             if successful this is the information string
       def pool(session, flag, history)
-        task('rvpe.vm.pool', session) do
+        read_task('rvpe.vm.pool', session) do
           uname = get_user_from_session(session)
           user = User.find_by_name(uname).last
 
@@ -100,7 +100,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             if successful this is the id of the virtual machine.
       def ask_id(session, name)
-        task('rvpe.vm.ask_id', session) do
+        read_task('rvpe.vm.ask_id', session) do
           uname = get_user_from_session(session)
           user = User.find_by_name(uname).last
           condition = "user_id=#{user.id} AND name='#{name}'"
@@ -119,12 +119,14 @@ module RenkeiVPE
       #             if successful this is the string with the information
       #             about the virtual machine
       def info(session, id)
-        msg = "You don't have permission to query info. of the VM."
-        mod_task('rvpe.vm.info', session, id, msg) do |vm|
-          vm_e = vm.to_xml_element(session)
-          doc = REXML::Document.new
-          doc.add(vm_e)
-          [true, doc.to_s]
+        read_task('rvpe.vm.info', session) do
+          err_msg = "You don't have permission to query info. of the VM."
+          sanity_check(session, id, err_msg) do |vm|
+            vm_e = vm.to_xml_element(session)
+            doc = REXML::Document.new
+            doc.add(vm_e)
+            [true, doc.to_s]
+          end
         end
       end
 
@@ -141,7 +143,7 @@ module RenkeiVPE
       #             if successful this is the associated id (int id)
       #             generated for this vm
       def allocate(session, type_n, image_id, sshkey, zone_n, networks)
-        task('rvpe.vm.allocate', session) do
+        write_task('rvpe.vm.allocate', session) do
           # 0. get resources and check if they exist
           type = VMType.find_by_id_or_name(type_n).last
           raise "VMType[#{type_n}] is not found." unless type
@@ -373,26 +375,28 @@ EOS
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it does not exist.
       def action(session, id, action)
-        msg = "You don't have permission to make any action to the VM."
-        mod_task('rvpe.vm.action', session, id, msg) do |vm|
-          rc = call_one_xmlrpc('one.vm.action', session, action, vm.oid)
-          raise rc[1] unless rc[0]
+        write_task('rvpe.vm.action', session) do
+          err_msg = "You don't have permission to make any action to the VM."
+          sanity_check(session, id, err_msg) do |vm|
+            rc = call_one_xmlrpc('one.vm.action', session, action, vm.oid)
+            raise rc[1] unless rc[0]
 
-          case action.upcase
-          when 'SHUTDOWN', 'FINALIZE'
-            # delete temporal files
-            lease = Lease.find_by_id(vm.lease_id)[0]
-            vmtmpdir  = "#{$rvpe_path}/var/#{lease.name}"
-            FileUtils.rm_rf(vmtmpdir)
-            # mark leases as not-used
-            vm.leases.split(ITEM_SEPARATOR).map { |i| i.to_i }.each do |lid|
-              lease = Lease.find_by_id(lid)[0]
-              lease.used = 0
-              lease.update
+            case action.upcase
+            when 'SHUTDOWN', 'FINALIZE'
+              # delete temporal files
+              lease = Lease.find_by_id(vm.lease_id)[0]
+              vmtmpdir  = "#{$rvpe_path}/var/#{lease.name}"
+              FileUtils.rm_rf(vmtmpdir)
+              # mark leases as not-used
+              vm.leases.split(ITEM_SEPARATOR).map { |i| i.to_i }.each do |lid|
+                lease = Lease.find_by_id(lid)[0]
+                lease.used = 0
+                lease.update
+              end
             end
-          end
 
-          rc
+            rc
+          end
         end
       end
 
@@ -405,32 +409,34 @@ EOS
       # +return[1]+         if an error occurs this is error message,
       #                     otherwise it does not exist.
       def mark_save(session, id, image_name, image_description)
-        msg = "You don't have permission to save status of the VM."
-        mod_task('rvpe.vm.mark_save', session, id, msg) do |vm|
-          # It always saves Disk whose ID is 0 (OS image).
-          disk_id = 0
+        write_task('rvpe.vm.mark_save', session) do
+          err_msg = "You don't have permission to save status of the VM."
+          sanity_check(session, id, err_msg) do |vm|
+            # It always saves Disk whose ID is 0 (OS image).
+            disk_id = 0
 
-          # 1. check if an image whose name is equal to 'image_name' exists
-          img = Image.find_by_name(image_name, session, -2).last
-          if img
-            raise "Image[#{image_name}] already exists.  Use another name."
-          end
+            # 1. check if an image whose name is equal to 'image_name' exists
+            img = Image.find_by_name(image_name, session, -2).last
+            if img
+              raise "Image[#{image_name}] already exists.  Use another name."
+            end
 
-          # 2. check if the VM is already marked
-          rc = call_one_xmlrpc('one.vm.info', session, vm.oid)
-          raise rc[1] unless rc[0]
-          doc = REXML::Document.new(rc[1])
-          xml_prefix = "/VM/TEMPLATE/DISK[DISK_ID=\"#{disk_id}\"]"
-          save = doc.elements["#{xml_prefix}/SAVE_AS"]
-          if save
-            raise "VM[#{vm.id}] is already marked to save its OS image as Image[#{save.text}]"
-          end
+            # 2. check if the VM is already marked
+            rc = call_one_xmlrpc('one.vm.info', session, vm.oid)
+            raise rc[1] unless rc[0]
+            doc = REXML::Document.new(rc[1])
+            xml_prefix = "/VM/TEMPLATE/DISK[DISK_ID=\"#{disk_id}\"]"
+            save = doc.elements["#{xml_prefix}/SAVE_AS"]
+            if save
+              raise "VM[#{vm.id}] is already marked to save its OS image as Image[#{save.text}]"
+            end
 
-          # 3. create a template for the saved image
-          dev_prefix = doc.elements["#{xml_prefix}/TARGET"].get_text.to_s[0, 2]
-          bus = doc.elements["#{xml_prefix}/BUS"].get_text.to_s
-          nic_model = doc.elements['/VM/TEMPLATE/NIC/MODEL'].get_text.to_s
-          template =<<EOS
+            # 3. create a template for the saved image
+            dev_prefix =
+              doc.elements["#{xml_prefix}/TARGET"].get_text.to_s[0, 2]
+            bus = doc.elements["#{xml_prefix}/BUS"].get_text.to_s
+            nic_model = doc.elements['/VM/TEMPLATE/NIC/MODEL'].get_text.to_s
+            template =<<EOS
 NAME        = "#{image_name}"
 DESCRIPTION = "#{image_description}"
 TYPE        = "OS"
@@ -439,35 +445,34 @@ DEV_PREFIX  = "#{dev_prefix}"
 NIC_MODEL   = "#{nic_model}"
 EOS
 
-          # 4. allocate ONE image
-          rc = call_one_xmlrpc('one.image.allocate', session, template)
-          raise rc[1] unless rc[0]
-          image_id = rc[1]
+            # 4. allocate ONE image
+            rc = call_one_xmlrpc('one.image.allocate', session, template)
+            raise rc[1] unless rc[0]
+            image_id = rc[1]
 
-          begin
-            rc = call_one_xmlrpc('one.vm.savedisk', session,
-                                 vm.oid, disk_id, image_id)
-          rescue => e
-            call_one_xmlrpc('one.image.delete', session, image_id)
-            raise e
+            begin
+              rc = call_one_xmlrpc('one.vm.savedisk', session,
+                                   vm.oid, disk_id, image_id)
+            rescue => e
+              call_one_xmlrpc('one.image.delete', session, image_id)
+              raise e
+            end
+
+            [true, '']
           end
-
-          [true, '']
         end
       end
 
       private
 
-      # It is an iterator that does a task that modify/update a VM.
-      def mod_task(name, session, vm_id, auth_emsg=nil)
-        task(name, session) do
-          vm = VirtualMachine.find_by_id(vm_id)[0]
-          raise "VirtualMachine[#{vm_id}] is not found." unless vm
-          unless vm_is_owned_by_session_owner?(vm, session)
-            admin_session(session, true, auth_emsg) do; end
-          end
-          yield vm
+      # It checks the VM access permission.
+      def sanity_check(session, vm_id, err_msg=nil)
+        vm = VirtualMachine.find_by_id(vm_id)[0]
+        raise "VirtualMachine[#{vm_id}] is not found." unless vm
+        unless vm_is_owned_by_session_owner?(vm, session)
+          admin_session(session, true, err_msg) do; end
         end
+        yield vm
       end
 
       # It returns true if the __vm__ is owned by the __session__ owner.

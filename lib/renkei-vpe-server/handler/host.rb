@@ -50,7 +50,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             if successful this is the information string
       def pool(session)
-        task('rvpe.host.pool', session) do
+        read_task('rvpe.host.pool', session) do
           call_one_xmlrpc('one.hostpool.info', session)
         end
       end
@@ -62,7 +62,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             if successful this is the id of the host
       def ask_id(session, name)
-        task('rvpe.host.ask_id', session) do
+        read_task('rvpe.host.ask_id', session) do
           rc = call_one_xmlrpc('one.hostpool.info', session)
           raise rc[1] unless rc[0]
 
@@ -89,7 +89,7 @@ module RenkeiVPE
       #             if successful this is the string with the information
       #             about the host
       def info(session, id)
-        task('rvpe.host.info', session) do
+        read_task('rvpe.host.info', session) do
           call_one_xmlrpc('one.host.info', session, id)
         end
       end
@@ -102,7 +102,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it does not exist.
       def enable(session, id, enabled)
-        task('rvpe.host.enable', session, true) do
+        write_task('rvpe.host.enable', session, true) do
           call_one_xmlrpc('one.host.enable', session, id, enabled)
         end
       end

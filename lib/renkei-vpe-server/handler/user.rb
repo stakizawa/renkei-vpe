@@ -62,7 +62,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             if successful this is the information string
       def pool(session)
-        task('rvpe.user.pool', session, true) do
+        read_task('rvpe.user.pool', session, true) do
           pool_e = REXML::Element.new('USER_POOL')
           User.each(session) do |user|
             pool_e.add(user.to_xml_element(session))
@@ -80,7 +80,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             if successful this is the id of the user
       def ask_id(session, name)
-        task('rvpe.user.ask_id', session) do
+        read_task('rvpe.user.ask_id', session) do
           u = User.find_by_name(name).last
           raise "User[#{name}] is not found." unless u
 
@@ -96,7 +96,7 @@ module RenkeiVPE
       #             if successful this is the string with the information
       #             about the user
       def info(session, id)
-        task('rvpe.user.info', session) do
+        read_task('rvpe.user.info', session) do
           session_uname = get_user_from_session(session)
           session_user = User.find_by_name(session_uname).last
 
@@ -122,7 +122,7 @@ module RenkeiVPE
       #             if successful this is the associated id (int uid)
       #             generated for this user
       def allocate(session, name, passwd)
-        task('rvpe.user.allocate', session, true) do
+        write_task('rvpe.user.allocate', session, true) do
           user = User.find_by_name(name)[0]
           raise "User[#{name}] already exists." if user
 
@@ -151,7 +151,7 @@ module RenkeiVPE
       #             otherwise it does not exist.
       def delete(session, id)
         task_name = 'rvpe.user.delete'
-        task(task_name, session, true) do
+        write_task(task_name, session, true) do
           user = User.find_by_id(id)[0]
           raise "User[#{id}] does not exist." unless user
 
@@ -188,7 +188,7 @@ module RenkeiVPE
       #             otherwise it is the user id.
       def enable(session, id, enabled)
         task_name = 'rvpe.user.enable'
-        task(task_name, session, true) do
+        write_task(task_name, session, true) do
           user = User.find_by_id(id)[0]
           raise "User[#{id}] does not exist." unless user
 
@@ -215,7 +215,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it does not exist.
       def passwd(session, id, passwd)
-        task('rvpe.user.passwd', session, true) do
+        write_task('rvpe.user.passwd', session, true) do
           user = User.find_by_id(id)[0]
           raise "User[#{id}] does not exist." unless user
 
@@ -234,7 +234,7 @@ module RenkeiVPE
       #             otherwise it is maximum number of VMs when enabled is
       #             true and it does not exist when enabled is false.
       def enable_zone(session, id, enabled, zone_id, limit)
-        task('rvpe.user.enable_zone', session, true) do
+        write_task('rvpe.user.enable_zone', session, true) do
           user = User.find_by_id(id)[0]
           raise "User[#{id}] does not exist." unless user
 

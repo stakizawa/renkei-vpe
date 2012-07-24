@@ -18,7 +18,7 @@
 require 'renkei-vpe-server/model'
 require 'renkei-vpe-server/logger'
 require 'renkei-vpe-server/one_client'
-require 'thread'
+require 'renkei-vpe-server/read_write_lock'
 
 module RenkeiVPE
   ############################################################################
@@ -34,8 +34,18 @@ module RenkeiVPE
       include RenkeiVPE::Model
 
       def initialize
-        @lock = Mutex.new
+        @lock = ReadWriteLock.new
         @log = RenkeiVPE::Logger.get_logger
+      end
+
+      # It defines a task that update status of resources.
+      def write_task(task_name, session, admin_auth=false, &block)
+        task(task_name, session, :wt, admin_auth, &block)
+      end
+
+      # It defines a task that queries information about resources.
+      def read_task(task_name, session, admin_auth=false, &block)
+        task(task_name, session, :rd, admin_auth, &block)
       end
 
       # It is used for define an xml handler's task.
@@ -43,6 +53,8 @@ module RenkeiVPE
       # 4)returning a result to a client.
       # +task_name+   name of task
       # +session+     a string that represents a user session
+      # +lock_mode+   a mode flag for exclusive access
+      #               :rd for read lock and :wt for write lock.
       # +admin_auth+  it does authentication for the administrator if true,
       #               otherwise does authentication for usual users.
       # +block+       a block that defines a task routine
@@ -50,8 +62,15 @@ module RenkeiVPE
       #               of the task is successful, otherwise false. +result+
       #               is defined by tasks. It can take integer, boolean,
       #               string, etc.
-      def task(task_name, session, admin_auth=false, &block)
-        @lock.synchronize do
+      def task(task_name, session, lock_mode, admin_auth=false, &block)
+        begin
+          # lock
+          if lock_mode == :wt
+            @lock.write_lock
+          else
+            @lock.read_lock
+          end
+
           begin
             rc = authenticate(session, admin_auth, &block)
             log_msg = rc
@@ -59,9 +78,18 @@ module RenkeiVPE
             rc = [false, e.message]
             log_msg = [false, e]
           end
-          log_result(task_name, get_user_from_session(session), log_msg)
-          return rc
+
+        ensure
+          # unlock
+          if lock_mode == :wt
+            @lock.write_unlock
+          else
+            @lock.read_unlock
+          end
         end
+
+        log_result(task_name, get_user_from_session(session), log_msg)
+        return rc
       end
 
       def authenticate(session, admin_auth=false, &block)

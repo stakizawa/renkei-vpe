@@ -65,7 +65,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             if successful this is the information string
       def pool(session)
-        task('rvpe.vn.pool', session) do
+        read_task('rvpe.vn.pool', session) do
           pool_e = REXML::Element.new('VNET_POOL')
           VirtualNetwork.each do |vnet|
             vnet_e = vnet.to_xml_element(session)
@@ -84,7 +84,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             if successful this is the id of the virtual network.
       def ask_id(session, name)
-        task('rvpe.vn.ask_id', session) do
+        read_task('rvpe.vn.ask_id', session) do
           vn = VirtualNetwork.find_by_name(name).last
           raise "VirtualNetwork[#{name}] is not found. " unless vn
 
@@ -100,7 +100,7 @@ module RenkeiVPE
       #             if successful this is the string with the information
       #             about the virtual network
       def info(session, id)
-        task('rvpe.vn.info', session) do
+        read_task('rvpe.vn.info', session) do
           vnet = VirtualNetwork.find_by_id(id)[0]
           raise "VirtualNetwork[#{id}] is not found." unless vnet
 
@@ -121,7 +121,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it does not exist.
       def add_dns(session, id, dnses)
-        task('rvpe.vn.add_dns', session, true) do
+        write_task('rvpe.vn.add_dns', session, true) do
           vnet = VirtualNetwork.find_by_id(id)[0]
           raise "VirtualNetwork[#{id}] is not found." unless vnet
 
@@ -137,7 +137,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it does not exist.
       def remove_dns(session, id, dnses)
-        task('rvpe.vn.remove_dns', session, true) do
+        write_task('rvpe.vn.remove_dns', session, true) do
           vnet = VirtualNetwork.find_by_id(id)[0]
           raise "VirtualNetwork[#{id}] is not found." unless vnet
 
@@ -153,7 +153,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it does not exist.
       def add_ntp(session, id, ntps)
-        task('rvpe.vn.add_ntp', session, true) do
+        write_task('rvpe.vn.add_ntp', session, true) do
           vnet = VirtualNetwork.find_by_id(id)[0]
           raise "VirtualNetwork[#{id}] is not found." unless vnet
 
@@ -169,7 +169,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it does not exist.
       def remove_ntp(session, id, ntps)
-        task('rvpe.vn.remove_ntp', session, true) do
+        write_task('rvpe.vn.remove_ntp', session, true) do
           vnet = VirtualNetwork.find_by_id(id)[0]
           raise "VirtualNetwork[#{id}] is not found." unless vnet
 
@@ -186,7 +186,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it is the virtual network id.
       def add_lease(session, id, name, ip_addr)
-        task('rvpe.vn.add_lease', session, true) do
+        write_task('rvpe.vn.add_lease', session, true) do
           vnet = VirtualNetwork.find_by_id(id)[0]
           raise "VirtualNetwork[#{id}] is not found." unless vnet
 
@@ -216,7 +216,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it is the virtual network id.
       def remove_lease(session, id, name)
-        task('rvpe.vn.remove_lease', session, true) do
+        write_task('rvpe.vn.remove_lease', session, true) do
           vnet = VirtualNetwork.find_by_id(id)[0]
           raise "VirtualNetwork[#{id}] is not found." unless vnet
           l = Lease.find_by_name(name).last

@@ -71,7 +71,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             if successful this is the information string
       def pool(session)
-        task('rvpe.zone.pool', session) do
+        read_task('rvpe.zone.pool', session) do
           doc = REXML::Document.new
           pool_e = REXML::Element.new('ZONE_POOL')
           doc.add(pool_e)
@@ -92,7 +92,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             if successful this is the id of the zone.
       def ask_id(session, name)
-        task('rvpe.zone.ask_id', session) do
+        read_task('rvpe.zone.ask_id', session) do
           z = Zone.find_by_name(name).last
           raise "Zone[#{name}] is not found. " unless z
 
@@ -108,7 +108,7 @@ module RenkeiVPE
       #             if successful this is the string with the information
       #             about the zone
       def info(session, id)
-        task('rvpe.zone.info', session) do
+        read_task('rvpe.zone.info', session) do
           zone = Zone.find_by_id(id)[0]
           raise "Zone[#{id}] is not found." unless zone
 
@@ -128,7 +128,7 @@ module RenkeiVPE
       #             if successful this is the associated id (int id)
       #             generated for this zone
       def allocate(session, template)
-        task('rvpe.zone.allocate', session, true) do
+        write_task('rvpe.zone.allocate', session, true) do
           zone_def = ResourceFile::Parser.load_yaml(template)
 
           # create a zone
@@ -184,7 +184,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it does not exist.
       def delete(session, id)
-        task('rvpe.zone.delete', session, true) do
+        write_task('rvpe.zone.delete', session, true) do
           zone = Zone.find_by_id(id)[0]
           raise "Zone[#{id}] does not exist." unless zone
 
@@ -200,7 +200,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it does not exist.
       def add_host(session, id, host_name)
-        task('rvpe.zone.add_host', session, true) do
+        write_task('rvpe.zone.add_host', session, true) do
           zone = Zone.find_by_id(id)[0]
           raise "Zone[#{id}] does not exist." unless zone
 
@@ -217,7 +217,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it does not exist.
       def remove_host(session, id, host_name)
-        task('rvpe.zone.remove_host', session, true) do
+        write_task('rvpe.zone.remove_host', session, true) do
           zone = Zone.find_by_id(id)[0]
           raise "Zone[#{id}] does not exist." unless zone
 
@@ -234,7 +234,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it does not exist.
       def add_vnet(session, id, template)
-        task('rvpe.zone.add_vnet', session, true) do
+        write_task('rvpe.zone.add_vnet', session, true) do
           zone = Zone.find_by_id(id)[0]
           raise "Zone[#{id}] does not exist." unless zone
 
@@ -252,7 +252,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it does not exist.
       def remove_vnet(session, id, vnet_name)
-        task('rvpe.zone.remove_vnet', session, true) do
+        write_task('rvpe.zone.remove_vnet', session, true) do
           zone = Zone.find_by_id(id)[0]
           raise "Zone[#{id}] does not exist." unless zone
 
@@ -266,7 +266,7 @@ module RenkeiVPE
       # +return[0]+ always true
       # +return[1]+ always ''
       def sync(session)
-        task('rvpe.zone.sync', session, true) do
+        write_task('rvpe.zone.sync', session, true) do
           one_loc = $server_config.one_location
           if one_loc
             FileUtils.touch "#{one_loc}/var/remotes"

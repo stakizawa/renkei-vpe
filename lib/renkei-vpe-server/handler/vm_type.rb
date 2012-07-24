@@ -54,7 +54,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             if successful this is the information string
       def pool(session)
-        task('rvpe.vmtype.pool', session) do
+        read_task('rvpe.vmtype.pool', session) do
           pool_e = REXML::Element.new('VMTYPE_POOL')
           VMType.each do |type|
             type_e = type.to_xml_element
@@ -73,7 +73,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             if successful this is the id of the vm type
       def ask_id(session, name)
-        task('rvpe.vmtype.ask_id', session) do
+        read_task('rvpe.vmtype.ask_id', session) do
           t = VMType.find_by_name(name).last
           raise "VMType[#{name}] is not found. " unless t
 
@@ -89,7 +89,7 @@ module RenkeiVPE
       #             if successful this is the string with the information
       #             about the user
       def info(session, id)
-        task('rvpe.vmtype.info', session) do
+        read_task('rvpe.vmtype.info', session) do
           type = VMType.find_by_id(id)[0]
           raise "VMType[#{id}] is not found." unless type
 
@@ -109,7 +109,7 @@ module RenkeiVPE
       #             if successful this is the associated id (int uid)
       #             generated for this vm type
       def allocate(session, template)
-        task('rvpe.vmtype.allocate', session, true) do
+        write_task('rvpe.vmtype.allocate', session, true) do
           type_def = ResourceFile::Parser.load_yaml(template)
 
           name = type_def[ResourceFile::VMType::NAME]
@@ -134,7 +134,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it does not exist.
       def delete(session, id)
-        task('rvpe.vmtype.delete', session, true) do
+        write_task('rvpe.vmtype.delete', session, true) do
           type = VMType.find_by_id(id)[0]
           raise "VMType[#{id}] does not exist." unless type
 

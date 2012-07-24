@@ -66,7 +66,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             if successful this is the information string
       def pool(session, flag)
-        task('rvpe.image.pool', session) do
+        read_task('rvpe.image.pool', session) do
           if flag <= -2 || flag >= 0
             admin_session(session) do; end
           else # flag == -1
@@ -86,7 +86,7 @@ module RenkeiVPE
       # +return[1]+ if an error occurs this is error message,
       #             if successful this is the id of the image
       def ask_id(session, name)
-        task('rvpe.image.ask_id', session) do
+        read_task('rvpe.image.ask_id', session) do
           flag = -1
           admin_session(session, false) { flag = -2 }
           img = Image.find_by_name(name, session, flag).last
@@ -104,7 +104,7 @@ module RenkeiVPE
       #             if successful this is the string with the information
       #             about the image
       def info(session, id)
-        task('rvpe.image.info', session) do
+        read_task('rvpe.image.info', session) do
           rc = call_one_xmlrpc('one.image.info', session, id)
           raise rc[1] unless rc[0]
 
@@ -128,7 +128,7 @@ module RenkeiVPE
       #             if successful this is the associated id (int id)
       #             generated for this image
       def allocate(session, template)
-        task('rvpe.image.allocate', session) do
+        write_task('rvpe.image.allocate', session) do
           image_def = ResourceFile::Parser.load_yaml(template)
           # check fields
           err_msg_suffix = ' in Image file.'
@@ -197,9 +197,11 @@ EOT
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it does not exist.
       def delete(session, id)
-        auth_emsg = "You don't have permission to delete the image."
-        mod_task('rvpe.image.delete', session, id, auth_emsg) do
-          call_one_xmlrpc('one.image.delete', session, id)
+        write_task('rvpe.image.delete', session) do
+          err_msg = "You don't have permission to delete the image."
+          sanity_check(session, id, err_msg) do
+            call_one_xmlrpc('one.image.delete', session, id)
+          end
         end
       end
 
@@ -211,9 +213,11 @@ EOT
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it is the image id.
       def enable(session, id, enabled)
-        auth_emsg = "You don't have permission to enable/disable the image."
-        mod_task('rvpe.image.enable', session, id, auth_emsg) do
-          call_one_xmlrpc('one.image.enable', session, id, enabled)
+        write_task('rvpe.image.enable', session) do
+          err_msg = "You don't have permission to enable/disable the image."
+          sanity_check(session, id, err_msg) do
+            call_one_xmlrpc('one.image.enable', session, id, enabled)
+          end
         end
       end
 
@@ -225,11 +229,13 @@ EOT
       # +return[1]+ if an error occurs this is error message,
       #             otherwise it is the image id.
       def publish(session, id, published)
-        auth_emsg = "You don't have permission to publish/unpublish the image."
-        mod_task('rvpe.image.publish', session, id, auth_emsg) do
-          rc = call_one_xmlrpc('one.image.publish', session, id, published)
-          raise "A persistent image can't be public." unless rc[0]
-          rc
+        write_task('rvpe.image.publish', session) do
+          err_msg = "You don't have permission to publish/unpublish the image."
+          sanity_check(session, id, err_msg) do
+            rc = call_one_xmlrpc('one.image.publish', session, id, published)
+            raise "A persistent image can't be public." unless rc[0]
+            rc
+          end
         end
       end
 
@@ -241,11 +247,14 @@ EOT
       # +return[1]+  if an error occurs this is error message,
       #              otherwise it is the image id.
       def persistent(session, id, persistent)
-        auth_emsg = "You don't have permission to make the image persistent."
-        mod_task('rvpe.image.persistent', session, id, auth_emsg) do
-          rc = call_one_xmlrpc('one.image.persistent', session, id, persistent)
-          raise "A public or used image can't be persistent." unless rc[0]
-          rc
+        write_task('rvpe.image.persistent', session) do
+          err_msg = "You don't have permission to make the image persistent."
+          sanity_check(session, id, err_msg) do
+            rc = call_one_xmlrpc('one.image.persistent',
+                                 session, id, persistent)
+            raise "A public or used image can't be persistent." unless rc[0]
+            rc
+          end
         end
       end
 
@@ -254,26 +263,26 @@ EOT
       # +id+              id of the image
       # +new_description+ new description of the image
       def description(session, id, new_description)
-        auth_emsg = "You don't have permission to modify the description " +
-          'of the image.'
-        mod_task('rvpe.image.description', session, id, auth_emsg) do
-          call_one_xmlrpc('one.image.update', session, id,
-                          'DESCRIPTION', new_description)
+        write_task('rvpe.image.description', session) do
+          err_msg = "You don't have permission to modify the description " +
+            'of the image.'
+          sanity_check(session, id, err_msg) do
+            call_one_xmlrpc('one.image.update', session, id,
+                            'DESCRIPTION', new_description)
+          end
         end
       end
 
       private
 
-      # It is an iterator that does a task that modify/update an image.
-      def mod_task(name, session, id, auth_emsg=nil)
-        task(name, session) do
-          rc = call_one_xmlrpc('one.image.info', session, id)
-          raise rc[1] unless rc[0]
-          unless image_is_owned_by_session_owner?(rc[1], session)
-            admin_session(session, true, auth_emsg) do; end
-          end
-          yield
+      # It checks the image access permission.
+      def sanity_check(session, id, err_msg=nil)
+        rc = call_one_xmlrpc('one.image.info', session, id)
+        raise rc[1] unless rc[0]
+        unless image_is_owned_by_session_owner?(rc[1], session)
+          admin_session(session, true, err_msg) do; end
         end
+        yield rc[1]
       end
 
       # It weaves 'SIZE' element that represents image size to the
