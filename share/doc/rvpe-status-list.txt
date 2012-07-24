@@ -27,7 +27,7 @@ If an image is stable, its state is 'READY' or 'USED'.
 
 * Virtual Machine
 
-VM State ('STATE' line in 'rvpevm show')
+VM State
 | Number | Meaning   | Short Name |
 |      0 | INIT      | init       |
 |      1 | PENDING   | pend       |
@@ -38,7 +38,7 @@ VM State ('STATE' line in 'rvpevm show')
 |      6 | DONE      | done       |
 |      7 | FAILED    | fail       |
 
-Life-cycle State ('STAT' column in 'rvpevm list' and 'rvpevm history')
+Life-cycle State
 | Number | Meaning        | Short Name |
 |      0 | LCM_INIT       |            | unused
 |      1 | PROLOG         | prol       |
@@ -58,6 +58,14 @@ Life-cycle State ('STAT' column in 'rvpevm list' and 'rvpevm history')
 |     15 | CLEANUP        | clea       |
 |     16 | UNKNOWN        | unkn       |
 
+
+STAT column in 'rvpevm list' and 'rvpevm history' is set by the follwing rule.
+
+1. When 'VM State' is ACTIVE(3), it is one of 'Life-cycle State'.
+2. When 'VM State' is other than ACTIVE(3), it is one of 'VM State'.
+
+
+STATE line in 'rvpevm show' is one of 'VM State'.
 
 
 # Local Variables:
