@@ -155,6 +155,25 @@ module RenkeiVPE
           user = User.find_by_id(id)[0]
           raise "User[#{id}] does not exist." unless user
 
+          # check if there are any running VMs or Images the user owns.
+          # if any exist, this command will fail.
+          # check the VM
+          VirtualMachine.each("user_id=#{id}") do |vm|
+            vm_e = vm.to_xml_element(session)
+            stat = vm_e.get_elements('STATE')[0].text.to_i
+            if stat != 6 && stat != 7
+              raise "Can't delete a user who has incomplete VMs (whose state is neigher 'done' or 'fail'): User[#{user.name}]"
+            end
+          end
+          # check the OS Image
+          imgcnt = 0
+          Image.each(session, user.oid) do |img|
+            imgcnt += 1
+          end
+          if imgcnt != 0
+            raise "Can't delete a user who has OS Images: User[#{user.name}]"
+          end
+
           err_msg = ''
 
           rc = call_one_xmlrpc('one.user.delete', session, user.oid)
