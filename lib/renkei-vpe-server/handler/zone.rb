@@ -152,25 +152,29 @@ module RenkeiVPE
           end
 
           # add hosts to this zone
-          begin
-            zone_def[ResourceFile::Zone::HOST].each do |host|
-              add_host_to_zone(session, host, zone)
+          if zone_def[ResourceFile::Zone::HOST]
+            begin
+              zone_def[ResourceFile::Zone::HOST].each do |host|
+                add_host_to_zone(session, host, zone)
+              end
+            rescue => e
+              # delete this zone
+              _delete(session, zone)
+              raise e
             end
-          rescue => e
-            # delete this zone
-            _delete(session, zone)
-            raise e
           end
 
           # add virtual networks to this zone
-          begin
-            zone_def[ResourceFile::Zone::NETWORK].each do |net|
-              add_vnet_to_zone(session, net, zone)
+          if zone_def[ResourceFile::Zone::NETWORK]
+            begin
+              zone_def[ResourceFile::Zone::NETWORK].each do |net|
+                add_vnet_to_zone(session, net, zone)
+              end
+            rescue => e
+              # delete this zone
+              _delete(session, zone)
+              raise e
             end
-          rescue => e
-            # delete this zone
-            _delete(session, zone)
-            raise e
           end
 
           [true, zone.id]
