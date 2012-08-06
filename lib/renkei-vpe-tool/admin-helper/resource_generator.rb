@@ -46,6 +46,7 @@ module RenkeiVPETool
       def gen_zone_hash(csv_str)
         attrs = {}
         csv_str.each_line do |line|
+          next if line =~ /^#/ || line =~ /^\s+/
           key,val = line.split(',', 2).map {|e| e.strip}
           case key.upcase
           when 'ZONE_NAME'
@@ -67,6 +68,7 @@ module RenkeiVPETool
       def gen_vnet_hash(csv_str)
         attrs = {}
         csv_str.each_line do |line|
+          next if line =~ /^#/ || line =~ /^\s+/
           key,val = line.split(',', 2).map {|e| e.strip}
           case key.upcase
           when 'NETWORK_NAME'
@@ -110,7 +112,6 @@ module RenkeiVPETool
     end
   end
 end
-
 
 
 # Local Variables:
