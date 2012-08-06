@@ -53,10 +53,16 @@ begin
   parser = OptionParser.new
   parser.banner = <<EOT
 NAME
-    #{CMD_NAME} - Parser for resource files for RENKEI-VPE
+    #{CMD_NAME} - parser for resource files for RENKEI-VPE
 
 Synopsis
     #{CMD_NAME} <command> [ options ] <input_file>
+
+Description
+    This command parses CSV-formatted resource files into RENKEI-VPE's
+    YAML-formatted resource files.
+
+    The <command> is a name of a subcommand of #{CMD_NAME} command.
 
 Commands
     zone [ -o <output_file> ] <zone_file> [ <network_file> ... ]
@@ -160,6 +166,9 @@ when 'vnet'
   rescue => e
     $stderr.puts e.message
   end
+
+when 'help'
+  puts parser.help
 
 else
   exit_on_parse_error("Unknown command: #{command}")
