@@ -1,5 +1,8 @@
 TODOs for next release.
 
+- access control for VM networks
+- refactoring rvpeXXX commands
+- modify to support specifying VM templates when invoking a VM
 - implement an installer
 - use gfarm auto replication mechanism to create replicas of OS images
 - support vhost-net, macvlan and/or macvtap
