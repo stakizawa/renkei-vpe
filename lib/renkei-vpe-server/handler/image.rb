@@ -62,13 +62,23 @@ module RenkeiVPE
       # return information about image group.
       # +session+   string that represents user session
       # +flag+      flag for condition
+      #             if flag <  -1, return all vms
+      #             if flag == -1, return mine
+      #             if flag >=  0, return user's vms
       # +return[0]+ true or false whenever is successful or not
       # +return[1]+ if an error occurs this is error message,
       #             if successful this is the information string
       def pool(session, flag)
         read_task('rvpe.image.pool', session) do
           if flag <= -2 || flag >= 0
-            admin_session(session) do; end
+            admin_session(session) do
+              if flag >= 0
+                # convert uid in RENKEI-VPE to uid in OpenNebula
+                user = User.find_by_id(flag).last
+                raise "User[ID:#{flag}] is not found. " unless user
+                flag = user.oid
+              end
+            end
           else # flag == -1
           end
 
