@@ -130,6 +130,9 @@ Commands
         Shutdown the specified VM.  If a VM shutdowns, all its files are
         deleted.  <vm_name> can be name or id of a VM.
 
+        When the administrator  shutdowns  VMs  owned  by other users,  he
+        should specify them by their IDs.
+
         $ #{CMD_NAME} shutdown vm00-nii
 
     delete <vm_name>
@@ -137,11 +140,17 @@ Commands
         RENKEI-VPE.  Information about accounting still remains on the DB.
         This command should be used only when the status of VM is 'unknown'.
 
+        When the administrator deletes VMs owned by other users, he should
+        specify them by their IDs.
+
         $ #{CMD_NAME} delete vm00-nii
 
     restart <vm_name>
         Restart the specified VM.  This command  should be used only when
         the status of VM is 'unknown'.
+
+        When the administrator restarts VMs owned by other users, he should
+        specify them by their IDs.
 
         $ #{CMD_NAME} restart vm00-nii
 
@@ -150,23 +159,33 @@ Commands
         Suspend the specified VM.  A suspended VM can be resumed. <vm_name>
         can be name or id of a VM.
 
+        When the administrator suspends VMs owned by other users, he should
+        specify them by their IDs.
+
         $ #{CMD_NAME} suspend vm00-nii
 
     resume <vm_name>
         Resume the specified suspended VM.  <vm_name> can be name or id of
         a VM.
 
+        When the administrator resumes VMs owned by other users, he should
+        specify them by their IDs.
+
         $ #{CMD_NAME} resume vm00-nii
 
 
     mark_save <vm_name> <image_name> [ <image_description> ]
         Mark a running VM  to be seved on its shutdown.  It just marks and
-        do not actually saves the VM status as an OS image.
+        do not actually saves the VM state as an OS image.
 
         <vm_name>           can be name or id of a VM.
         <image_name>        is name of saved image.
         <image_description> can be empty or a string that contains a simple
                             description of the saved image.
+
+        When the administrator  calls  this command to VMs  owned by other
+        users, he should specify them by their IDs and the owner of resultant
+        OS images is the administrator.
 
         $ #{CMD_NAME} mark_save vm00-nii saved_vm00-nii
         $ #{CMD_NAME} mark_save vm00-nii saved_vm00-nii 'test'
