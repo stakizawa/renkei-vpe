@@ -135,6 +135,7 @@ module RenkeiVPE
       'gfarm_local_path'         => '/work/one_images',
       'gfarm_replica_count'      => '3',
       'gfarm_replicate_interval' => '3600',
+      'image_max_virtual_size'   => '100',
       'log_level'                => 'info',
       'user_limit'               => '1',
     }

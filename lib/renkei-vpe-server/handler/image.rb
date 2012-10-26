@@ -55,6 +55,8 @@ module RenkeiVPE
       end
 
 
+      CMD_QEMUIMG = '/usr/bin/qemu-img'
+
       ########################################################################
       # Implement xml rpc functions
       ########################################################################
@@ -181,6 +183,7 @@ module RenkeiVPE
           unless _path
             raise 'Specify ' + ResourceFile::Image::PATH + err_msg_suffix
           end
+          image_sanity_check(_path)
           _nic_model = image_def[ResourceFile::Image::NIC_MODEL]
           _nic_model = 'virtio' unless _nic_model
 
@@ -347,6 +350,40 @@ EOT
           true
         else
           false
+        end
+      end
+
+      # It returns maximum virtual size of an OS image
+      @image_max_vsize = nil
+      def image_max_vsize
+        unless @image_max_vsize
+          @image_max_vsize =
+            $server_config.image_max_virtual_size.to_i * 1024 * 1024 * 1024
+        end
+        @image_max_vsize
+      end
+
+      # It checks image file existence & attributes.
+      def image_sanity_check(image_path)
+        unless FileTest.exist?(image_path)
+          raise "Image file is not found: #{image_path}"
+        end
+        `#{CMD_QEMUIMG} info #{image_path}`.each_line do |l|
+          k,v = l.split(':').map { |e| e.strip }
+          case k
+          when 'file format'
+            unless v == 'qcow2'
+              raise "Image should be formatted in qcow2. '#{v}' can't be used."
+            end
+          when 'virtual size'
+            if /.*\((\d+).*\).*/ =~ v
+              unless $1.to_i <= image_max_vsize
+                raise "Virtual size of an image should be smaller than #{$server_config.image_max_virtual_size}GB."
+              end
+            else
+              raise "Virtual size can't be recognized."
+            end
+          end
         end
       end
 
