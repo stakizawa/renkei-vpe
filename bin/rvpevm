@@ -34,60 +34,17 @@ $: << RUBY_LIB_LOCATION
 # Required libraries
 ##############################################################################
 require 'renkei-vpe'
-require 'client_utilities'
+require 'renkei-vpe-tool/cli-utilities'
 require 'optparse'
 
 include RenkeiVPE::Const
+include RenkeiVPETool::CliUtilities
 
 ##############################################################################
-# Global variables
+# Constant variables
 ##############################################################################
 CMD_NAME = 'rvpevm'
-
-client = RenkeiVPE::Client.new()
-xml_output = false
-verbose    = false
-super_verbose = false
-list_columns = {
-  :id      => { :name => 'ID',
-                :size => 4,
-                :proc => lambda {|d,e| d.id} },
-  :name    => { :name => 'NAME',
-                :size => 30,
-                :proc => lambda {|d,e| d.name} },
-  :user    => { :name => 'USER',
-                :size => 10,
-                :proc => lambda {|d,e| d['USER_NAME']} },
-  :zone    => { :name => 'ZONE',
-                :size => 15,
-                :proc => lambda {|d,e| d['ZONE_NAME']} },
-  :time    => { :name => 'TIME',
-                :size => 11,
-                :proc => lambda {|d,e| str_running_time(d)} },
-  :state   => { :name => 'STAT',
-                :size => 4,
-                :proc => lambda {|d,e| d.status} },
-
-  :default => [:id, :name, :user, :zone, :time, :state]
-}
-
-##############################################################################
-# Functions
-##############################################################################
-def exit_on_parse_error(errmsg=nil)
-  $stderr.puts errmsg if errmsg
-  $stderr.puts
-  $stderr.puts "Run '#{CMD_NAME} help' to see the usage."
-  exit 1
-end
-
-##############################################################################
-# main
-##############################################################################
-
-begin
-  parser = OptionParser.new
-  parser.banner = <<EOT
+CMD_HELP = <<EOS
 Name
     #{CMD_NAME} - manipulate virtual machines
 
@@ -227,7 +184,60 @@ Commands
         Show this message.
 
 Options
-EOT
+EOS
+
+##############################################################################
+# Global variables
+##############################################################################
+client        = RenkeiVPE::Client.new()
+xml_output    = false
+verbose       = false
+super_verbose = false
+list_columns  = {
+  :id      => { :name => 'ID',
+                :size => 4,
+                :proc => lambda {|d,e| d.id} },
+  :name    => { :name => 'NAME',
+                :size => 30,
+                :proc => lambda {|d,e| d.name} },
+  :user    => { :name => 'USER',
+                :size => 10,
+                :proc => lambda {|d,e| d['USER_NAME']} },
+  :zone    => { :name => 'ZONE',
+                :size => 15,
+                :proc => lambda {|d,e| d['ZONE_NAME']} },
+  :time    => { :name => 'TIME',
+                :size => 11,
+                :proc => lambda {|d,e| str_running_time(d)} },
+  :state   => { :name => 'STAT',
+                :size => 4,
+                :proc => lambda {|d,e| d.status} },
+
+  :default => [:id, :name, :user, :zone, :time, :state]
+}
+
+##############################################################################
+# Functions
+##############################################################################
+def str_running_time(data)
+  stime=Time.at(data["STIME"].to_i)
+  if data["ETIME"]=="0"
+    etime=Time.now
+  else
+    etime=Time.at(data["ETIME"].to_i)
+  end
+  dtime=Time.at(etime-stime).getgm
+
+  "%02d %02d:%02d:%02d" % [dtime.yday-1, dtime.hour, dtime.min, dtime.sec]
+end
+
+##############################################################################
+# main
+##############################################################################
+
+begin
+  parser = OptionParser.new
+  parser.banner = CMD_HELP
 
   parser.on('-x', '--xml', ': xml output mode') do
     xml_output = true
@@ -260,7 +270,7 @@ case command
 #######################################
 # create a VM
 when 'create'
-  check_parameters('create', 5)
+  check_command('create', 5)
 
   vmtype   = ARGV.shift
   # TODO to use id only for image is dirty
@@ -279,7 +289,7 @@ when 'create'
   vm = RenkeiVPE::VirtualMachine.new(RenkeiVPE::VirtualMachine.build_xml,
                                      client)
   rc = vm.create(vmtype, image_id, root_pubkey, zone, networks)
-  if is_successful?(rc)
+  if RenkeiVPE.is_successful?(rc)
     puts "Request done: create VM[#{vm.name}]"
   else
     $stderr.puts rc.message
@@ -289,14 +299,14 @@ when 'create'
 #######################################
 # shutdown a VM
 when 'shutdown'
-  check_parameters('shutdown', 1)
+  check_command('shutdown', 1)
 
   vm_name = ARGV[0]
   id = get_vm_id(vm_name)
   vm = RenkeiVPE::VirtualMachine.new_with_id(id, client)
   rc = vm.shutdown
 
-  if is_successful?(rc)
+  if RenkeiVPE.is_successful?(rc)
     puts "Request done: shutdown VM[#{vm_name}]"
   else
     $stderr.puts rc.message
@@ -306,14 +316,14 @@ when 'shutdown'
 #######################################
 # delete a VM
 when 'delete'
-  check_parameters('delete', 1)
+  check_command('delete', 1)
 
   vm_name = ARGV[0]
   id = get_vm_id(vm_name)
   vm = RenkeiVPE::VirtualMachine.new_with_id(id, client)
   rc = vm.delete
 
-  if is_successful?(rc)
+  if RenkeiVPE.is_successful?(rc)
     puts "Request done: delete VM[#{vm_name}]"
   else
     $stderr.puts rc.message
@@ -323,14 +333,14 @@ when 'delete'
 #######################################
 # restart a VM
 when 'restart'
-  check_parameters('restart', 1)
+  check_command('restart', 1)
 
   vm_name = ARGV[0]
   id = get_vm_id(vm_name)
   vm = RenkeiVPE::VirtualMachine.new_with_id(id, client)
   rc = vm.restart
 
-  if is_successful?(rc)
+  if RenkeiVPE.is_successful?(rc)
     puts "Request done: restart VM[#{vm_name}]"
   else
     $stderr.puts rc.message
@@ -340,14 +350,14 @@ when 'restart'
 #######################################
 # subpend a VM
 when 'suspend'
-  check_parameters('suspend', 1)
+  check_command('suspend', 1)
 
   vm_name = ARGV[0]
   id = get_vm_id(vm_name)
   vm = RenkeiVPE::VirtualMachine.new_with_id(id, client)
   rc = vm.suspend
 
-  if is_successful?(rc)
+  if RenkeiVPE.is_successful?(rc)
     puts "Request done: suspend VM[#{vm_name}]"
   else
     $stderr.puts rc.message
@@ -357,14 +367,14 @@ when 'suspend'
 #######################################
 # resume a VM
 when 'resume'
-  check_parameters('resume', 1)
+  check_command('resume', 1)
 
   vm_name = ARGV[0]
   id = get_vm_id(vm_name)
   vm = RenkeiVPE::VirtualMachine.new_with_id(id, client)
   rc = vm.resume
 
-  if is_successful?(rc)
+  if RenkeiVPE.is_successful?(rc)
     puts "Request done: resume VM[#{vm_name}]"
   else
     $stderr.puts rc.message
@@ -374,16 +384,16 @@ when 'resume'
 ##############################################
 # mark a VM to save its OS image on shutdown
 when 'mark_save'
-  check_parameters('mark_save', 2)
+  check_command('mark_save', 2)
 
-  vm_name = ARGV[0]
+  vm_name  = ARGV[0]
   img_name = ARGV[1]
   img_desc = (ARGV[2])? ARGV[2] : ''
   id = get_vm_id(vm_name)
   vm = RenkeiVPE::VirtualMachine.new_with_id(id, client)
   rc = vm.mark_save(img_name, img_desc)
 
-  if is_successful?(rc)
+  if RenkeiVPE.is_successful?(rc)
     puts "VM[#{vm_name}] is marked to save its image on shutdown."
   else
     $stderr.puts rc.message
@@ -411,7 +421,7 @@ when 'list'
 
   vm_pool = RenkeiVPE::VirtualMachinePool.new(client, filter)
   rc = vm_pool.info
-  if is_error?(rc)
+  if RenkeiVPE.is_error?(rc)
     $stderr.puts rc.message
     exit 1
   end
@@ -419,7 +429,7 @@ when 'list'
   if xml_output
     puts vm_pool.to_xml
   else
-    print_xml_friendly(list_columns, vm_pool, verbose)
+    print_xml_in_table(list_columns, vm_pool, verbose)
   end
 
 #######################################
@@ -443,7 +453,7 @@ when 'history'
 
   vm_pool = RenkeiVPE::VirtualMachinePool.new(client, filter, 1)
   rc = vm_pool.info
-  if is_error?(rc)
+  if RenkeiVPE.is_error?(rc)
     $stderr.puts rc.message
     exit 1
   end
@@ -451,20 +461,20 @@ when 'history'
   if xml_output
     puts vm_pool.to_xml
   else
-    print_xml_friendly(list_columns, vm_pool, verbose)
+    print_xml_in_table(list_columns, vm_pool, verbose)
   end
 
 #######################################
 # show VM info
 when 'show'
-  check_parameters('show', 1)
+  check_command('show', 1)
 
   ARGV.each do |vm_name|
     id = get_vm_id(vm_name)
     vm = RenkeiVPE::VirtualMachine.new_with_id(id, client)
     rc = vm.info
 
-    if is_successful?(rc)
+    if RenkeiVPE.is_successful?(rc)
       if xml_output
         puts vm.to_xml
       else

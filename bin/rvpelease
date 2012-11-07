@@ -34,55 +34,16 @@ $: << RUBY_LIB_LOCATION
 # Required libraries
 ##############################################################################
 require 'renkei-vpe'
-require 'client_utilities'
+require 'renkei-vpe-tool/cli-utilities'
 require 'optparse'
 
+include RenkeiVPETool::CliUtilities
+
 ##############################################################################
-# Global variables
+# Constant variables
 ##############################################################################
 CMD_NAME = 'rvpelease'
-
-client = RenkeiVPE::Client.new()
-xml_output = false
-verbose    = false
-
-list_columns = {
-  :id      => { :name => 'ID',
-                :size => 4,
-                :proc => lambda {|d,e| d.id} },
-  :name    => { :name => 'NAME',
-                :size => 30,
-                :proc => lambda {|d,e| d.name} },
-  :ip      => { :name => 'IP',
-                :size => 15,
-                :proc => lambda {|d,e| d['IP']} },
-  :assign  => { :name => 'ASSIGN',
-                :size => 10,
-                :proc => lambda {|d,e| d.assigned_user} },
-  :vid     => { :name => 'VM_ID',
-                :size => 15,
-                :proc => lambda {|d,e| d.vm_id_str} },
-
-  :default => [:id, :name, :ip, :assign, :vid]
-}
-
-##############################################################################
-# Functions
-##############################################################################
-def exit_on_parse_error(errmsg=nil)
-  $stderr.puts errmsg if errmsg
-  $stderr.puts
-  $stderr.puts "Run '#{CMD_NAME} help' to see the usage."
-  exit 1
-end
-
-##############################################################################
-# main
-##############################################################################
-
-begin
-  parser = OptionParser.new
-  parser.banner = <<EOT
+CMD_HELP = <<EOS
 NAME
     #{CMD_NAME} - manage the assignment of IP address
 
@@ -141,7 +102,22 @@ Commands
         Show this message.
 
 Options
-EOT
+EOS
+
+##############################################################################
+# Global variables
+##############################################################################
+client = RenkeiVPE::Client.new()
+xml_output = false
+verbose    = false
+
+##############################################################################
+# main
+##############################################################################
+
+begin
+  parser = OptionParser.new
+  parser.banner = CMD_HELP
 
   parser.on('-x', '--xml', ': xml output mode') do
     xml_output = true
@@ -168,14 +144,14 @@ case command
 #######################################
 # assign a lease to a user
 when 'assign'
-  check_parameters('assign', 2)
+  check_command('assign', 2)
 
   lease_name = ARGV[0]
   user_name  = ARGV[1]
   id = get_lease_id(lease_name)
   lease = RenkeiVPE::Lease.new_with_id(id, client)
   rc = lease.assign(user_name)
-  if is_successful?(rc)
+  if RenkeiVPE.is_successful?(rc)
     puts "Lease[#{lease_name}] is assigned to User[#{user_name}]."
   else
     $stderr.puts rc.message
@@ -185,13 +161,13 @@ when 'assign'
 #######################################
 # release a lease from a user
 when 'release'
-  check_parameters('release', 1)
+  check_command('release', 1)
 
   lease_name = ARGV[0]
   id = get_lease_id(lease_name)
   lease = RenkeiVPE::Lease.new_with_id(id, client)
   rc = lease.release
-  if is_successful?(rc)
+  if RenkeiVPE.is_successful?(rc)
     puts "Lease[#{lease_name}] is released."
   else
     $stderr.puts rc.message
@@ -201,14 +177,14 @@ when 'release'
 #######################################
 # show leases
 when 'show'
-  check_parameters('show', 1)
+  check_command('show', 1)
 
   ARGV.each do |lease_name|
     id = get_lease_id(lease_name)
     lease = RenkeiVPE::Lease.new_with_id(id, client)
     rc = lease.info
 
-    if is_successful?(rc)
+    if RenkeiVPE.is_successful?(rc)
       if xml_output
         puts lease.to_xml
       else
@@ -260,7 +236,7 @@ when 'list'
 
   lease_pool = RenkeiVPE::LeasePool.new(client, filter)
   rc = lease_pool.info
-  if is_error?(rc)
+  if RenkeiVPE.is_error?(rc)
     $stderr.puts rc.message
     exit 1
   end
@@ -268,7 +244,25 @@ when 'list'
   if xml_output
     puts lease_pool.to_xml
   else
-    print_xml_friendly(list_columns, lease_pool, verbose)
+    list_columns = {
+      :id      => { :name => 'ID',
+                    :size => 4,
+                    :proc => lambda {|d,e| d.id} },
+      :name    => { :name => 'NAME',
+                    :size => 30,
+                    :proc => lambda {|d,e| d.name} },
+      :ip      => { :name => 'IP',
+                    :size => 15,
+                    :proc => lambda {|d,e| d['IP']} },
+      :assign  => { :name => 'ASSIGN',
+                    :size => 10,
+                    :proc => lambda {|d,e| d.assigned_user} },
+      :vid     => { :name => 'VM_ID',
+                    :size => 15,
+                    :proc => lambda {|d,e| d.vm_id_str} },
+      :default => [:id, :name, :ip, :assign, :vid]
+    }
+    print_xml_in_table(list_columns, lease_pool, verbose)
   end
 
 #######################################

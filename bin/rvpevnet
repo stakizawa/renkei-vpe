@@ -34,189 +34,16 @@ $: << RUBY_LIB_LOCATION
 # Required libraries
 ##############################################################################
 require 'renkei-vpe'
-require 'client_utilities'
+require 'renkei-vpe-tool/cli-utilities'
 require 'optparse'
 
+include RenkeiVPETool::CliUtilities
+
 ##############################################################################
-# Global variables
+# Constant variables
 ##############################################################################
 CMD_NAME = 'rvpevnet'
-
-client = RenkeiVPE::Client.new()
-xml_output = false
-verbose    = false
-
-list_columns = {
-  :id      => { :name => 'ID',
-                :size => 4,
-                :proc => lambda {|d,e| d.id} },
-  :name    => { :name => 'NAME',
-                :size => 30,
-                :proc => lambda {|d,e| d.name} },
-  :zone    => { :name => 'ZONE',
-                :size => 20,
-                :proc => lambda {|d,e| d['ZONE']} },
-
-  :default => [:id, :name, :zone]
-}
-
-##############################################################################
-# Functions
-##############################################################################
-def send_servers_to_vnet(args, method, client)
-  zone_name = args.shift
-  vnet_name = args.shift
-  servers   = args.join(' ')
-  id = get_vn_id(vnet_name, zone_name)
-  vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
-  rc = vnet.send(method, servers)
-
-  if is_successful?(rc)
-    vn_uqname = "VirtualNetwork[#{zone_name}::#{vnet_name}]"
-    servers_name = "Server[#{servers}]"
-    yield(vn_uqname, servers_name)
-  else
-    $stderr.puts rc.message
-    exit 1
-  end
-end
-
-def send_lease_to_vnet(args, method, client)
-  zone_name = args.shift
-  vnet_name = args.shift
-  id = get_vn_id(vnet_name, zone_name)
-  vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
-  rc = vnet.send(method, *args)
-
-  if is_successful?(rc)
-    vn_uqname = "VirtualNetwork[#{zone_name}::#{vnet_name}]"
-    yield(vn_uqname, args)
-  else
-    $stderr.puts rc.message
-    exit 1
-  end
-end
-
-def add_servers(args, method, client)
-  send_servers_to_vnet(args, method, client) do |vn_name, servers|
-    puts "#{servers} added to #{vn_name}."
-  end
-end
-
-def remove_servers(args, method, client)
-  send_servers_to_vnet(args, method, client) do |vn_name, servers|
-    puts "#{servers} removed from #{vn_name}."
-  end
-end
-
-def add_lease(args, method, client)
-  send_lease_to_vnet(args, method, client) do |vn_name, lease_info|
-    lease = lease_info[0] + '(' + lease_info[1] + ')'
-    puts "#{lease} added to #{vn_name}."
-  end
-end
-
-def remove_lease(args, method, client)
-  send_lease_to_vnet(args, method, client) do |vn_name, lease_info|
-    puts "#{lease_info[0]} removed from #{vn_name}."
-  end
-end
-
-def print_servers(xml_obj, server_name)
-  str='%-15s: %-30s'
-
-  list = xml_obj[server_name].split
-  if list.size > 1
-    puts str % [server_name + ' SERVERS', list.shift]
-    list.each do |s|
-      puts str % ['', s]
-    end
-  else
-    puts str % [server_name + ' SERVER', list[0]]
-  end
-end
-
-def print_leases(xml_obj, verbose=false, print_name_on_header=false)
-  # print header
-  print_header('%-80s',
-               'VIRTUAL HOST LEASES' +
-               ((print_name_on_header)? " - #{xml_obj.name}" : ''),
-               true)
-
-  # print header for leases
-  if verbose
-    str = '%4s %30s %15s %17s %4s %4s'
-    hmsg = %w{ID NAME IP MAC USED VID}
-  else
-    str = '%30s %15s %17s'
-    hmsg = %w{NAME IP MAC}
-  end
-  print_header(str, hmsg, true)
-  xml_obj.each('LEASES/LEASE') do |l|
-    name = l['NAME']
-    if l['ASSIGNED_TO_UID'].to_i >= 0
-      name = '(+) ' + name
-    end
-    if verbose
-      msg = [ l['ID'], name, l['IP'], l['MAC'],
-              l['USED'], l['VID'] ]
-    else
-      msg = [ name, l['IP'], l['MAC'] ]
-    end
-    puts str % msg
-  end
-end
-
-def each_vnets_in_zone(args, client)
-  zone_name = args.shift
-  if args.empty?
-    targets = get_vn_ids(zone_name)
-  else
-    targets = []
-    args.each do |vnet_name|
-      targets << get_vn_id(vnet_name, zone_name)
-    end
-  end
-
-  targets.each do |id|
-    vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
-    rc = vnet.info
-    if is_successful?(rc)
-      yield vnet
-    else
-      $stderr.puts rc.message
-      exit 1
-    end
-  end
-end
-
-def list_servers(args, type, client)
-  each_vnets_in_zone(args, client) do |vnet|
-    print_header('%-80s', "NETWORK - #{vnet.name}", true)
-    print_servers(vnet, type)
-  end
-end
-
-def list_leases(args, verbose, client)
-  each_vnets_in_zone(args, client) do |vnet|
-    print_leases(vnet, verbose, true)
-  end
-end
-
-def exit_on_parse_error(errmsg=nil)
-  $stderr.puts errmsg if errmsg
-  $stderr.puts
-  $stderr.puts "Run '#{CMD_NAME} help' to see the usage."
-  exit 1
-end
-
-##############################################################################
-# main
-##############################################################################
-
-begin
-  parser = OptionParser.new
-  parser.banner = <<EOT
+CMD_HELP = <<EOS
 Name
     #{CMD_NAME} - manipulate virtual networks
 
@@ -317,7 +144,165 @@ Commands
         Show this message.
 
 Options
-EOT
+EOS
+
+##############################################################################
+# Global variables
+##############################################################################
+client = RenkeiVPE::Client.new()
+xml_output = false
+verbose    = false
+
+##############################################################################
+# Functions
+##############################################################################
+def send_servers_to_vnet(args, method, client)
+  zone_name = args.shift
+  vnet_name = args.shift
+  servers   = args.join(' ')
+  id = get_vn_id(vnet_name, zone_name)
+  vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
+  rc = vnet.send(method, servers)
+
+  if RenkeiVPE.is_successful?(rc)
+    vn_uqname = "VirtualNetwork[#{zone_name}::#{vnet_name}]"
+    servers_name = "Server[#{servers}]"
+    yield(vn_uqname, servers_name)
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+end
+
+def send_lease_to_vnet(args, method, client)
+  zone_name = args.shift
+  vnet_name = args.shift
+  id = get_vn_id(vnet_name, zone_name)
+  vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
+  rc = vnet.send(method, *args)
+
+  if RenkeiVPE.is_successful?(rc)
+    vn_uqname = "VirtualNetwork[#{zone_name}::#{vnet_name}]"
+    yield(vn_uqname, args)
+  else
+    $stderr.puts rc.message
+    exit 1
+  end
+end
+
+def add_servers(args, method, client)
+  send_servers_to_vnet(args, method, client) do |vn_name, servers|
+    puts "#{servers} added to #{vn_name}."
+  end
+end
+
+def remove_servers(args, method, client)
+  send_servers_to_vnet(args, method, client) do |vn_name, servers|
+    puts "#{servers} removed from #{vn_name}."
+  end
+end
+
+def add_lease(args, method, client)
+  send_lease_to_vnet(args, method, client) do |vn_name, lease_info|
+    lease = lease_info[0] + '(' + lease_info[1] + ')'
+    puts "#{lease} added to #{vn_name}."
+  end
+end
+
+def remove_lease(args, method, client)
+  send_lease_to_vnet(args, method, client) do |vn_name, lease_info|
+    puts "#{lease_info[0]} removed from #{vn_name}."
+  end
+end
+
+def print_servers(xml_obj, server_name)
+  str='%-15s: %-30s'
+
+  list = xml_obj[server_name].split
+  if list.size > 1
+    puts str % [server_name + ' SERVERS', list.shift]
+    list.each do |s|
+      puts str % ['', s]
+    end
+  else
+    puts str % [server_name + ' SERVER', list[0]]
+  end
+end
+
+def print_leases(xml_obj, verbose=false, print_name_on_header=false)
+  # print header
+  print_header('%-80s',
+               'VIRTUAL HOST LEASES' +
+               ((print_name_on_header)? " - #{xml_obj.name}" : ''),
+               true)
+
+  # print header for leases
+  if verbose
+    str = '%4s %30s %15s %17s %4s %4s'
+    hmsg = %w{ID NAME IP MAC USED VID}
+  else
+    str = '%30s %15s %17s'
+    hmsg = %w{NAME IP MAC}
+  end
+  print_header(str, hmsg, true)
+  xml_obj.each('LEASES/LEASE') do |l|
+    name = l['NAME']
+    if l['ASSIGNED_TO_UID'].to_i >= 0
+      name = '(+) ' + name
+    end
+    if verbose
+      msg = [ l['ID'], name, l['IP'], l['MAC'],
+              l['USED'], l['VID'] ]
+    else
+      msg = [ name, l['IP'], l['MAC'] ]
+    end
+    puts str % msg
+  end
+end
+
+def each_vnets_in_zone(args, client)
+  zone_name = args.shift
+  if args.empty?
+    targets = get_vn_ids(zone_name)
+  else
+    targets = []
+    args.each do |vnet_name|
+      targets << get_vn_id(vnet_name, zone_name)
+    end
+  end
+
+  targets.each do |id|
+    vnet = RenkeiVPE::VirtualNetwork.new_with_id(id, client)
+    rc = vnet.info
+    if RenkeiVPE.is_successful?(rc)
+      yield vnet
+    else
+      $stderr.puts rc.message
+      exit 1
+    end
+  end
+end
+
+def list_servers(args, type, client)
+  each_vnets_in_zone(args, client) do |vnet|
+    print_header('%-80s', "NETWORK - #{vnet.name}", true)
+    print_servers(vnet, type)
+  end
+end
+
+def list_leases(args, verbose, client)
+  each_vnets_in_zone(args, client) do |vnet|
+    print_leases(vnet, verbose, true)
+  end
+end
+
+##############################################################################
+# main
+##############################################################################
+
+begin
+  parser = OptionParser.new
+  parser.banner = CMD_HELP
 
   parser.on('-v', ': verbose output mode') do
     verbose = true
@@ -344,21 +329,21 @@ case command
 #######################################
 # add dns servers
 when 'adddns'
-  check_parameters('adddns', 3)
+  check_command('adddns', 3)
 
   add_servers(ARGV, :adddns, client)
 
 #######################################
 # remove dns servers
 when 'removedns'
-  check_parameters('removedns', 3)
+  check_command('removedns', 3)
 
   remove_servers(ARGV, :rmdns, client)
 
 #######################################
 # list dns servers
 when 'listdns'
-  check_parameters('listdns', 1)
+  check_command('listdns', 1)
 
   list_servers(ARGV, 'DNS', client)
   puts
@@ -366,21 +351,21 @@ when 'listdns'
 #######################################
 # add ntp servers
 when 'addntp'
-  check_parameters('addntp', 3)
+  check_command('addntp', 3)
 
   add_servers(ARGV, :addntp, client)
 
 #######################################
 # remove ntp servers
 when 'removentp'
-  check_parameters('removentp', 3)
+  check_command('removentp', 3)
 
   remove_servers(ARGV, :rmntp, client)
 
 #######################################
 # list ntp servers
 when 'listntp'
-  check_parameters('listntp', 1)
+  check_command('listntp', 1)
 
   list_servers(ARGV, 'NTP', client)
   puts
@@ -388,21 +373,21 @@ when 'listntp'
 #######################################
 # add a virtual host lease
 when 'addlease'
-  check_parameters('addlease', 4)
+  check_command('addlease', 4)
 
   add_lease(ARGV, :addlease, client)
 
 #######################################
 # remove a virtual host lease
 when 'removelease'
-  check_parameters('removelease', 3)
+  check_command('removelease', 3)
 
   remove_lease(ARGV, :rmlease, client)
 
 #######################################
 # list virtual host leases
 when 'leases'
-  check_parameters('leases', 1)
+  check_command('leases', 1)
 
   list_leases(ARGV, verbose, client)
   puts
@@ -410,7 +395,7 @@ when 'leases'
 #######################################
 # show vns
 when 'show'
-  check_parameters('show', 1)
+  check_command('show', 1)
 
   each_vnets_in_zone(ARGV, client) do |vnet|
     if xml_output
@@ -453,11 +438,11 @@ when 'show'
   end
 
 #######################################
-# list hosts
+# list virtual network
 when 'list'
   vnet_pool = RenkeiVPE::VirtualNetworkPool.new(client)
   rc = vnet_pool.info
-  if is_error?(rc)
+  if RenkeiVPE.is_error?(rc)
     $stderr.puts rc.message
     exit 1
   end
@@ -465,7 +450,19 @@ when 'list'
   if xml_output
     puts vnet_pool.to_xml
   else
-    print_xml_friendly(list_columns, vnet_pool, verbose)
+    list_columns = {
+      :id      => { :name => 'ID',
+                    :size => 4,
+                    :proc => lambda {|d,e| d.id} },
+      :name    => { :name => 'NAME',
+                    :size => 30,
+        :proc => lambda {|d,e| d.name} },
+      :zone    => { :name => 'ZONE',
+                    :size => 20,
+                    :proc => lambda {|d,e| d['ZONE']} },
+      :default => [:id, :name, :zone]
+    }
+    print_xml_in_table(list_columns, vnet_pool, verbose)
   end
 
 #######################################

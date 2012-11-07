@@ -34,52 +34,16 @@ $: << RUBY_LIB_LOCATION
 # Required libraries
 ##############################################################################
 require 'renkei-vpe'
-require 'client_utilities'
+require 'renkei-vpe-tool/cli-utilities'
 require 'optparse'
 
+include RenkeiVPETool::CliUtilities
+
 ##############################################################################
-# Global variables
+# Constant variables
 ##############################################################################
 CMD_NAME = 'rvpehost'
-
-client = RenkeiVPE::Client.new()
-xml_output = false
-verbose    = false
-
-list_columns = {
-  :id      => { :name => 'ID',
-                :size => 4,
-                :proc => lambda {|d,e| d.id} },
-  :name    => { :name => 'NAME',
-                :size => 30,
-                :proc => lambda {|d,e| d.name} },
-  :zone    => { :name => 'ZONE',
-                :size => 20,
-                :proc => lambda {|d,e| d['CLUSTER']} },
-  :state   => { :name => 'STATE',
-                :size => 15,
-                :proc => lambda {|d,e| d.state_str} },
-
-  :default => [:id, :name, :zone, :state]
-}
-
-##############################################################################
-# Functions
-##############################################################################
-def exit_on_parse_error(errmsg=nil)
-  $stderr.puts errmsg if errmsg
-  $stderr.puts
-  $stderr.puts "Run '#{CMD_NAME} help' to see the usage."
-  exit 1
-end
-
-##############################################################################
-# main
-##############################################################################
-
-begin
-  parser = OptionParser.new
-  parser.banner = <<EOT
+CMD_HELP = <<EOS
 Name
     #{CMD_NAME} - show and edit physical host information
 
@@ -112,7 +76,7 @@ Commands
         $ #{CMD_NAME} show 'tokyo tech' rpop-titech.cc.titech.ac.jp
 
 
-    list [ -x ]
+    list [ -v ] [ -x ]
         List all hosts registered to th system.  This command is used for
         debugging.
 
@@ -121,7 +85,22 @@ Commands
         Show this message.
 
 Options
-EOT
+EOS
+
+##############################################################################
+# Global variables
+##############################################################################
+client = RenkeiVPE::Client.new()
+xml_output = false
+verbose    = false
+
+##############################################################################
+# main
+##############################################################################
+
+begin
+  parser = OptionParser.new
+  parser.banner = CMD_HELP
 
   parser.on('-x', '--xml', ': xml output mode') do
     xml_output = true
@@ -148,14 +127,14 @@ case command
 #######################################
 # enable hosts
 when 'enable'
-  check_parameters('enable', 2)
+  check_command('enable', 2)
 
   zone_name = ARGV.shift
   ARGV.each do |host_name|
     id = get_host_id(host_name, zone_name)
     host = RenkeiVPE::Host.new_with_id(id, client)
     rc = host.enable
-    if is_successful?(rc)
+    if RenkeiVPE.is_successful?(rc)
       puts "Host[#{host_name}] enabled."
     else
       $stderr.puts rc.message
@@ -166,14 +145,14 @@ when 'enable'
 #######################################
 # disable hosts
 when 'disable'
-  check_parameters('disable', 2)
+  check_command('disable', 2)
 
   zone_name = ARGV.shift
   ARGV.each do |host_name|
     id = get_host_id(host_name, zone_name)
     host = RenkeiVPE::Host.new_with_id(id, client)
     rc = host.disable
-    if is_successful?(rc)
+    if RenkeiVPE.is_successful?(rc)
       puts "Host[#{host_name}] disabled."
     else
       $stderr.puts rc.message
@@ -184,7 +163,7 @@ when 'disable'
 #######################################
 # show hosts
 when 'show'
-  check_parameters('show', 1)
+  check_command('show', 1)
 
   zone_name = ARGV.shift
 
@@ -201,7 +180,7 @@ when 'show'
     host = RenkeiVPE::Host.new_with_id(id, client)
     rc = host.info
 
-    if is_successful?(rc)
+    if RenkeiVPE.is_successful?(rc)
       if xml_output
         puts host.to_xml
       else
@@ -248,7 +227,7 @@ when 'show'
 when 'list'
   host_pool = RenkeiVPE::HostPool.new(client)
   rc = host_pool.info
-  if is_error?(rc)
+  if RenkeiVPE.is_error?(rc)
     $stderr.puts rc.message
     exit 1
   end
@@ -256,7 +235,22 @@ when 'list'
   if xml_output
     puts host_pool.to_xml
   else
-    print_xml_friendly(list_columns, host_pool, verbose)
+    list_columns = {
+      :id      => { :name => 'ID',
+                    :size => 4,
+                    :proc => lambda {|d,e| d.id} },
+      :name    => { :name => 'NAME',
+                    :size => 30,
+                    :proc => lambda {|d,e| d.name} },
+      :zone    => { :name => 'ZONE',
+                    :size => 20,
+                    :proc => lambda {|d,e| d['CLUSTER']} },
+      :state   => { :name => 'STATE',
+                    :size => 15,
+                    :proc => lambda {|d,e| d.state_str} },
+      :default => [:id, :name, :zone, :state]
+    }
+    print_xml_in_table(list_columns, host_pool, verbose)
   end
 
 #######################################

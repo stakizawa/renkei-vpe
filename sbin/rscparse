@@ -40,18 +40,10 @@ require 'optparse'
 include RenkeiVPETool::CliUtilities
 
 ##############################################################################
-# Global variables
+# Constant variables
 ##############################################################################
 CMD_NAME = 'rscparse'
-output = STDOUT
-rscgen = RenkeiVPETool::AdminHelper::ResourceGenerator.new
-
-##############################################################################
-# main
-##############################################################################
-begin
-  parser = OptionParser.new
-  parser.banner = <<EOT
+CMD_HELP = <<EOS
 NAME
     #{CMD_NAME} - parser for resource files for RENKEI-VPE
 
@@ -130,7 +122,20 @@ Commands
         Show this message.
 
 Options
-EOT
+EOS
+
+##############################################################################
+# Global variables
+##############################################################################
+output = STDOUT
+rscgen = RenkeiVPETool::AdminHelper::ResourceGenerator.new
+
+##############################################################################
+# main
+##############################################################################
+begin
+  parser = OptionParser.new
+  parser.banner = CMD_HELP
 
   parser.on('-o OUTPUT_FILE', ': write to a file') do |file|
     output = File.open(file, 'w')

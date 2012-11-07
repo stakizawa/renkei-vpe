@@ -20,37 +20,64 @@
 # Environment Configuration
 ##############################################################################
 RVPE_LOCATION = ENV['RVPE_LOCATION']
-CMD_RVPEVM    = RVPE_LOCATION + '/bin/rvpevm'
+
+if !RVPE_LOCATION
+  $stderr.puts 'set "RVPE_LOCATION" valiable.'
+  exit 1
+else
+  RUBY_LIB_LOCATION = RVPE_LOCATION + '/lib'
+end
+
+$: << RUBY_LIB_LOCATION
 
 ##############################################################################
 # Required libraries
 ##############################################################################
+require 'renkei-vpe-tool/cli-utilities'
 require 'optparse'
 require 'fileutils'
 require 'rexml/document'
 
+include RenkeiVPETool::CliUtilities
+
+##############################################################################
+# Constant variables
+##############################################################################
+CMD_NAME = 'vmkiller'
+CMD_HELP = <<EOS
+Name
+    #{CMD_NAME} - automatically shutdown VMs
+
+Synopsis
+    #{CMD_NAME} [ <HOURS> ]
+    #{CMD_NAME} help
+
+Description
+    This command forcibly shutdowns VMs that have been running over a certain
+    hours.  If <HOURS> is not specified, its default is 24.  This command can
+    be run only by the RENKEI-VPE administrator.
+
+Commands
+    help
+        Show this message.
+
+Options
+EOS
+CMD_RVPEVM = RVPE_LOCATION + '/bin/rvpevm'
+
 ##############################################################################
 # Global variables
 ##############################################################################
-CMD_NAME = 'vmkiller'
-
 $exp_file = RVPE_LOCATION + '/etc/vmkiller_exceptions'
 $log_file = RVPE_LOCATION + '/var/vmkiller.log'
 $max_hours = 24
 
 ##############################################################################
-# subroutine
+# Functions
 ##############################################################################
 def logtime
   now = Time.now
   now.strftime("%b %e %Y %H:%M:%S")
-end
-
-def exit_on_parse_error(errmsg=nil)
-  $stderr.puts errmsg if errmsg
-  $stderr.puts
-  $stderr.puts "Run '#{CMD_NAME} help' to see the usage."
-  exit 1
 end
 
 ##############################################################################
@@ -59,20 +86,7 @@ end
 
 begin
   parser = OptionParser.new
-  parser.banner = <<EOT
-Name
-    #{CMD_NAME} - automatically shutdown VMs
-
-Synopsis
-    #{CMD_NAME} [ <HOURS> ]
-
-Description
-    This command forcibly shutdowns VMs that have been running over a certain
-    hours.  If <HOURS> is not specified, its default is 24.  This command can
-    be run only by the RENKEI-VPE administrator.
-
-Options
-EOT
+  parser.banner = CMD_HELP
 
   parser.on('-f EXCEPTION_USERS_FILE',
             ': Specify a file which lists users whose',
@@ -104,6 +118,10 @@ EOT
   parser.parse!(ARGV)
   unless ARGV.empty?
     $max_hours = ARGV.shift
+    if $max_hours == 'help'
+      puts parser.help
+      exit 0
+    end
     unless /^\d+$/ =~ $max_hours
       raise 'HOURS must be an integer.'
     end

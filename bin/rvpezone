@@ -34,69 +34,17 @@ $: << RUBY_LIB_LOCATION
 # Required libraries
 ##############################################################################
 require 'renkei-vpe'
-require 'client_utilities'
+require 'renkei-vpe-tool/cli-utilities'
 require 'optparse'
 require 'yaml'
 
+include RenkeiVPETool::CliUtilities
+
 ##############################################################################
-# Global variables
+# Constant variables
 ##############################################################################
 CMD_NAME = 'rvpezone'
-
-client = RenkeiVPE::Client.new()
-xml_output = false
-verbose    = false
-list_columns = {
-  :id      => { :name => 'ID',
-                :size => 4,
-                :proc => lambda {|d,e| d.id} },
-  :name    => { :name => 'NAME',
-                :size => 30,
-                :proc => lambda {|d,e| d.name} },
-
-  :default => [:id, :name]
-}
-
-##############################################################################
-# Functions
-##############################################################################
-def print_xml_array(xml_obj,
-                    header_str, target_xpath, msg_on_no_item,
-                    print_name_on_header=false)
-  msg = header_str + ((print_name_on_header)? " - #{xml_obj.name}" : '')
-  print_header("%-80s", msg, true)
-  if xml_obj.has_elements?(target_xpath)
-    xml_obj.each(target_xpath) do |e|
-      puts e.text
-    end
-  else
-    puts msg_on_no_item
-  end
-end
-
-def print_hosts(zone, print_zone_name=false)
-  print_xml_array(zone, 'HOSTS', 'HOSTS/HOST/NAME', 'no hosts', print_zone_name)
-end
-
-def print_networks(zone, print_zone_name=false)
-  print_xml_array(zone, 'NETWORKS', 'NETWORKS/NETWORK/NAME',
-                  'no networks', print_zone_name)
-end
-
-def exit_on_parse_error(errmsg=nil)
-  $stderr.puts errmsg if errmsg
-  $stderr.puts
-  $stderr.puts "Run '#{CMD_NAME} help' to see the usage."
-  exit 1
-end
-
-##############################################################################
-# main
-##############################################################################
-
-begin
-  parser = OptionParser.new
-  parser.banner = <<EOT
+CMD_HELP = <<EOS
 Name
     #{CMD_NAME} - manipulate zones
 
@@ -175,7 +123,48 @@ Commands
         Show this message.
 
 Options
-EOT
+EOS
+
+##############################################################################
+# Global variables
+##############################################################################
+client = RenkeiVPE::Client.new()
+xml_output = false
+verbose    = false
+
+##############################################################################
+# Functions
+##############################################################################
+def print_xml_array(xml_obj,
+                    header_str, target_xpath, msg_on_no_item,
+                    print_name_on_header=false)
+  msg = header_str + ((print_name_on_header)? " - #{xml_obj.name}" : '')
+  print_header("%-80s", msg, true)
+  if xml_obj.has_elements?(target_xpath)
+    xml_obj.each(target_xpath) do |e|
+      puts e.text
+    end
+  else
+    puts msg_on_no_item
+  end
+end
+
+def print_hosts(zone, print_zone_name=false)
+  print_xml_array(zone, 'HOSTS', 'HOSTS/HOST/NAME', 'no hosts', print_zone_name)
+end
+
+def print_networks(zone, print_zone_name=false)
+  print_xml_array(zone, 'NETWORKS', 'NETWORKS/NETWORK/NAME',
+                  'no networks', print_zone_name)
+end
+
+##############################################################################
+# main
+##############################################################################
+
+begin
+  parser = OptionParser.new
+  parser.banner = CMD_HELP
 
   parser.on('-x', '--xml', ': xml output mode') do
     xml_output = true
@@ -202,7 +191,7 @@ case command
 #######################################
 # create a zone
 when 'create'
-  check_parameters('create', 1)
+  check_command('create', 1)
   begin
     definition = File.read(ARGV[0])
   rescue
@@ -212,7 +201,7 @@ when 'create'
 
   zone = RenkeiVPE::Zone.new(RenkeiVPE::Zone.build_xml, client)
   rc = zone.register(definition)
-  if is_successful?(rc)
+  if RenkeiVPE.is_successful?(rc)
     puts "Zone created: #{zone.name}"
   else
     $stderr.puts rc.message
@@ -222,13 +211,13 @@ when 'create'
 #######################################
 # delete a zone
 when 'delete'
-  check_parameters('delete', 1)
+  check_command('delete', 1)
 
   name = ARGV[0]
   id = get_zone_id(name)
   zone = RenkeiVPE::Zone.new_with_id(id, client)
   rc = zone.delete
-  if is_successful?(rc)
+  if RenkeiVPE.is_successful?(rc)
     puts "ZONE deleted: " + name
   else
     $stderr.puts rc.message
@@ -238,14 +227,14 @@ when 'delete'
 #######################################
 # add hosts
 when 'addhost'
-  check_parameters('addhost', 2)
+  check_command('addhost', 2)
 
   zone_name = ARGV.shift
   id = get_zone_id(zone_name)
   zone = RenkeiVPE::Zone.new_with_id(id, client)
   ARGV.each do |host_name|
     rc = zone.addhost(host_name)
-    if is_successful?(rc)
+    if RenkeiVPE.is_successful?(rc)
       puts "HOST[#{host_name}] is added to ZONE[#{zone_name}]."
     else
       $stderr.puts rc.message
@@ -256,14 +245,14 @@ when 'addhost'
 #######################################
 # remove hosts
 when 'removehost'
-  check_parameters('removehost', 2)
+  check_command('removehost', 2)
 
   zone_name = ARGV.shift
   id = get_zone_id(zone_name)
   zone = RenkeiVPE::Zone.new_with_id(id, client)
   ARGV.each do |host_name|
     rc = zone.rmhost(host_name)
-    if is_successful?(rc)
+    if RenkeiVPE.is_successful?(rc)
       puts "HOST[#{host_name}] is removed from ZONE[#{zone_name}]."
     else
       $stderr.puts rc.message
@@ -274,13 +263,13 @@ when 'removehost'
 #######################################
 # list hosts
 when 'listhost'
-  check_parameters('listhost', 1)
+  check_command('listhost', 1)
 
   zone_name = ARGV[0]
   id = get_zone_id(zone_name)
   zone = RenkeiVPE::Zone.new_with_id(id, client)
   rc = zone.info
-  if is_successful?(rc)
+  if RenkeiVPE.is_successful?(rc)
     print_hosts(zone, true)
   else
     $stderr.puts rc.message
@@ -290,7 +279,7 @@ when 'listhost'
 #######################################
 # add a virtual network
 when 'addvnet'
-  check_parameters('addvnet', 2)
+  check_command('addvnet', 2)
 
   zone_name = ARGV.shift
   id = get_zone_id(zone_name)
@@ -304,7 +293,7 @@ when 'addvnet'
     end
 
     rc = zone.addvnet(vn_definition)
-    if is_successful?(rc)
+    if RenkeiVPE.is_successful?(rc)
       name = zone_name + '::' + YAML.load(vn_definition)['name']
       puts "VirtualNetwork[#{name}] is added to ZONE[#{zone_name}]."
     else
@@ -316,14 +305,14 @@ when 'addvnet'
 #######################################
 # remove virtual networks
 when 'removevnet'
-  check_parameters('removevnet', 2)
+  check_command('removevnet', 2)
 
   zone_name = ARGV.shift
   id = get_zone_id(zone_name)
   zone = RenkeiVPE::Zone.new_with_id(id, client)
   ARGV.each do |vnet_name|
     rc = zone.rmvnet(vnet_name)
-    if is_successful?(rc)
+    if RenkeiVPE.is_successful?(rc)
       puts "VirtualNetwork[#{vnet_name}] is removed from ZONE[#{zone_name}]."
     else
       $stderr.puts rc.message
@@ -334,13 +323,13 @@ when 'removevnet'
 #######################################
 # list virtual networks
 when 'listvnet'
-  check_parameters('listvnet', 1)
+  check_command('listvnet', 1)
 
   zone_name = ARGV[0]
   id = get_zone_id(zone_name)
   zone = RenkeiVPE::Zone.new_with_id(id, client)
   rc = zone.info
-  if is_successful?(rc)
+  if RenkeiVPE.is_successful?(rc)
     print_networks(zone, true)
   else
     $stderr.puts rc.message
@@ -350,11 +339,11 @@ when 'listvnet'
 #######################################
 # synchronize probes with remote hosts in all zones
 when 'sync'
-  check_parameters('sync', 0)
+  check_command('sync', 0)
 
   zone = RenkeiVPE::Zone.new(RenkeiVPE::Zone.build_xml, client)
   rc = zone.sync
-  if is_successful?(rc)
+  if RenkeiVPE.is_successful?(rc)
     puts 'Sync is done.'
   else
     $stderr.puts rc.message
@@ -366,7 +355,7 @@ when 'sync'
 when 'list'
   zone_pool = RenkeiVPE::ZonePool.new(client)
   rc = zone_pool.info
-  if is_error?(rc)
+  if RenkeiVPE.is_error?(rc)
     $stderr.puts rc.message
     exit 1
   end
@@ -374,20 +363,29 @@ when 'list'
   if xml_output
     puts zone_pool.to_xml
   else
-    print_xml_friendly(list_columns, zone_pool, verbose)
+    list_columns = {
+      :id      => { :name => 'ID',
+                    :size => 4,
+                    :proc => lambda {|d,e| d.id} },
+      :name    => { :name => 'NAME',
+                    :size => 30,
+                    :proc => lambda {|d,e| d.name} },
+      :default => [:id, :name]
+    }
+    print_xml_in_table(list_columns, zone_pool, verbose)
   end
 
 #######################################
 # show zones
 when 'show'
-  check_parameters('show', 1)
+  check_command('show', 1)
 
   ARGV.each do |zone_name|
     id = get_zone_id(zone_name)
     zone = RenkeiVPE::Zone.new_with_id(id, client)
     rc = zone.info
 
-    if is_successful?(rc)
+    if RenkeiVPE.is_successful?(rc)
       if xml_output
         puts zone.to_xml
       else

@@ -34,56 +34,16 @@ $: << RUBY_LIB_LOCATION
 # Required libraries
 ##############################################################################
 require 'renkei-vpe'
-require 'client_utilities'
+require 'renkei-vpe-tool/cli-utilities'
 require 'optparse'
 
+include RenkeiVPETool::CliUtilities
+
 ##############################################################################
-# Global variables
+# Constant variables
 ##############################################################################
 CMD_NAME = 'rvpevmtype'
-
-client = RenkeiVPE::Client.new()
-xml_output = false
-verbose    = false
-
-list_columns = {
-  :id      => { :name => 'ID',
-                :size => 4,
-                :proc => lambda {|d,e| d.id} },
-  :user    => { :name => 'NAME',
-                :size => 15,
-                :left => true,
-                :proc => lambda {|d,e| d['NAME']} },
-  :desc    => { :name => 'DESCRIPTION',
-                :size => 40,
-                :proc => lambda {|d,e| d['DESCRIPTION']} },
-  :cpu     => { :name => 'CPU',
-                :size => 4,
-                :proc => lambda {|d,e| d['CPU']} },
-  :mem     => { :name => 'MEM(MB)',
-                :size => 8,
-                :proc => lambda {|d,e| d['MEMORY']} },
-
-  :default => [:id, :user, :desc, :cpu, :mem]
-}
-
-##############################################################################
-# Functions
-##############################################################################
-def exit_on_parse_error(errmsg=nil)
-  $stderr.puts errmsg if errmsg
-  $stderr.puts
-  $stderr.puts "Run '#{CMD_NAME} help' to see the usage."
-  exit 1
-end
-
-##############################################################################
-# main
-##############################################################################
-
-begin
-  parser = OptionParser.new
-  parser.banner = <<EOT
+CMD_HELP = <<EOS
 Name
     #{CMD_NAME} - manipulate virtual machine type configuration
 
@@ -125,7 +85,22 @@ Commands
         Show this message.
 
 Options:
-EOT
+EOS
+
+##############################################################################
+# Global variables
+##############################################################################
+client = RenkeiVPE::Client.new()
+xml_output = false
+verbose    = false
+
+##############################################################################
+# main
+##############################################################################
+
+begin
+  parser = OptionParser.new
+  parser.banner = CMD_HELP
 
   parser.on('-v', ': verbose output mode') do
     verbose = true
@@ -152,7 +127,7 @@ case command
 #######################################
 # create a VM type
 when 'create'
-  check_parameters('create', 1)
+  check_command('create', 1)
   begin
     template = File.read(ARGV[0])
   rescue
@@ -162,7 +137,7 @@ when 'create'
 
   type = RenkeiVPE::VMType.new(RenkeiVPE::VMType.build_xml, client)
   rc = type.allocate(template)
-  if is_successful?(rc)
+  if RenkeiVPE.is_successful?(rc)
     puts "VMType[#{type.name}] is registered."
   else
     $stderr.puts rc.message
@@ -172,13 +147,13 @@ when 'create'
 #######################################
 # delete a VM type
 when 'delete'
-  check_parameters('delete', 1)
+  check_command('delete', 1)
 
   name = ARGV[0]
   id = get_vmtype_id(name)
   type = RenkeiVPE::VMType.new_with_id(id, client)
   rc = type.delete
-  if is_successful?(rc)
+  if RenkeiVPE.is_successful?(rc)
     puts "VMType[#{name}] deleted."
   else
     $stderr.puts rc.message
@@ -190,7 +165,7 @@ when 'delete'
 when 'list'
   vmtype_pool = RenkeiVPE::VMTypePool.new(client)
   rc = vmtype_pool.info
-  if is_error?(rc)
+  if RenkeiVPE.is_error?(rc)
     $stderr.puts rc.message
     exit 1
   end
@@ -198,20 +173,39 @@ when 'list'
   if xml_output
     puts vmtype_pool.to_xml
   else
-    print_xml_friendly(list_columns, vmtype_pool, verbose)
+    list_columns = {
+      :id      => { :name => 'ID',
+                    :size => 4,
+                    :proc => lambda {|d,e| d.id} },
+      :user    => { :name => 'NAME',
+                    :size => 15,
+                    :left => true,
+                    :proc => lambda {|d,e| d['NAME']} },
+      :desc    => { :name => 'DESCRIPTION',
+                    :size => 40,
+                    :proc => lambda {|d,e| d['DESCRIPTION']} },
+      :cpu     => { :name => 'CPU',
+                    :size => 4,
+                    :proc => lambda {|d,e| d['CPU']} },
+      :mem     => { :name => 'MEM(MB)',
+                    :size => 8,
+                    :proc => lambda {|d,e| d['MEMORY']} },
+      :default => [:id, :user, :desc, :cpu, :mem]
+    }
+    print_xml_in_table(list_columns, vmtype_pool, verbose)
   end
 
 #######################################
 # show VM types
 when 'show'
-  check_parameters('show', 1)
+  check_command('show', 1)
 
   ARGV.each do |type_name|
     id = get_vmtype_id(type_name)
     type = RenkeiVPE::VMType.new_with_id(id, client)
     rc = type.info
 
-    if is_successful?(rc)
+    if RenkeiVPE.is_successful?(rc)
       if xml_output
         puts type.to_xml
       else
@@ -248,8 +242,8 @@ else
 end
 
 
-### Local variables:
-### mode: Ruby
-### coding: utf-8-unix
-### indent-tabs-mode: nil
-### End:
+# Local Variables:
+# mode: Ruby
+# coding: utf-8
+# indent-tabs-mode: nil
+# End:
