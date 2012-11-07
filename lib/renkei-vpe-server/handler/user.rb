@@ -258,7 +258,12 @@ module RenkeiVPE
           raise "User[#{id}] does not exist." unless user
 
           unless limit.kind_of? Integer
-            raise "limit attribute must be an integer: Can't specify '#{limit}'"
+            if limit.instance_of?(String) && /^-?[0123456789]+$/ =~ limit
+              limit = limit.to_i
+            else
+              raise 'limit attribute must be an integer: ' +
+                "Can't specify '#{limit}'"
+            end
           end
           limit = $server_config.user_limit.to_i if limit < 0
 

@@ -56,6 +56,7 @@ module RenkeiVPE
 
     # Retrieves the id of the given-named image.
     # +name+  name of an image
+    # [return] nil in case of success or an Error object
     def ask_id(name)
       super(IMAGE_POOL_METHODS[:ask_id], name)
     end
