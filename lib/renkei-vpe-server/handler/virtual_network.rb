@@ -190,7 +190,16 @@ module RenkeiVPE
           vnet = VirtualNetwork.find_by_id(id)[0]
           raise "VirtualNetwork[#{id}] is not found." unless vnet
 
-          # TODO check the format of ip_addr
+          # check the format of ip_addr
+          err_msg = "IP[#{ip_addr}] does not match IP address pattern."
+          if /(\d+)\.(\d+)\.(\d+)\.(\d+)/ =~ ip_addr
+            nums = [$1.to_i, $2.to_i, $3.to_i, $4.to_i]
+            nums.each do |e|
+              raise err_msg if !(e >= 0 && e <= 255)
+            end
+          else
+            raise err_msg
+          end
 
           # create a lease on OpenNebula
           query = "LEASES=[IP=#{ip_addr}]"
