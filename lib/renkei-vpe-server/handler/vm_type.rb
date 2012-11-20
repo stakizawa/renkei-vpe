@@ -112,14 +112,38 @@ module RenkeiVPE
         write_task('rvpe.vmtype.allocate', session, true) do
           type_def = ResourceFile::Parser.load_yaml(template)
 
+          # check fields
+          err_msg_suffix = ' in VM Type file.'
+          # check name
           name = type_def[ResourceFile::VMType::NAME]
+          unless name
+            raise 'Specify ' + ResourceFile::VMType::NAME + err_msg_suffix
+          end
           type = VMType.find_by_name(name).last
           raise "VMType[#{name}] already exists." if type
+          # check cpu
+          cpu = type_def[ResourceFile::VMType::CPU]
+          unless cpu
+            raise 'Specify ' + ResourceFile::VMType::CPU + err_msg_suffix
+          end
+          unless /^\d+$/ =~ cpu.to_s
+            raise 'Format error of ' + ResourceFile::VMType::CPU +
+              err_msg_suffix + '  Its value should be digits.'
+          end
+          # check memory
+          memory = type_def[ResourceFile::VMType::MEMORY]
+          unless memory
+            raise 'Specify ' + ResourceFile::VMType::MEMORY + err_msg_suffix
+          end
+          unless /^\d+$/ =~ memory.to_s
+            raise 'Format error of ' + ResourceFile::VMType::MEMORY +
+              err_msg_suffix + '  Its value should be digits.'
+          end
 
           type = VMType.new
-          type.name        = type_def[ResourceFile::VMType::NAME]
-          type.cpu         = type_def[ResourceFile::VMType::CPU]
-          type.memory      = type_def[ResourceFile::VMType::MEMORY]
+          type.name        = name
+          type.cpu         = cpu
+          type.memory      = memory
           type.description = type_def[ResourceFile::VMType::DESCRIPTION]
           type.create
 
