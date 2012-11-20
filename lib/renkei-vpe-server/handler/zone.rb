@@ -133,6 +133,9 @@ module RenkeiVPE
 
           # create a zone
           name = zone_def[ResourceFile::Zone::NAME]
+          unless name
+            raise 'Specify ' + ResourceFile::Zone::NAME + ' in Zone file.'
+          end
           zone = Zone.find_by_name(name).last
           raise "Zone[#{name}] already exists." if zone
           # create an associated site in OpenNebula
@@ -424,12 +427,43 @@ module RenkeiVPE
       # +zone+      instance of a zone
       # +return+    id of vnet
       def add_vnet_to_zone(session, vnet_def, zone)
-        name        = vnet_def[ResourceFile::VirtualNetwork::NAME]
-        vn_unique   = zone.name + ATTR_SEPARATOR + name
+        name = vnet_def[ResourceFile::VirtualNetwork::NAME]
+        unless name
+          raise "Specify #{ResourceFile::VirtualNetwork::NAME} of the network."
+        end
+        vn_unique = zone.name + ATTR_SEPARATOR + name
 
-        # 0. check if the vnet already exists
+        # 0. check fields
+        # check network existence
         vnet = VirtualNetwork.find_by_name(vn_unique).last
         raise "VirtualNetwork[#{vn_unique}] already exists." if vnet
+        # check bridge interface
+        unless vnet_def[ResourceFile::VirtualNetwork::INTERFACE]
+          raise "Specify #{ResourceFile::VirtualNetwork::INTERFACE} of the network."
+        end
+        # check network address
+        unless vnet_def[ResourceFile::VirtualNetwork::ADDRESS]
+          raise "Specify #{ResourceFile::VirtualNetwork::ADDRESS} of the network."
+        end
+        VNetHandler.check_ip_validity(vnet_def[ResourceFile::VirtualNetwork::ADDRESS])
+        # check netmask
+        unless vnet_def[ResourceFile::VirtualNetwork::NETMASK]
+          raise "Specify #{ResourceFile::VirtualNetwork::NETMASK} of the network."
+        end
+        VNetHandler.check_ip_validity(vnet_def[ResourceFile::VirtualNetwork::NETMASK])
+        # check gateway
+        unless vnet_def[ResourceFile::VirtualNetwork::GATEWAY]
+          raise "Specify #{ResourceFile::VirtualNetwork::GATEWAY} of the network."
+        end
+        VNetHandler.check_ip_validity(vnet_def[ResourceFile::VirtualNetwork::GATEWAY])
+        # check dns servers
+        unless vnet_def[ResourceFile::VirtualNetwork::DNS]
+          raise "Specify #{ResourceFile::VirtualNetwork::DNS} of the network."
+        end
+        # check ntp servers
+        unless vnet_def[ResourceFile::VirtualNetwork::NTP]
+          raise "Specify #{ResourceFile::VirtualNetwork::NTP} of the network."
+        end
 
         # 1. allocate vn in OpenNebula
         # create one vnet template
