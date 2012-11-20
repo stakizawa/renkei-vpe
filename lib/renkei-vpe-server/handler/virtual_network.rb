@@ -189,17 +189,7 @@ module RenkeiVPE
         write_task('rvpe.vn.add_lease', session, true) do
           vnet = VirtualNetwork.find_by_id(id)[0]
           raise "VirtualNetwork[#{id}] is not found." unless vnet
-
-          # check the format of ip_addr
-          err_msg = "IP[#{ip_addr}] does not match IP address pattern."
-          if /(\d+)\.(\d+)\.(\d+)\.(\d+)/ =~ ip_addr
-            nums = [$1.to_i, $2.to_i, $3.to_i, $4.to_i]
-            nums.each do |e|
-              raise err_msg if !(e >= 0 && e <= 255)
-            end
-          else
-            raise err_msg
-          end
+          VNetHandler.check_ip_validity(ip_addr)
 
           # create a lease on OpenNebula
           query = "LEASES=[IP=#{ip_addr}]"
@@ -260,8 +250,11 @@ module RenkeiVPE
       # +vnet+        instance of vnet
       # +return+      id of lease
       def self.add_lease_to_vnet(lease_name, lease_addr, vnet)
+        raise "Specify name of lease." unless lease_name
         l = Lease.find_by_name(lease_name).last
         raise "Lease[#{lease_name}] already exists." if l
+        raise "Specify address of lease." unless lease_addr
+        VNetHandler.check_ip_validity(lease_addr)
 
         # create a virtual host record
         l = Lease.new
@@ -313,6 +306,20 @@ module RenkeiVPE
 
         raise err_msg unless err_msg.size == 0
         return l.id
+      end
+
+      # +ip+      target ip address
+      # +return+  If ip does not match the pattern, it raises an exception.
+      def self.check_ip_validity(ip)
+        err_msg = "IP[#{ip}] does not match IP address pattern."
+        if /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/ =~ ip
+          nums = [$1.to_i, $2.to_i, $3.to_i, $4.to_i]
+          nums.each do |e|
+            raise err_msg if !(e >= 0 && e <= 255)
+          end
+        else
+          raise err_msg
+        end
       end
 
 
