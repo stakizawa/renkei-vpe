@@ -195,7 +195,7 @@ when 'import'
   begin
     template = expand_image_path(File.read(ARGV[0]))
   rescue
-    $stderr.puts "Can't read definition file: #{ARGV[0]}"
+    $stderr.puts "Error: Can't read definition file: #{ARGV[0]}"
     exit 1
   end
 
@@ -204,7 +204,7 @@ when 'import'
   if RenkeiVPE.is_successful?(rc)
     puts "Image[#{image.name}] is created."
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -226,7 +226,7 @@ when 'export'
   if RenkeiVPE.is_successful?(rc)
     puts "Image[#{img_name}] is exported to File[#{out_name}]."
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -242,7 +242,7 @@ when 'delete'
     if RenkeiVPE.is_successful?(rc)
       puts "Image[#{image.name}] is deleted."
     else
-      $stderr.puts rc.message
+      $stderr.puts 'Error: ' + rc.message
       exit 1
     end
   end
@@ -259,7 +259,7 @@ when 'publish'
     if RenkeiVPE.is_successful?(rc)
       puts "Image[#{img_name}] is published."
     else
-      $stderr.puts rc.message
+      $stderr.puts 'Error: ' + rc.message
       exit 1
     end
   end
@@ -276,7 +276,7 @@ when 'unpublish'
     if RenkeiVPE.is_successful?(rc)
       puts "Image[#{img_name}] is unpublished."
     else
-      $stderr.puts rc.message
+      $stderr.puts 'Error: ' + rc.message
       exit 1
     end
   end
@@ -293,7 +293,7 @@ when 'persistent'
     if RenkeiVPE.is_successful?(rc)
       puts "Image[#{img_name}] is persistent."
     else
-      $stderr.puts rc.message
+      $stderr.puts 'Error: ' + rc.message
       exit 1
     end
   end
@@ -310,7 +310,7 @@ when 'nonpersistent'
     if RenkeiVPE.is_successful?(rc)
       puts "Image[#{img_name}] is nonpersistent."
     else
-      $stderr.puts rc.message
+      $stderr.puts 'Error: ' + rc.message
       exit 1
     end
   end
@@ -328,7 +328,7 @@ when 'description'
   if RenkeiVPE.is_successful?(rc)
     puts "Description Image[#{img_name}] is updated."
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -354,7 +354,7 @@ when 'list'
   img_pool = RenkeiVPE::ImagePool.new(client, filter)
   rc = img_pool.info
   if RenkeiVPE.is_error?(rc)
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -446,7 +446,7 @@ when 'show'
         puts str % ["STATE", image.super_state_str]
       end
     else
-      $stderr.puts rc.message
+      $stderr.puts 'Error: ' + rc.message
       exit 1
     end
   end

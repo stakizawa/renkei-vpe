@@ -147,7 +147,7 @@ begin
   end
 
   parser.parse!(ARGV)
-  raise 'Specify command.' if ARGV.empty?
+  raise 'Error: Specify command.' if ARGV.empty?
 rescue OptionParser::ParseError => e
   exit_on_parse_error(e.message)
 rescue => e
@@ -161,7 +161,7 @@ when 'zone'
   begin
     output.puts rscgen.gen_zone_with_vnet(*(ARGV.map {|e| File.open(e).read}))
   rescue => e
-    $stderr.puts e.message
+    $stderr.puts 'Error: ' + e.message
   end
 
 when 'vnet'
@@ -169,7 +169,7 @@ when 'vnet'
   begin
     output.puts rscgen.gen_vnet(File.open(ARGV.shift).read)
   rescue => e
-    $stderr.puts e.message
+    $stderr.puts 'Error: ' + e.message
   end
 
 when 'help'

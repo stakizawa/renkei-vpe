@@ -169,7 +169,7 @@ def send_servers_to_vnet(args, method, client)
     servers_name = "Server[#{servers}]"
     yield(vn_uqname, servers_name)
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 end
@@ -185,7 +185,7 @@ def send_lease_to_vnet(args, method, client)
     vn_uqname = "VirtualNetwork[#{zone_name}::#{vnet_name}]"
     yield(vn_uqname, args)
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 end
@@ -277,7 +277,7 @@ def each_vnets_in_zone(args, client)
     if RenkeiVPE.is_successful?(rc)
       yield vnet
     else
-      $stderr.puts rc.message
+      $stderr.puts 'Error: ' + rc.message
       exit 1
     end
   end
@@ -443,7 +443,7 @@ when 'list'
   vnet_pool = RenkeiVPE::VirtualNetworkPool.new(client)
   rc = vnet_pool.info
   if RenkeiVPE.is_error?(rc)
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 

@@ -282,7 +282,7 @@ when 'create'
   begin
     root_pubkey = File.read(key_file)
   rescue
-    $stderr.puts "Can't read root ssh public key file: #{key_file}"
+    $stderr.puts "Error: Can't read root ssh public key file: #{key_file}"
     exit 1
   end
 
@@ -292,7 +292,7 @@ when 'create'
   if RenkeiVPE.is_successful?(rc)
     puts "Request done: create VM[#{vm.name}]"
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -309,7 +309,7 @@ when 'shutdown'
   if RenkeiVPE.is_successful?(rc)
     puts "Request done: shutdown VM[#{vm_name}]"
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -326,7 +326,7 @@ when 'delete'
   if RenkeiVPE.is_successful?(rc)
     puts "Request done: delete VM[#{vm_name}]"
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -343,7 +343,7 @@ when 'restart'
   if RenkeiVPE.is_successful?(rc)
     puts "Request done: restart VM[#{vm_name}]"
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -360,7 +360,7 @@ when 'suspend'
   if RenkeiVPE.is_successful?(rc)
     puts "Request done: suspend VM[#{vm_name}]"
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -377,7 +377,7 @@ when 'resume'
   if RenkeiVPE.is_successful?(rc)
     puts "Request done: resume VM[#{vm_name}]"
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -396,7 +396,7 @@ when 'mark_save'
   if RenkeiVPE.is_successful?(rc)
     puts "VM[#{vm_name}] is marked to save its image on shutdown."
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -422,7 +422,7 @@ when 'list'
   vm_pool = RenkeiVPE::VirtualMachinePool.new(client, filter)
   rc = vm_pool.info
   if RenkeiVPE.is_error?(rc)
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -454,7 +454,7 @@ when 'history'
   vm_pool = RenkeiVPE::VirtualMachinePool.new(client, filter, 1)
   rc = vm_pool.info
   if RenkeiVPE.is_error?(rc)
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -557,7 +557,7 @@ when 'show'
         end
       end
     else
-      $stderr.puts rc.message
+      $stderr.puts 'Error: ' + rc.message
       exit 1
     end
   end

@@ -195,7 +195,7 @@ when 'create'
   begin
     definition = File.read(ARGV[0])
   rescue
-    $stderr.puts "Can't read definition file: #{ARGV[0]}"
+    $stderr.puts "Error: Can't read definition file: #{ARGV[0]}"
     exit 1
   end
 
@@ -204,7 +204,7 @@ when 'create'
   if RenkeiVPE.is_successful?(rc)
     puts "Zone created: #{zone.name}"
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -220,7 +220,7 @@ when 'delete'
   if RenkeiVPE.is_successful?(rc)
     puts "ZONE deleted: " + name
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -237,7 +237,7 @@ when 'addhost'
     if RenkeiVPE.is_successful?(rc)
       puts "HOST[#{host_name}] is added to ZONE[#{zone_name}]."
     else
-      $stderr.puts rc.message
+      $stderr.puts 'Error: ' + rc.message
       exit 1
     end
   end
@@ -255,7 +255,7 @@ when 'removehost'
     if RenkeiVPE.is_successful?(rc)
       puts "HOST[#{host_name}] is removed from ZONE[#{zone_name}]."
     else
-      $stderr.puts rc.message
+      $stderr.puts 'Error: ' + rc.message
       exit 1
     end
   end
@@ -272,7 +272,7 @@ when 'listhost'
   if RenkeiVPE.is_successful?(rc)
     print_hosts(zone, true)
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -288,7 +288,7 @@ when 'addvnet'
     begin
       vn_definition = File.read(ARGV[0])
     rescue
-      $stderr.puts "Can't read definition file: #{vn_definition}"
+      $stderr.puts "Error: Can't read definition file: #{vn_definition}"
       exit 1
     end
 
@@ -297,7 +297,7 @@ when 'addvnet'
       name = zone_name + '::' + YAML.load(vn_definition)['name']
       puts "VirtualNetwork[#{name}] is added to ZONE[#{zone_name}]."
     else
-      $stderr.puts rc.message
+      $stderr.puts 'Error: ' + rc.message
       exit 1
     end
   end
@@ -315,7 +315,7 @@ when 'removevnet'
     if RenkeiVPE.is_successful?(rc)
       puts "VirtualNetwork[#{vnet_name}] is removed from ZONE[#{zone_name}]."
     else
-      $stderr.puts rc.message
+      $stderr.puts 'Error: ' + rc.message
       exit 1
     end
   end
@@ -332,7 +332,7 @@ when 'listvnet'
   if RenkeiVPE.is_successful?(rc)
     print_networks(zone, true)
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -346,7 +346,7 @@ when 'sync'
   if RenkeiVPE.is_successful?(rc)
     puts 'Sync is done.'
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -356,7 +356,7 @@ when 'list'
   zone_pool = RenkeiVPE::ZonePool.new(client)
   rc = zone_pool.info
   if RenkeiVPE.is_error?(rc)
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -407,7 +407,7 @@ when 'show'
 
       end
     else
-      $stderr.puts rc.message
+      $stderr.puts 'Error: ' + rc.message
       exit 1
     end
   end

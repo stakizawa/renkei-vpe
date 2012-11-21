@@ -241,7 +241,7 @@ when 'info'
       puts sio.string
     end
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -257,7 +257,7 @@ when 'create'
   if RenkeiVPE.is_successful?(rc)
     puts "User[#{user.name}] is created."
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -273,7 +273,7 @@ when 'delete'
   if RenkeiVPE.is_successful?(rc)
     puts "User[#{name}] is deleted."
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -290,7 +290,7 @@ when 'passwd'
   if RenkeiVPE.is_successful?(rc)
     puts "Password for User[#{name}] is changed."
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -306,7 +306,7 @@ when 'enable'
     if RenkeiVPE.is_successful?(rc)
       puts "User[#{user_name}] is enabled."
     else
-      $stderr.puts rc.message
+      $stderr.puts 'Error: ' + rc.message
       exit 1
     end
   end
@@ -323,7 +323,7 @@ when 'disable'
     if RenkeiVPE.is_successful?(rc)
       puts "User[#{user_name}] is disabled."
     else
-      $stderr.puts rc.message
+      $stderr.puts 'Error: ' + rc.message
       exit 1
     end
   end
@@ -345,7 +345,7 @@ when 'enable_zone'
     puts "User[#{user_name}] enabled to use Zone[#{zone_name}]" +
       " with Limit[#{rc}]"
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -363,7 +363,7 @@ when 'disable_zone'
     if RenkeiVPE.is_successful?(rc)
       puts "User[#{user_name}] disabled to use Zone[#{zone_name}]"
     else
-      $stderr.puts rc.message
+      $stderr.puts 'Error: ' + rc.message
       exit 1
     end
   end
@@ -374,7 +374,7 @@ when 'list'
   user_pool = RenkeiVPE::UserPool.new(client)
   rc = user_pool.info
   if RenkeiVPE.is_error?(rc)
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -407,7 +407,7 @@ when 'show'
     if RenkeiVPE.is_successful?(rc)
       print_user(user, xml_output, true)
     else
-      $stderr.puts rc.message
+      $stderr.puts 'Error: ' + rc.message
       exit 1
     end
   end

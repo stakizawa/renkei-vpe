@@ -154,7 +154,7 @@ when 'assign'
   if RenkeiVPE.is_successful?(rc)
     puts "Lease[#{lease_name}] is assigned to User[#{user_name}]."
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -170,7 +170,7 @@ when 'release'
   if RenkeiVPE.is_successful?(rc)
     puts "Lease[#{lease_name}] is released."
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -210,7 +210,7 @@ when 'show'
         puts
       end
     else
-      $stderr.puts rc.message
+      $stderr.puts 'Error: ' + rc.message
       exit 1
     end
   end
@@ -237,7 +237,7 @@ when 'list'
   lease_pool = RenkeiVPE::LeasePool.new(client, filter)
   rc = lease_pool.info
   if RenkeiVPE.is_error?(rc)
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 

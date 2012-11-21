@@ -123,10 +123,10 @@ begin
       exit 0
     end
     unless /^\d+$/ =~ $max_hours
-      raise 'HOURS must be an integer.'
+      raise 'Error: HOURS must be an integer.'
     end
     unless ARGV.empty?
-      raise 'Argument error.'
+      raise 'Error: Argument error.'
     end
     $max_hours = $max_hours.to_i
   end

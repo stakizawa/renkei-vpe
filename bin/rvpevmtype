@@ -131,7 +131,7 @@ when 'create'
   begin
     template = File.read(ARGV[0])
   rescue
-    $stderr.puts "Can't read definition file: #{ARGV[0]}"
+    $stderr.puts "Error: Can't read definition file: #{ARGV[0]}"
     exit 1
   end
 
@@ -140,7 +140,7 @@ when 'create'
   if RenkeiVPE.is_successful?(rc)
     puts "VMType[#{type.name}] is registered."
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -156,7 +156,7 @@ when 'delete'
   if RenkeiVPE.is_successful?(rc)
     puts "VMType[#{name}] deleted."
   else
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -166,7 +166,7 @@ when 'list'
   vmtype_pool = RenkeiVPE::VMTypePool.new(client)
   rc = vmtype_pool.info
   if RenkeiVPE.is_error?(rc)
-    $stderr.puts rc.message
+    $stderr.puts 'Error: ' + rc.message
     exit 1
   end
 
@@ -226,7 +226,7 @@ when 'show'
         puts str % ['DESCRIPTION', type['DESCRIPTION']]
       end
     else
-      $stderr.puts rc.message
+      $stderr.puts 'Error: ' + rc.message
       exit 1
     end
   end

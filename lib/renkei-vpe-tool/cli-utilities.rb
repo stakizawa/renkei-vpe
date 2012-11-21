@@ -32,11 +32,11 @@ module RenkeiVPETool
 
     def check_command(name, number)
       if ARGV.length < number
-        print "Command #{name} requires "
+        $stderr.print "Error: Command #{name} requires "
         if number > 1
-          puts "#{number} parameters to run."
+          $stderr.puts "#{number} parameters to run."
         else
-          puts "one parameter to run"
+          $stderr.puts "one parameter to run"
         end
         exit 1
       end
@@ -236,7 +236,7 @@ module RenkeiVPETool
       pool = pool_class.new(RenkeiVPE::Client.new)
       result = pool.ask_id(name)
       if RenkeiVPE.is_error?(result)
-        puts result.message
+        $stderr.puts 'Error: ' + result.message
         exit 1
       end
 
@@ -252,7 +252,7 @@ module RenkeiVPETool
       pool = RenkeiVPE::ZonePool.new(RenkeiVPE::Client.new)
       result = pool.info
       if RenkeiVPE.is_error?(result)
-        puts result.message
+        $stderr.puts 'Error: ' + result.message
         exit 1
       end
 
@@ -267,11 +267,13 @@ module RenkeiVPETool
         zone.each(search_str) do |h|
           return h['ID'] if h['NAME'] == name
         end
+        $stderr.puts "Error: Host[#{name}] is not found in Zone[#{zone_name}]."
+        exit 1
       elsif zones.size > 1
-        puts "There are multiple zone's with name #{zone_name}."
+        $stderr.puts "Error: There are multiple zone's with name #{zone_name}."
         exit 1
       else
-        puts "Zone[#{zone_name}] not found."
+        $stderr.puts "Error: Zone[#{zone_name}] is not found."
         exit 1
       end
     end
@@ -284,7 +286,7 @@ module RenkeiVPETool
       pool = RenkeiVPE::ZonePool.new(RenkeiVPE::Client.new)
       result = pool.info
       if RenkeiVPE.is_error?(result)
-        puts result.message
+        $stderr.puts 'Error: ' + result.message
         exit 1
       end
 
@@ -302,10 +304,10 @@ module RenkeiVPETool
         end
         return results
       elsif zones.size > 1
-        puts "There are multiple zone's with name #{zone_name}."
+        $stderr.puts "Error: There are multiple zone's with name #{zone_name}."
         exit 1
       else
-        puts "Zone[#{zone_name}] not found."
+        $stderr.puts "Error: Zone[#{zone_name}] is not found."
         exit 1
       end
     end
