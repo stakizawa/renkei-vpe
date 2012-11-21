@@ -336,6 +336,17 @@ module RenkeiVPE
       # +zone+      instance of a zone
       # +return+    id of host
       def add_host_to_zone(session, host_name, zone)
+        # check if the specified host exists
+        rc = call_one_xmlrpc('one.hostpool.info', session)
+        raise rc[1] unless rc[0]
+        doc = REXML::Document.new(rc[1])
+        doc.elements.each('HOST_POOL/HOST') do |e|
+          db_name = e.elements['NAME'].get_text
+          if db_name == host_name
+            raise "Host[#{host_name}] already exists in the system."
+          end
+        end
+
         # allocate host (only in OpenNebula)
         rc = call_one_xmlrpc('one.host.allocate', session,
                              host_name, 'im_kvm', 'vmm_rvpe', 'tm_gfarm')
