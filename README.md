@@ -4,7 +4,7 @@ Welcome to RENKEI-VPE
 RENKEI-VPE is a virtual machine management system on a distributed environment.
 It manages geographically distributed servers with kvm virtualization and gfarm client supports, invokes VMs on them and manages life cycle of the VMs.
 
-RENKEI-VPE is deployed and operated in High Performance Computing Infrastrucutre (HPCI) to support HPC researches.
+RENKEI-VPE is deployed and operated in High Performance Computing Infrastructure (HPCI) to support HPC researches.
 
 [HPCI Advanced Software Development Environment](http://hpci-ae.r.gsic.titech.ac.jp/)
 
