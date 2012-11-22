@@ -174,9 +174,10 @@ EOS
             Parser.load_yaml(err2_yaml)
           end.should raise_error(RuntimeError)
         end
-      end
 
+      end
     end
+
   end
 end
 
