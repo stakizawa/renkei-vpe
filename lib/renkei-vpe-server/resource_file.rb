@@ -16,6 +16,7 @@
 
 
 require 'yaml'
+require 'renkei-vpe-common'
 
 module RenkeiVPE
 
