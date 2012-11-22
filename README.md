@@ -34,7 +34,7 @@ Install
 -------
 
 RENKEI-VPE Installation manual and management manual are written in Japanese.
-If you want the manual, ask me.
+If you want the manual, contact me.
 
 
 License
