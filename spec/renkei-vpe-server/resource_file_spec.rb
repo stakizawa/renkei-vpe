@@ -124,7 +124,7 @@ a: 1#a
 EOS
       end
 
-      context '#load_yaml' do
+      context '.load_yaml' do
         it 'will generate a simple hash whose keys are capitalized.' do
           data = Parser.load_yaml(simple_hash_yaml)
           data.class.should == Hash

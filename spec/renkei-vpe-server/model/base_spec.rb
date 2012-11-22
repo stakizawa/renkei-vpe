@@ -42,7 +42,7 @@ EOS
       system("sqlite3 #{DB_File} \"#{sql}\" 2>/dev/null")
     end
 
-    def get_data_count(cond=nil)
+    def data_count(cond=nil)
       sql = "SELECT COUNT(*) FROM #{Table_Name}"
       if cond
         sql += " WHERE #{cond};"
@@ -76,18 +76,18 @@ EOS
       FileUtils.rm_rf(DB_File)
     end
 
-    context '#file' do
+    context '.file' do
       it 'will return database file path.' do
         Database.file.should == DB_File
       end
     end
 
-    context '#execute' do
+    context '.execute' do
       # Test for its work ###################################################
       it 'will insert data when a correct sql is given.' do
         sql = "INSERT INTO #{Table_Name} VALUES (4, 'test4', 1)"
         val = Database.execute(sql)
-        get_data_count('id=4').should == 1
+        data_count('id=4').should == 1
       end
 
       it 'will raise when a given insert sql does not match the schema.' do
@@ -148,14 +148,14 @@ EOS
       end
     end
 
-    context '#transaction' do
+    context '.transaction' do
       it 'will delete all data from the table when transaction successes.' do
         sqls = [ "DELETE FROM #{Table_Name} WHERE name='#{Name0}'",
                  "DELETE FROM #{Table_Name} WHERE name='#{Name1}'",
                  "DELETE FROM #{Table_Name} WHERE name='#{Name2}'",
                  "DELETE FROM #{Table_Name} WHERE name='#{Name3}'" ]
         Database.transaction(*sqls)
-        get_data_count.should == 0
+        data_count.should == 0
       end
 
       it 'will not delete any data from the table when transaction failes.' do
@@ -166,7 +166,7 @@ EOS
         lambda do
           Database.transaction(*sqls)
         end.should raise_error(SQLite3::SQLException)
-        get_data_count.should == 4
+        data_count.should == 4
       end
     end
   end
