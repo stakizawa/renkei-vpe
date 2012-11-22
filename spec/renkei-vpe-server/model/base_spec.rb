@@ -68,6 +68,7 @@ EOS
         "INSERT INTO #{Table_Name} VALUES (2, '#{Name2}', 1);",
         "INSERT INTO #{Table_Name} VALUES (3, '#{Name3}', 0);" ].each do |e|
         run_sql(e)
+        Database.file = DB_File
       end
     end
 
@@ -77,7 +78,6 @@ EOS
 
     context '#file' do
       it 'will return database file path.' do
-        Database.file = DB_File
         Database.file.should == DB_File
       end
     end

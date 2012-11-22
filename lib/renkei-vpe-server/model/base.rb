@@ -15,6 +15,7 @@
 #
 
 
+require 'renkei-vpe-common'
 require 'renkei-vpe-server/logger'
 require 'renkei-vpe-server/one_client'
 require 'rubygems'
