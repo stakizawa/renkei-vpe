@@ -34,6 +34,11 @@ module RenkeiVPE
       end
     end
 
+    def self.finalize
+      @logger.close
+      @logger = nil
+    end
+
     def set_level(level_str)
       level_str.upcase!
       case level_str
