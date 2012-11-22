@@ -58,6 +58,7 @@ EOS
     end
 
     after(:all) do
+      RenkeiVPE::Logger.finalize
       FileUtils.rm_rf(Log_File)
     end
 
