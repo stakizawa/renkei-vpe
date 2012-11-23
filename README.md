@@ -14,11 +14,11 @@ Supported Platforms
 
 RENKEI-VPE runs on CentOS 6.x (i386/amd64) with the following software.
 
-* Ruby 1.8.7 (1.9.x is NOT supported yet)
+* Ruby 1.8.7 (1.9.x is NOT tested yet)
 * OpenNebula 2.2.1
 * Gfarm 2.x
 
-RENKEI-VPE can manage VMs with the following OS.
+RENKEI-VPE can control VMs running the following OS.
 
 * CentOS 5.x and 6.x
 * Scientific Linux 5.x and 6.x (will be supported)
