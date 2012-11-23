@@ -53,6 +53,7 @@ require 'renkei-vpe/vm_type'
 require 'renkei-vpe/vm_type_pool'
 require 'renkei-vpe/virtual_machine'
 require 'renkei-vpe/virtual_machine_pool'
+require 'renkei-vpe/transfer'
 
 ##############################################################################
 # RenkeiVPE module

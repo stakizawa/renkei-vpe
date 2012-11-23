@@ -456,6 +456,30 @@ when 'show'
 when 'help'
   puts parser.help
 
+#######################################
+# TODO temporal
+when 'put'
+  transfer = RenkeiVPE::Transfer.new(client)
+  rc = transfer.transfer_put(ARGV[0], verbose)
+  if RenkeiVPE.is_successful?(rc)
+    puts "Transfer of File[#{ARGV[0]}] succeeded."
+  else
+    $stderr.puts 'Error: ' + rc.message
+    exit 1
+  end
+
+#######################################
+# TODO temporal
+when 'get'
+  transfer = RenkeiVPE::Transfer.new(client)
+  rc = transfer.transfer_get(ARGV[0], ARGV[1], verbose)
+  if RenkeiVPE.is_successful?(rc)
+    puts "Transfer of File[#{ARGV[0]}] succeeded."
+  else
+    $stderr.puts 'Error: ' + rc.message
+    exit 1
+  end
+
 else
   exit_on_parse_error("Unknown command: #{command}")
 
