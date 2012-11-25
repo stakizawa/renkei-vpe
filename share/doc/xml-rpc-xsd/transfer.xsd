@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    elementFormDefault="qualified"
+    targetNamespace="http://www.e-sciren.org/sub5/XMLSchema"
+    xmlns="http://www.e-sciren.org/sub5/XMLSchema">
+  <xs:element name="TRANSFER">
+    <xs:complexType name="LEASE">
+      <xs:sequence>
+	<xs:element name="NAME" type="xs:string"/>
+	<xs:element name="SIZE" type="xs:integer"/>
+	<xs:element name="CHUNK_SIZE" type="xs:integer"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
