@@ -5,29 +5,28 @@
     targetNamespace="http://www.e-sciren.org/sub5/XMLSchema"
     xmlns="http://www.e-sciren.org/sub5/XMLSchema">
   <xs:include schemaLocation="lease.xsd"/>
-  <xs:element name="VNET" type="VNET">
+  <xs:element name="VNET">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="ID" type="xs:integer"/>
+        <xs:element name="NAME" type="xs:string"/>
+        <xs:element name="ZONE" type="xs:string"/>
+        <xs:element name="UNIQUE_NAME" type="xs:string"/>
+        <xs:element name="DESCRIPTION" type="xs:string"/>
+        <xs:element name="ADDRESS" type="xs:string"/>
+        <xs:element name="NETMASK" type="xs:string"/>
+        <xs:element name="GATEWAY" type="xs:string"/>
+        <xs:element name="DNS" type="xs:string"/>
+        <xs:element name="NTP" type="xs:string"/>
+        <xs:element name="HOST_INTERFACE" type="xs:string"/>
+        <xs:element name="LEASES">
+          <xs:complexType>
+            <xs:sequence maxOccurs="unbounded" minOccurs="0">
+              <xs:element ref="LEASE" maxOccurs="unbounded" minOccurs="0"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
   </xs:element>
-
-  <xs:complexType name="VNET">
-    <xs:sequence>
-      <xs:element name="ID" type="xs:integer"/>
-      <xs:element name="NAME" type="xs:string"/>
-      <xs:element name="ZONE" type="xs:string"/>
-      <xs:element name="UNIQUE_NAME" type="xs:string"/>
-      <xs:element name="DESCRIPTION" type="xs:string"/>
-      <xs:element name="ADDRESS" type="xs:string"/>
-      <xs:element name="NETMASK" type="xs:string"/>
-      <xs:element name="GATEWAY" type="xs:string"/>
-      <xs:element name="DNS" type="xs:string"/>
-      <xs:element name="NTP" type="xs:string"/>
-      <xs:element name="HOST_INTERFACE" type="xs:string"/>
-      <xs:element name="LEASES">
-        <xs:complexType>
-          <xs:sequence maxOccurs="unbounded" minOccurs="0">
-            <xs:element ref="LEASE" maxOccurs="unbounded" minOccurs="0"/>
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
-    </xs:sequence>
-  </xs:complexType>
 </xs:schema>
