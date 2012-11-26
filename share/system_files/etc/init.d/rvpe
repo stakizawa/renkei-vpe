@@ -73,7 +73,7 @@ start() {
 
     # mount gfarm
     $SU - $ONEADMIN -c "\
-      $GFARM2FS -o allow_other -o ncopy=$GF_N_REPLICAS \
+      $GFARM2FS -o ncopy=$GF_N_REPLICAS \
                 -o modules=subdir -o subdir=$GF_LOCAL_PATH $IMAGE_REPO"
     if [ ! $? -eq 0 ]; then
         echo 'Failed to start RENKEI-VPE: gfarm2fs failed to mount'
@@ -124,7 +124,7 @@ stop() {
       source /etc/profile.d/renkei-vpe.sh; \
       $RVPE_LOCATION/sbin/rvped stop'
     if [ ! $? -eq 0 ]; then
-        echo 'Failed to start RENKEI-VPE.'
+        echo 'Failed to stop RENKEI-VPE.'
         RETVAL=1
     fi
 
