@@ -60,13 +60,13 @@ Description
     The <command> is a name of a subcommand of #{CMD_NAME} command.
 
 Commands
-    import <definition_file>
+    import [ -v ] <definition_file>
         Import an OS image to the system whose context is defined in
         <definition_file>.
 
         $ #{CMD_NAME} import centos.dsk
 
-    export <image_name> <file_name>
+    export [ -v ] <image_name> <file_name>
         Export an OS image named <image_name> to a file named <file_name>.
         It generates one directory containing two files.  The directory is
         created with  <file_name> name.  In the directory,  the following
@@ -113,7 +113,7 @@ Commands
         $ #{CMD_NAME} description centos5.5 'Updated CentOS 5.5 image'
 
 
-    list [ -x ] [ -v]  [ all|mine|<user_name> ]
+    list [ -x ] [ -v ]  [ all|mine|<user_name> ]
         List registered OS images.
 
         If one of all(a), mine(m) and <user_name> is given, it lists
@@ -246,8 +246,14 @@ when 'export'
   id = get_image_id(img_name)
   image = RenkeiVPE::Image.new_with_id(id, client)
   rc = image.export(out_name)
+  if RenkeiVPE.is_error?(rc)
+    $stderr.puts 'Error: ' + rc.message
+    exit 1
+  end
+  transfer = RenkeiVPE::Transfer.new(client)
+  rc = transfer.transfer_get(rc[0], rc[1], verbose)
   if RenkeiVPE.is_successful?(rc)
-    puts "Image[#{img_name}] is exported to File[#{out_name}]."
+    puts "Image[#{img_name}] is exported to Directory[#{out_name}]."
   else
     $stderr.puts 'Error: ' + rc.message
     exit 1
@@ -484,30 +490,6 @@ when 'show'
 # show help
 when 'help'
   puts parser.help
-
-#######################################
-# TODO temporal
-when 'put'
-  transfer = RenkeiVPE::Transfer.new(client)
-  rc = transfer.transfer_put(ARGV[0], verbose)
-  if RenkeiVPE.is_successful?(rc)
-    puts "Transfer of File[#{ARGV[0]}] succeeded."
-  else
-    $stderr.puts 'Error: ' + rc.message
-    exit 1
-  end
-
-#######################################
-# TODO temporal
-when 'get'
-  transfer = RenkeiVPE::Transfer.new(client)
-  rc = transfer.transfer_get(ARGV[0], ARGV[1], verbose)
-  if RenkeiVPE.is_successful?(rc)
-    puts "Transfer of File[#{ARGV[0]}] succeeded."
-  else
-    $stderr.puts 'Error: ' + rc.message
-    exit 1
-  end
 
 else
   exit_on_parse_error("Unknown command: #{command}")

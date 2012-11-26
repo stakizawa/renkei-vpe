@@ -150,16 +150,14 @@ module RenkeiVPE
       return result
     end
 
+    # It returns array of transfer source and dest if success.
+    # Othersize, it returns RenkeiVPE::Error
     def export(dirname)
       result = self.info
       if RenkeiVPE.is_successful?(result)
         FileUtils.mkdir_p(dirname)
         disk_file = dirname + '/disk.img'
         attr_file = dirname + '/attr.txt'
-
-        # copy the disk image file
-        # TODO download the file from remove server
-        FileUtils.cp(self['SOURCE'], disk_file)
 
         # create the attribute file
         File.open(attr_file, 'w') do |f|
@@ -172,6 +170,7 @@ nic_model:   #{get_template_value('NIC_MODEL')}
 path:        ./disk.img
 EOT
         end
+        result = [ self['SOURCE'], disk_file ]
       end
       return result
     end
