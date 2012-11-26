@@ -1,0 +1,11 @@
+Release note for RENKEI-VPE 1.4.0
+=================================
+
+[2012.11.26]
+
+* improve 'rvpeimage import/export/delete' commands to use RENKEI-VPE
+  data transfer RPCs
+* remove 'allow_other' gfarm2fs mount option
+* delete all old unit tests and implement them as rspec tests
+* add README
+* add Release Note
