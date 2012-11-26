@@ -112,6 +112,17 @@ SQL
         delete
       end
 
+      # It deletes and returns data whose date is older than specified seconds.
+      def self.cleanup_before(time_in_sec)
+        result = []
+        time = Time.now.to_i - time_in_sec
+        each do |e|
+          result << e if e.date < time
+        end
+        result.each { |e| e.delete }
+        result
+      end
+
       protected
 
       def check_fields

@@ -25,7 +25,7 @@ module RenkeiVPE
       Log_File = 'transfer_spec.log'
       DB_File  = 'transfer_spec.db'
 
-      Test_Time = Time.now.to_i
+      Test_Time = Time.now.to_i - 3600
 
       # meanings items
       # 0: id   : session id
@@ -176,6 +176,23 @@ module RenkeiVPE
           result = Transfer.find_by_id_or_name('3a56d94bec8b57f9564de5f773bdbf1e9a72a1af')
           result.class.should == Array
           result.size.should  == 0
+        end
+      end
+
+      context '.cleanup_before' do
+        it 'will delete and return data that are older than specified time.' do
+          # delete all data
+          result = Transfer.cleanup_before(0)
+          data_count.should == 0
+          result.class.should == Array
+          result.size.should == 2
+        end
+
+        it 'will do nothing when specified time is older than any data.' do
+          result = Transfer.cleanup_before(360000)
+          data_count.should == 2
+          result.class.should == Array
+          result.size.should == 0
         end
       end
 

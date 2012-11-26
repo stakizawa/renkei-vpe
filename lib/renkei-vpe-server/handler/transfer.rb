@@ -202,6 +202,48 @@ module RenkeiVPE
         end
       end
 
+
+      # It cleans up transfer sessions.
+      # It deletes old transfer records from transfers table and deletes
+      # forgotten to be delete files in 'transfer_storage' directory.
+      class Cleaner
+        def initialize(config)
+          @session_life_time = config.transfer_session_life_time.to_i
+          @interval = 3600 # 1h
+        end
+
+        def serve
+          @exec_f = true
+          log = RenkeiVPE::Logger.get_logger
+
+          loop do
+            if @exec_f
+              ts = RenkeiVPE::Model::Transfer.cleanup_before(@session_life_time)
+              ts.each do |t|
+                if t.type == 'put' && FileTest.exist?(t.path)
+                  FileUtils.rm(t.path)
+                  log.info "Stale File[#{t.path}] is deleted."
+                end
+              end
+              break unless @exec_f
+            else
+              break
+            end
+
+            @sleep_t = Thread.new do
+              sleep @interval
+            end
+            @sleep_t.join
+            @sleep_t = nil
+          end
+        end
+
+        def shutdown
+          @exec_f = false
+          @sleep_t.run if @sleep_t
+        end
+      end
+
       private
 
       @transfer_storage = nil
