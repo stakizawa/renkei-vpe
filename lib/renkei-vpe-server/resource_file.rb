@@ -71,6 +71,7 @@ module RenkeiVPE
       IO_BUS      = 'IO_BUS'
       NIC_MODEL   = 'NIC_MODEL'
       PATH        = 'PATH'
+      TRANSFER    = 'TRANSFER'
     end
 
     ##########################################################################

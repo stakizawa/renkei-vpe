@@ -90,6 +90,9 @@ module RenkeiVPE
     # Helpers to transfer file
     #######################################################################
 
+    # It puts file on the server.
+    # It will return name of transfer session when it successfully puts
+    # file. Otherwise, it returns RenkeiVPE::Error.
     def transfer_put(filename, verbose)
       unless FileTest.exist?(filename)
         return RenkeiVPE::Error.new("File[#{filename}] does not exist.")
@@ -128,7 +131,7 @@ module RenkeiVPE
       if RenkeiVPE.is_error?(result)
         return result
       end
-      return nil
+      return session
     end
 
     def transfer_get(remote_filename, local_filename, verbose)

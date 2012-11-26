@@ -16,6 +16,7 @@
 
 
 require 'renkei-vpe-server/handler/base'
+require 'rexml/document'
 
 module RenkeiVPE
   module Handler
@@ -142,19 +143,26 @@ module RenkeiVPE
       def allocate(session, template)
         write_task('rvpe.image.allocate', session) do
           image_def = ResourceFile::Parser.load_yaml(template)
+          t = Transfer.find_by_name(image_def[ResourceFile::Image::TRANSFER])[0]
           # check fields
           err_msg_suffix = ' in Image file.'
+          # check name
           _name = image_def[ResourceFile::Image::NAME]
           unless _name
+            t.cleanup
             raise 'Specify ' + ResourceFile::Image::NAME + err_msg_suffix
           end
           unless Image.find_by_name(_name, session, -2).empty?
+            t.cleanup
             raise "Image[#{_name}] already exists.  Use another name."
           end
+          # check type
           _type = image_def[ResourceFile::Image::TYPE]
           _type = 'OS' unless _type
+          # check attributes
           if image_def[ResourceFile::Image::PUBLIC] &&
               image_def[ResourceFile::Image::PERSISTENT]
+            t.cleanup
             raise "An image can't be public and persistent at the same time."
           end
           _public = image_def[ResourceFile::Image::PUBLIC]
@@ -169,6 +177,7 @@ module RenkeiVPE
           else
             _persistent = 'NO'
           end
+          # check bus
           _bus = image_def[ResourceFile::Image::IO_BUS]
           _bus = 'virtio' unless _bus
           case _bus.downcase
@@ -179,13 +188,16 @@ module RenkeiVPE
           else
             _dev_prefix = 'sd'
           end
-          _path = image_def[ResourceFile::Image::PATH]
-          unless _path
-            raise 'Specify ' + ResourceFile::Image::PATH + err_msg_suffix
-          end
-          image_sanity_check(_path)
+          # check nic model
           _nic_model = image_def[ResourceFile::Image::NIC_MODEL]
           _nic_model = 'virtio' unless _nic_model
+          # check image file
+          begin
+#            image_sanity_check(t.path) # TODO
+          rescue => e
+            t.cleanup
+            raise e
+          end
 
           one_template = <<EOT
 NAME        = "#{_name}"
@@ -196,10 +208,28 @@ PERSISTENT  = "#{_persistent}"
 BUS         = "#{_bus}"
 DEV_PREFIX  = "#{_dev_prefix}"
 NIC_MODEL   = "#{_nic_model}"
-PATH        = "#{_path}"
+PATH        = "#{image_def[ResourceFile::Image::PATH]}"
 EOT
+          rc = call_one_xmlrpc('one.image.allocate', session, one_template)
 
-          call_one_xmlrpc('one.image.allocate', session, one_template)
+          if rc[0]
+            # call gfreg to copy OS image into gfarm
+            rc2 = call_one_xmlrpc('one.image.info', session, rc[1])
+            unless rc2[0]
+              t.cleanup
+              raise rc2[1]
+            end
+            doc = REXML::Document.new(rc2[1])
+            file_name = doc.get_text('IMAGE/SOURCE').value.split('/')[-1]
+            gf_file_name = $server_config.gfarm_local_path + '/' + file_name
+            gfreg = $server_config.gfarm_location + '/bin/gfreg'
+            output = `#{gfreg} #{t.path} #{gf_file_name} 2>&1`
+            output.each_line do |line|
+              @log.info line.chomp
+            end
+          end
+          t.cleanup
+          rc
         end
       end
 

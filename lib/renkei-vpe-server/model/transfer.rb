@@ -106,6 +106,12 @@ SQL
         return false
       end
 
+      # It deletes itself and the assosiated file.
+      def cleanup
+        FileUtils.rm(@path)
+        delete
+      end
+
       protected
 
       def check_fields
