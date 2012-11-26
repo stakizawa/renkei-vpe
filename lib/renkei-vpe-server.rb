@@ -74,6 +74,9 @@ module RenkeiVPE
 
       # setup gfarm replication
       @gfrep = RenkeiVPE::ImageStore::GfarmReplicate.new(config)
+
+      # setup transfer cleaner
+      @tcleaner = RenkeiVPE::Handler::TransferHandler::Cleaner.new(config)
     end
 
     def start
@@ -82,6 +85,9 @@ module RenkeiVPE
       end
       gfrep_t = Thread.new do
         @gfrep.serve
+      end
+      tcleaner_t = Thread.new do
+        @tcleaner.serve
       end
 
       signals = [:INT, :TERM, :HUP]
@@ -93,11 +99,13 @@ module RenkeiVPE
 
       rpc_t.join
       gfrep_t.join
+      tcleaner_t.join
     end
 
     def shutdown
       @server.shutdown
       @gfrep.shutdown
+      @tcleaner.shutdown
     end
 
     # daemonize a block
@@ -128,16 +136,19 @@ module RenkeiVPE
 
   class ServerConfig
     DEFAULTS = {
-      'port'                     => '3111',
-      'one_location'             => ENV['ONE_LOCATION'],
-      'one_endpoint'             => 'http://localhost:2633/RPC2',
-      'gfarm_location'           => '/usr',
-      'gfarm_local_path'         => '/work/one_images',
-      'gfarm_replica_count'      => '3',
-      'gfarm_replicate_interval' => '3600',
-      'image_max_virtual_size'   => '100',
-      'log_level'                => 'info',
-      'user_limit'               => '1',
+      'port'                       => '3111',
+      'one_location'               => ENV['ONE_LOCATION'],
+      'one_endpoint'               => 'http://localhost:2633/RPC2',
+      'gfarm_location'             => '/usr',
+      'gfarm_local_path'           => '/work/one_images',
+      'gfarm_replica_count'        => '3',
+      'gfarm_replicate_interval'   => '3600',
+      'image_max_virtual_size'     => '100',
+      'transfer_temporal_path'     => $rvpe_path + '/var/transfer',
+      'transfer_chunk_size'        => '16777216',   # 16MB
+      'transfer_session_life_time' => '86400',  # 1day
+      'log_level'                  => 'info',
+      'user_limit'                 => '1',
     }
 
     instance_methods.each do |m|

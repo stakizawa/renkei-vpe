@@ -24,6 +24,7 @@ require 'renkei-vpe-server/handler/virtual_network'
 require 'renkei-vpe-server/handler/lease'
 require 'renkei-vpe-server/handler/vm_type'
 require 'renkei-vpe-server/handler/virtual_machine'
+require 'renkei-vpe-server/handler/transfer'
 
 module RenkeiVPE
   ############################################################################
@@ -34,14 +35,15 @@ module RenkeiVPE
     def init(rpc_server)
       # xml rpc interface
       ifs = [
-             [UserHandler::INTERFACE,   UserHandler.new],
-             [ImageHandler::INTERFACE,  ImageHandler.new],
-             [ZoneHandler::INTERFACE,   ZoneHandler.new],
-             [HostHandler::INTERFACE,   HostHandler.new],
-             [VNetHandler::INTERFACE,   VNetHandler.new],
-             [LeaseHandler::INTERFACE,  LeaseHandler.new],
-             [VMTypeHandler::INTERFACE, VMTypeHandler.new],
-             [VMHandler::INTERFACE,     VMHandler.new],
+             [UserHandler::INTERFACE,     UserHandler.new],
+             [ImageHandler::INTERFACE,    ImageHandler.new],
+             [ZoneHandler::INTERFACE,     ZoneHandler.new],
+             [HostHandler::INTERFACE,     HostHandler.new],
+             [VNetHandler::INTERFACE,     VNetHandler.new],
+             [LeaseHandler::INTERFACE,    LeaseHandler.new],
+             [VMTypeHandler::INTERFACE,   VMTypeHandler.new],
+             [VMHandler::INTERFACE,       VMHandler.new],
+             [TransferHandler::INTERFACE, TransferHandler.new],
             ]
 
       ifs.each do |iface, obj|

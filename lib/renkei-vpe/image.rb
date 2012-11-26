@@ -128,35 +128,9 @@ module RenkeiVPE
     def register(description)
       # allocate the image
       result = allocate(description)
-      if RenkeiVPE.is_error?(result)
-        return result
-      end
-
-      # copy the image file
-      # TODO it might be better to send file to the server
-      result = self.info
-      if RenkeiVPE.is_error?(result)
-        return result
-      end
-      if self['TEMPLATE/PATH']
-        result = nil
-        file_path = self['TEMPLATE/PATH']
-        if !File.exist?(file_path)
-          error_msg = "Image file could not be found, aborting."
-          result = RenkeiVPE::Error.new(error_msg)
-        else
-          begin
-            FileUtils.copy(file_path, self['SOURCE'])
-            FileUtils.chmod(0660, self['SOURCE'])
-          rescue Exception => e
-            result = RenkeiVPE::Error.new(e.message)
-          end
-        end
-      else
-        result = RenkeiVPE::Error.new('Failed to copy image file')
-      end
-
       if RenkeiVPE.is_successful?(result)
+        # get info and enable it
+        result = self.info
         self.enable
       else
         self.delete
@@ -166,35 +140,24 @@ module RenkeiVPE
     end
 
     def unregister
-      # TODO it might be better to remotely remove image file
       result = self.info
-
       if RenkeiVPE.is_successful?(result)
-        file_path = self['SOURCE']
         result = self.delete
         if RenkeiVPE.is_successful?(result)
-          begin
-            FileUtils.rm(file_path)
-            result = nil
-          rescue Exception => e
-            result = RenkeiVPE::Error.new(e.message)
-          end
+          result = self['SOURCE']
         end
       end
-
       return result
     end
 
+    # It returns array of transfer source and dest if success.
+    # Othersize, it returns RenkeiVPE::Error
     def export(dirname)
       result = self.info
       if RenkeiVPE.is_successful?(result)
         FileUtils.mkdir_p(dirname)
         disk_file = dirname + '/disk.img'
         attr_file = dirname + '/attr.txt'
-
-        # copy the disk image file
-        # TODO download the file from remove server
-        FileUtils.cp(self['SOURCE'], disk_file)
 
         # create the attribute file
         File.open(attr_file, 'w') do |f|
@@ -207,6 +170,7 @@ nic_model:   #{get_template_value('NIC_MODEL')}
 path:        ./disk.img
 EOT
         end
+        result = [ self['SOURCE'], disk_file ]
       end
       return result
     end
