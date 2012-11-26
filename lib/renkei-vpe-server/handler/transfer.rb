@@ -55,45 +55,6 @@ module RenkeiVPE
       CHUNK_SIZE = '16777216'   # 16MB
 #      CHUNK_SIZE = '67108864'   # 64MB
 
-      # session store for transfer
-      # TODO use database
-      class TransferSession
-        def initialize
-          @sessions = {}
-        end
-
-        def add_new(name, type, size, path)
-          s = { :type => type, :size => size, :path => path, :done => false }
-          @sessions[name] = s
-        end
-
-        def get_type(name)
-          @sessions[name][:type]
-        end
-
-        def get_size(name)
-          @sessions[name][:size]
-        end
-
-        def get_path(name)
-          @sessions[name][:path]
-        end
-
-        def get_state(name)
-          @sessions[name][:done]
-        end
-
-        def set_state(name, flag)
-          @sessions[name][:done] = flag
-        end
-
-        def self.instance
-          return @ts if @ts
-          @ts = TransferSession.new
-          return @ts
-        end
-      end
-
       ########################################################################
       # Implement xml rpc functions
       ########################################################################
@@ -126,23 +87,23 @@ module RenkeiVPE
             raise "Unknown transfer type: #{type}"
           end
 
-          # TODO fix from here to use model
-          ts = TransferSession.instance
-          ts.add_new(ts_name, type, file_size, path)
-          ts_e = REXML::Element.new('TRANSFER')
-          name_e = REXML::Element.new('NAME')
-          name_e.add(REXML::Text.new(ts_name))
-          ts_e.add(name_e)
-          size_e = REXML::Element.new('SIZE')
-          size_e.add(REXML::Text.new(file_size.to_s))
-          ts_e.add(size_e)
+          # create transfer session
+          t = Transfer.new
+          t.name = ts_name
+          t.type = type
+          t.path = path
+          t.size = file_size
+          t.create
+
+          # add CHUNK_SIZE
+          t_e = t.to_xml_element
           # TODO read chunk size from config
           cnk_e = REXML::Element.new('CHUNK_SIZE')
           cnk_e.add(REXML::Text.new(CHUNK_SIZE))
-          ts_e.add(cnk_e)
+          t_e.add(cnk_e)
 
           doc = REXML::Document.new
-          doc.add(ts_e)
+          doc.add(t_e)
           [true, doc.to_s]
         end
       end
@@ -156,14 +117,10 @@ module RenkeiVPE
       #                    otherwise it does not exist.
       def put(session, transfer_session, data)
         read_task('rvpe.transfer.put', session) do
-          # TODO fix here to use model
-          ts = TransferSession.instance
-          if ts.get_state(transfer_session)
-            raise 'Transfer has been already done.'
-          end
-          file_path = ts.get_path(transfer_session)
+          t = Transfer.find_by_name(transfer_session)[0]
+          raise 'Transfer has been already done.' if t.is_done?
 
-          File.open(file_path, 'ab') do |f|
+          File.open(t.path, 'ab') do |f|
             f.flock(File::LOCK_EX)
             f.write(XMLRPC::Base64.decode(data))
             f.flock(File::LOCK_UN)
@@ -181,15 +138,11 @@ module RenkeiVPE
       #                    otherwise it is data
       def get(session, transfer_session, offset)
         read_task('rvpe.transfer.get', session) do
-          # TODO fix here to use model
-          ts = TransferSession.instance
-          if ts.get_state(transfer_session)
-            raise 'Transfer has been already done.'
-          end
-          file_path = ts.get_path(transfer_session)
+          t = Transfer.find_by_name(transfer_session)[0]
+          raise 'Transfer has been already done.' if t.is_done?
 
           data = ''
-          File.open(file_path, 'rb') do |f|
+          File.open(t.path, 'rb') do |f|
             f.seek(offset)
             # TODO read chunk size from config
             raw_data = f.read(CHUNK_SIZE.to_i)
@@ -209,17 +162,13 @@ module RenkeiVPE
       #                    otherwise it does not exist.
       def finalize(session, transfer_session)
         write_task('rvpe.transfer.finalize', session) do
-          # TODO fix here to use model
-          ts = TransferSession.instance
-          ts.set_state(transfer_session, true)
+          t = Transfer.find_by_name(transfer_session)[0]
+          raise 'Transfer has been already done.' if t.is_done?
+          t.set_done
 
-          if ts.get_type(transfer_session) == 'put'
-            # TODO fix here to use model
-            file_path = ts.get_path(transfer_session)
-            file_size = ts.get_size(transfer_session)
-
-            if File.size(file_path) != file_size
-              FileUtils.rm_rf(file_path)
+          if t.type == 'put'
+            if File.size(t.path) != t.size
+              FileUtils.rm_rf(t.path)
               raise 'Transfer failed: File size is not same.'
             end
           end
@@ -235,16 +184,9 @@ module RenkeiVPE
       #                    otherwise it does not exist.
       def cancel(session, transfer_session)
         write_task('rvpe.transfer.finalize', session) do
-          # TODO fix here to use model
-          ts = TransferSession.instance
-          ts.set_state(transfer_session, true)
-
-          if ts.get_type(transfer_session) == 'put'
-            # TODO fix here to use model
-            file_path = ts.get_path(transfer_session)
-
-            FileUtils.rm_rf(file_path)
-          end
+          t = Transfer.find_by_name(transfer_session)[0]
+          FileUtils.rm_rf(t.path) if t.type == 'put'
+          t.delete
           [true, '']
         end
       end

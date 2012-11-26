@@ -23,6 +23,7 @@ require 'renkei-vpe-server/model/virtual_network'
 require 'renkei-vpe-server/model/lease'
 require 'renkei-vpe-server/model/vm_type'
 require 'renkei-vpe-server/model/zone'
+require 'renkei-vpe-server/model/transfer'
 
 module RenkeiVPE
   module Model
@@ -41,6 +42,7 @@ module RenkeiVPE
       Lease.create_table_if_necessary
       VMType.create_table_if_necessary
       VirtualMachine.create_table_if_necessary
+      Transfer.create_table_if_necessary
     end
 
     module_function :init
