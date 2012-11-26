@@ -8,6 +8,7 @@
     <xs:complexType>
       <xs:sequence>
         <xs:element name="NAME" type="xs:string"/>
+        <xs:element name="TYPE" type="xs:string"/>
         <xs:element name="SIZE" type="xs:integer"/>
         <xs:element name="CHUNK_SIZE" type="xs:integer"/>
       </xs:sequence>
