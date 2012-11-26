@@ -140,22 +140,13 @@ module RenkeiVPE
     end
 
     def unregister
-      # TODO it might be better to remotely remove image file
       result = self.info
-
       if RenkeiVPE.is_successful?(result)
-        file_path = self['SOURCE']
         result = self.delete
         if RenkeiVPE.is_successful?(result)
-          begin
-            FileUtils.rm(file_path)
-            result = nil
-          rescue Exception => e
-            result = RenkeiVPE::Error.new(e.message)
-          end
+          result = self['SOURCE']
         end
       end
-
       return result
     end
 

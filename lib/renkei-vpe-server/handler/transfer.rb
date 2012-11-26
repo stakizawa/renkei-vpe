@@ -41,6 +41,9 @@ module RenkeiVPE
         meth('val cancel(string, string)',
              'cancel transfer session',
              'cancel')
+        meth('val delete(string, string)',
+             'delete data from RENKEI-VPE',
+             'delete')
       end
 
       ########################################################################
@@ -91,6 +94,7 @@ module RenkeiVPE
 
           doc = REXML::Document.new
           doc.add(t_e)
+          @log.info "TransferSession[#{t.name}] is created."
           [true, doc.to_s]
         end
       end
@@ -112,6 +116,7 @@ module RenkeiVPE
             f.write(XMLRPC::Base64.decode(data))
             f.flock(File::LOCK_UN)
           end
+          @log.info "A part of File[#{t.path}] is successfully transfered in TransferSession[#{t.name}]."
           [true, '']
         end
       end
@@ -136,6 +141,7 @@ module RenkeiVPE
               data = XMLRPC::Base64.encode(raw_data)
             end
           end
+          @log.info "A part of File[#{t.path}] is successfully transfered in TransferSession[#{t.name}]."
           [true, data]
         end
       end
@@ -158,6 +164,7 @@ module RenkeiVPE
               raise 'Transfer failed: File size is not same.'
             end
           end
+          @log.info "TransferSession[#{t.name}] is successfully done."
           [true, '']
         end
       end
@@ -173,6 +180,24 @@ module RenkeiVPE
           t = Transfer.find_by_name(transfer_session)[0]
           FileUtils.rm_rf(t.path) if t.type == 'put'
           t.delete
+          @log.info "TransferSession[#{t.name}] is canceled."
+          [true, '']
+        end
+      end
+
+      # delete data from the server.
+      # +session+    string that represents user session
+      # +file_path+  string that represents path of target file
+      # +return[0]+  true or false whenever is successful or not
+      # +return[1]+  if an error occurs this is error message,
+      #              otherwise it does not exist.
+      def delete(session, file_path)
+        read_task('rvpe.transfer.delete', session) do
+          unless FileTest.exist?(file_path)
+            raise "File[#{file_path}] does not exist."
+          end
+          FileUtils.rm(file_path)
+          @log.info "File[#{file_path}] is deleted."
           [true, '']
         end
       end

@@ -28,6 +28,7 @@ module RenkeiVPE
       :get      => "transfer.get",
       :finalize => "transfer.finalize",
       :cancel   => "transfer.cancel",
+      :delete   => "transfer.delete",
     }
 
     def initialize(client)
@@ -79,6 +80,15 @@ module RenkeiVPE
 
     def cancel(transfer_session)
       rc = @client.call(TRANSFER_METHODS[:cancel], transfer_session)
+      if RenkeiVPE.is_successful?(rc)
+        return nil
+      else
+        return rc
+      end
+    end
+
+    def delete(file_path)
+      rc = @client.call(TRANSFER_METHODS[:delete], file_path)
       if RenkeiVPE.is_successful?(rc)
         return nil
       else
