@@ -193,7 +193,7 @@ module RenkeiVPE
           _nic_model = 'virtio' unless _nic_model
           # check image file
           begin
-#            image_sanity_check(t.path) # TODO
+            image_sanity_check(t.path)
           rescue => e
             t.cleanup
             raise e
