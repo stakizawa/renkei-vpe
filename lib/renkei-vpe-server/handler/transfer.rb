@@ -44,18 +44,6 @@ module RenkeiVPE
       end
 
       ########################################################################
-      # Setup temporal data storage
-      ########################################################################
-      TEMP_DIR = $rvpe_path + '/var/transfer'  # TODO read from config
-      unless FileTest.exist?(TEMP_DIR)
-        FileUtils.mkdir_p(TEMP_DIR)
-      end
-
-      # TODO read chunk size from config
-      CHUNK_SIZE = '16777216'   # 16MB
-#      CHUNK_SIZE = '67108864'   # 64MB
-
-      ########################################################################
       # Implement xml rpc functions
       ########################################################################
 
@@ -76,7 +64,7 @@ module RenkeiVPE
           ts_name = Digest::SHA1.hexdigest("#{user}#{Time.now}#{session_seed}")
 
           if type == 'put'
-            path = TEMP_DIR + '/' + ts_name
+            path = transfer_storage + '/' + ts_name
           elsif type == 'get'
             path = session_seed
             unless FileTest.exist?(path)
@@ -97,9 +85,8 @@ module RenkeiVPE
 
           # add CHUNK_SIZE
           t_e = t.to_xml_element
-          # TODO read chunk size from config
           cnk_e = REXML::Element.new('CHUNK_SIZE')
-          cnk_e.add(REXML::Text.new(CHUNK_SIZE))
+          cnk_e.add(REXML::Text.new($server_config.transfer_chunk_size))
           t_e.add(cnk_e)
 
           doc = REXML::Document.new
@@ -144,8 +131,7 @@ module RenkeiVPE
           data = ''
           File.open(t.path, 'rb') do |f|
             f.seek(offset)
-            # TODO read chunk size from config
-            raw_data = f.read(CHUNK_SIZE.to_i)
+            raw_data = f.read($server_config.transfer_chunk_size.to_i)
             if raw_data
               data = XMLRPC::Base64.encode(raw_data)
             end
@@ -189,6 +175,19 @@ module RenkeiVPE
           t.delete
           [true, '']
         end
+      end
+
+      private
+
+      @transfer_storage = nil
+      def transfer_storage
+        unless @transfer_storage
+          @transfer_storage = $server_config.transfer_temporal_path
+          unless FileTest.exist?(@transfer_storage)
+            FileUtils.mkdir_p(@transfer_storage)
+          end
+        end
+        @transfer_storage
       end
 
     end

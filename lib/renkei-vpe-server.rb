@@ -136,6 +136,8 @@ module RenkeiVPE
       'gfarm_replica_count'      => '3',
       'gfarm_replicate_interval' => '3600',
       'image_max_virtual_size'   => '100',
+      'transfer_temporal_path'   => $rvpe_path + '/var/transfer',
+      'transfer_chunk_size'      => '16777216',   # 16MB
       'log_level'                => 'info',
       'user_limit'               => '1',
     }
