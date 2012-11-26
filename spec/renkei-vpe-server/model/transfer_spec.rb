@@ -187,7 +187,6 @@ module RenkeiVPE
           t.type = 'get'
           t.path = '/this/is/path'
           t.size = 12345
-          t.done = 0
           t.create
           data_count.should == 3
         end
@@ -195,13 +194,14 @@ module RenkeiVPE
 
       context '#update' do
         it 'will update transfer on the table.' do
-          # by default transfer.done is 0
+          # by default transfer.size is 591140864
           t = Transfer.gen_instance(PUT)
-          t.done = 1
+          t.size.should == 591140864
+          t.size = 1024
           t.update
-          # after updating, transfer.done is 1
+          # after updating, transfer.size is 1024
           t = gen_transfer_from_native_sql(PUT[0])
-          t.done.should == 1
+          t.size.should == 1024
         end
       end
 
@@ -217,6 +217,47 @@ module RenkeiVPE
           t.delete  # transfer is deleted only here
           t.delete
           data_count.should_not == 0
+        end
+      end
+
+      context '#set_done' do
+        it 'will set done instance value and write it to DB.' do
+          t = Transfer.gen_instance(PUT)
+          t.instance_eval do
+            @done.should == 0
+          end
+          t.set_done
+          # after #set_done is called, transfer.done in memory is 1
+          t.instance_eval do
+            @done.should == 1
+          end
+          # after #set_done is called, transfer.done in DB is 1
+          t = gen_transfer_from_native_sql(PUT[0])
+          t.instance_eval do
+            @done.should == 1
+          end
+        end
+      end
+
+      context '#is_done?' do
+        it 'will return true if done instance value is 1.' do
+          t = Transfer.gen_instance(PUT)
+          t.is_done?.should be_false
+          t.instance_eval do
+            @done = 1
+          end
+          # after done is set 1, transfer.is_done? return true
+          t.is_done?.should be_true
+        end
+
+        it 'will return true if set_done is called once.' do
+          t = Transfer.gen_instance(PUT)
+          t.is_done?.should be_false
+          t.set_done
+          t.is_done?.should be_true
+          # read from DB
+          t = gen_transfer_from_native_sql(PUT[0])
+          t.is_done?.should be_true
         end
       end
 

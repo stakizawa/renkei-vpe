@@ -52,8 +52,6 @@ SQL
       attr_accessor(:size) { |v| v.to_i }
       # date when the session created
       attr_reader(:date)
-      # flag for transfer done
-      attr_accessor(:done)  { |v| v.to_i }
 
       def initialize
         super
@@ -82,18 +80,30 @@ SQL
         transfer_e = REXML::Element.new('TRANSFER')
         # set name
         name_e = REXML::Element.new('NAME')
-        name_e.add(REXML::Element.new(@name))
+        name_e.add(REXML::Text.new(@name))
         transfer_e.add(name_e)
         # set type
         type_e = REXML::Element.new('TYPE')
-        type_e.add(REXML::Element.new(@type))
+        type_e.add(REXML::Text.new(@type))
         transfer_e.add(type_e)
         # set size
         size_e = REXML::Element.new('SIZE')
-        size_e.add(REXML::Element.new(@size.to_i))
+        size_e.add(REXML::Text.new(@size.to_s))
         transfer_e.add(size_e)
 
         return transfer_e
+      end
+
+      def set_done
+        if @done == 0
+          @done = 1
+          update
+        end
+      end
+
+      def is_done?
+        return true if @done == 1
+        return false
       end
 
       protected
@@ -135,12 +145,12 @@ SQL
         transfer.instance_eval do
           @id   = attrs[0].to_i
           @date = attrs[5].to_i
+          @done = attrs[6].to_i
         end
         transfer.name = attrs[1]
         transfer.type = attrs[2]
         transfer.path = attrs[3]
         transfer.size = attrs[4]
-        transfer.done = attrs[6]
         return transfer
       end
 
