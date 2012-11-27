@@ -15,6 +15,9 @@
 #
 
 
+require 'rubygems'
+require 'ruby-progressbar'
+
 require 'renkei-vpe/pool'
 
 module RenkeiVPE
@@ -103,7 +106,7 @@ module RenkeiVPE
     # It puts file on the server.
     # It will return name of transfer session when it successfully puts
     # file. Otherwise, it returns RenkeiVPE::Error.
-    def transfer_put(filename, verbose)
+    def transfer_put(filename)
       unless FileTest.exist?(filename)
         return RenkeiVPE::Error.new("File[#{filename}] does not exist.")
       end
@@ -115,26 +118,25 @@ module RenkeiVPE
       end
       session, filesize, chunk_size = result
 
-      # calculation for progress output
-      count = filesize / chunk_size + 1
-      unit = 100.0 / count
-      val = 0
-
       File.open(filename, 'rb') do |f|
-        $stderr.puts 'Transfer starts' if verbose
+        pbar = ProgressBar.create(:title => 'Transfer', :output => STDERR,
+                                  :format => '%t(%p%%): |%B|')
+        count = filesize / chunk_size + 1
+        unit = 100.0 / count
+
         begin
           data = f.read(chunk_size)
           if data
             result = put(session, data)
             if RenkeiVPE.is_error?(result)
               cancel(session)
-              $stderr.puts 'Transfer fails' if verbose
+              pbar.stop
               return result
             end
-            $stderr.puts "   #{(val += unit).ceil}% has been done." if verbose
+            pbar.progress += unit
           end
         end while data != nil
-        $stderr.puts 'Transfer ends' if verbose
+        pbar.finish
       end
 
       result = finalize(session)
@@ -144,7 +146,7 @@ module RenkeiVPE
       return session
     end
 
-    def transfer_get(remote_filename, local_filename, verbose)
+    def transfer_get(remote_filename, local_filename)
       if FileTest.exist?(local_filename)
         return RenkeiVPE::Error.new("File[#{local_filename}] exists.")
       end
@@ -155,28 +157,27 @@ module RenkeiVPE
       end
       session, filesize, chunk_size = result
 
-      # calculation for progress output
-      count = filesize / chunk_size + 1
-      unit = 100.0 / count
-      val = 0
-
       File.open(local_filename, 'ab') do |f|
-        $stderr.puts 'Transfer starts' if verbose
+        pbar = ProgressBar.create(:title => 'Transfer', :output => STDERR,
+                                  :format => '%t(%p%%): |%B|')
+        count = filesize / chunk_size + 1
+        unit = 100.0 / count
+
         offset = 0
         begin
           result = get(session, offset)
           if RenkeiVPE.is_error?(result)
             cancel(session)
-            $stderr.puts 'Transfer fails' if verbose
+            pbar.stop
             f.close
             FileUtils.rm_rf(local_filename)
             return result
           end
           f.write(result)
           offset += result.size
-          $stderr.puts "   #{(val += unit).ceil}% has been done." if verbose
+          pbar.progress += unit
         end while offset < filesize
-        $stderr.puts 'Transfer ends' if verbose
+        pbar.finish
       end
 
       result = finalize(session)
@@ -186,6 +187,16 @@ module RenkeiVPE
       return nil
     end
 
+  end
+end
+
+# Modify output of progressbar
+class ProgressBar
+  module Components::Progressable
+    def percentage_completed
+      return 100 if total == 0
+      (self.progress * 100 / total).ceil
+    end
   end
 end
 

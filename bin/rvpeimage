@@ -60,13 +60,13 @@ Description
     The <command> is a name of a subcommand of #{CMD_NAME} command.
 
 Commands
-    import [ -v ] <definition_file>
+    import <definition_file>
         Import an OS image to the system whose context is defined in
         <definition_file>.
 
         $ #{CMD_NAME} import centos.dsk
 
-    export [ -v ] <image_name> <file_name>
+    export <image_name> <file_name>
         Export an OS image named <image_name> to a file named <file_name>.
         It generates one directory containing two files.  The directory is
         created with  <file_name> name.  In the directory,  the following
@@ -215,7 +215,7 @@ when 'import'
     exit 1
   end
   transfer = RenkeiVPE::Transfer.new(client)
-  rc = transfer.transfer_put(image_file_path, verbose)
+  rc = transfer.transfer_put(image_file_path)
   if RenkeiVPE.is_error?(rc)
     $stderr.puts 'Error: ' + rc.message
     exit 1
@@ -251,7 +251,7 @@ when 'export'
     exit 1
   end
   transfer = RenkeiVPE::Transfer.new(client)
-  rc = transfer.transfer_get(rc[0], rc[1], verbose)
+  rc = transfer.transfer_get(rc[0], rc[1])
   if RenkeiVPE.is_successful?(rc)
     puts "Image[#{img_name}] is exported to Directory[#{out_name}]."
   else
