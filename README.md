@@ -42,3 +42,13 @@ License
 
 RENKEI-VPE is released under [Apache License Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 
+
+Related Links
+-------------
+
+* [HPCI Advanced Software Development Environment](http://hpci-ae.r.gsic.titech.ac.jp/en/)
+* [High Performance Computing Ifrastructure Consortium](http://hpci-c.jp)
+* [REsources liNKage for E-scIence (RENKEI)](http://www.e-sciren.org/index-e.html)
+
+* [![Code Climate](https://codeclimate.com/badge.png)](https://codeclimate.com/github/stakizawa/renkei-vpe)
+
