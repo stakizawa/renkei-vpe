@@ -1,7 +1,7 @@
 Release note for RENKEI-VPE 1.4.1
 =================================
 
-[2012.xx.yy]
+[2012.11.30]
 
 * show progress bar when files are transferred using rvpeimage import/export
 
