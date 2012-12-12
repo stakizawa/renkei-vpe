@@ -33,12 +33,12 @@ _mount_cdrom()
 {
     # check redhat version
     dist_id=`lsb_release -si`
-    if [ "$dist_id" = "CentOS" ]; then
+    if [ "$dist_id" = "CentOS" ] || [ "$dist_id" = "Scientific" ]; then
         major_v=`lsb_release -sr | sed -e 's/^\([0-9]\)\+\.[0-9]\+$/\1/'`
         if [ "$major_v" = "6" ]; then
             mount -t iso9660 -o ro /dev/sr0 /mnt
         elif [ "$major_v" = "5" ]; then
-            mount -t iso9660 /dev/hdc /mnt
+            mount -t iso9660 -o ro /dev/hdc /mnt
         fi
     else
         echo "Unsupported linux distribution."
