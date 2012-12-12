@@ -320,8 +320,8 @@ class CentOS6 < CentOS5; end
 # main
 ###########################################
 dist_name = `lsb_release -si`.strip
-if dist_name == 'CentOS'
-  # when CentOS
+if dist_name == 'CentOS' || dist_name == 'Scientific'
+  # when CentOS or Scientific Linux
   major_v = $1 if /^(\d+)\.\d+$/ =~ `lsb_release -sr`.strip
   if major_v == '5'
     CentOS5.new.init
