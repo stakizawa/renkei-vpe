@@ -133,7 +133,7 @@ module RenkeiVPE
               pbar.stop
               return result
             end
-            pbar.progress += unit
+            update_progress(pbar, unit)
           end
         end while data != nil
         pbar.finish
@@ -175,7 +175,7 @@ module RenkeiVPE
           end
           f.write(result)
           offset += result.size
-          pbar.progress += unit
+          update_progress(pbar, unit)
         end while offset < filesize
         pbar.finish
       end
@@ -185,6 +185,18 @@ module RenkeiVPE
         return result
       end
       return nil
+    end
+
+    private
+
+    def update_progress(pbar, val)
+      tmp = pbar.progress
+      tmp += val
+      if tmp <= 100
+        pbar.progress = tmp
+      else
+        pbar.progress = 100
+      end
     end
 
   end
