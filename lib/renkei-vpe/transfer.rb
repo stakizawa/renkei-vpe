@@ -189,13 +189,23 @@ module RenkeiVPE
 
     private
 
+    def calc_units(filesize, chunk_size)
+      units = []
+      count = filesize / chunk_size + 1
+      unit = 100 / count
+      rest = 100 % count
+      count.times { units << unit }
+      rest.times { |i| units[i] += 1 }
+      return units
+    end
+
     def update_progress(pbar, val)
       tmp = pbar.progress
       tmp += val
-      if tmp <= 100
+      if tmp < 100.0
         pbar.progress = tmp
       else
-        pbar.progress = 100
+        pbar.progress = 99.0
       end
     end
 
