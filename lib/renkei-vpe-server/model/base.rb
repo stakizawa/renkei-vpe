@@ -44,6 +44,7 @@ module RenkeiVPE
     def execute(sql)
       begin
         db = SQLite3::Database.new(@@db_file)
+        db.busy_timeout($server_config.database_timeout)
         if block_given?
           db.execute(sql) do |row|
             yield row
@@ -60,6 +61,7 @@ module RenkeiVPE
     def transaction(*sqls)
       begin
         db = SQLite3::Database.new(@@db_file)
+        db.busy_timeout($server_config.database_timeout)
         db.transaction do
           sqls.each do |sql|
             db.execute(sql)

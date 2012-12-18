@@ -138,13 +138,14 @@ module RenkeiVPE
     DEFAULTS = {
       'port'                       => '3111',
       'max_clients'                => 100,
+      'database_timeout'           => 10000,  # 10sec
       'one_location'               => ENV['ONE_LOCATION'],
       'one_endpoint'               => 'http://localhost:2633/RPC2',
       'gfarm_location'             => '/usr',
       'gfarm_local_path'           => '/work/one_images',
       'gfarm_replica_count'        => '3',
-      'gfarm_replicate_interval'   => '3600',
-      'image_max_virtual_size'     => '100',
+      'gfarm_replicate_interval'   => '3600',  # 1hour
+      'image_max_virtual_size'     => '100',  # 100GB
       'transfer_temporal_path'     => $rvpe_path + '/var/transfer',
       'transfer_chunk_size'        => '16777216',   # 16MB
       'transfer_session_life_time' => '86400',  # 1day
