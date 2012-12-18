@@ -388,7 +388,7 @@ EOT
       def image_max_vsize
         unless @image_max_vsize
           @image_max_vsize =
-            $server_config.image_max_virtual_size.to_i * 1024 * 1024 * 1024
+            $server_config.image_max_virtual_size * 1024 * 1024 * 1024
         end
         @image_max_vsize
       end

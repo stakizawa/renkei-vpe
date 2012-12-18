@@ -89,7 +89,7 @@ module RenkeiVPE
           # add CHUNK_SIZE
           t_e = t.to_xml_element
           cnk_e = REXML::Element.new('CHUNK_SIZE')
-          cnk_e.add(REXML::Text.new($server_config.transfer_chunk_size))
+          cnk_e.add(REXML::Text.new($server_config.transfer_chunk_size.to_s))
           t_e.add(cnk_e)
 
           doc = REXML::Document.new
@@ -136,7 +136,7 @@ module RenkeiVPE
           data = ''
           File.open(t.path, 'rb') do |f|
             f.seek(offset)
-            raw_data = f.read($server_config.transfer_chunk_size.to_i)
+            raw_data = f.read($server_config.transfer_chunk_size)
             if raw_data
               data = XMLRPC::Base64.encode(raw_data)
             end
@@ -208,7 +208,7 @@ module RenkeiVPE
       # forgotten to be delete files in 'transfer_storage' directory.
       class Cleaner
         def initialize(config)
-          @session_life_time = config.transfer_session_life_time.to_i
+          @session_life_time = config.transfer_session_life_time
           @interval = 3600 # 1h
         end
 

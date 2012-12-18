@@ -265,7 +265,7 @@ module RenkeiVPE
                 "Can't specify '#{limit}'"
             end
           end
-          limit = $server_config.user_limit.to_i if limit < 0
+          limit = $server_config.user_limit if limit < 0
 
           user.modify_zone(zone_id, enabled, limit)
           user.update

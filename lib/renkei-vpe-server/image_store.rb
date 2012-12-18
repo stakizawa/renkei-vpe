@@ -25,7 +25,7 @@ module RenkeiVPE
         @gfrep = config.gfarm_location + '/bin/gfrep'
         @img_dir = config.gfarm_local_path
         @n_replicas = config.gfarm_replica_count
-        @interval = config.gfarm_replicate_interval.to_i
+        @interval = config.gfarm_replicate_interval
       end
 
       def serve
