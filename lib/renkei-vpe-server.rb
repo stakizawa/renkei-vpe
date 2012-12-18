@@ -69,7 +69,7 @@ module RenkeiVPE
       RenkeiVPE::Model.init(DB_FILE)
 
       # setup xml rpc server
-      @server = XMLRPC::Server.new(config.port)
+      @server = XMLRPC::Server.new(config.port, '127.0.0.1', config.max_clients)
       RenkeiVPE::Handler.init(@server)
 
       # setup gfarm replication
@@ -137,6 +137,7 @@ module RenkeiVPE
   class ServerConfig
     DEFAULTS = {
       'port'                       => '3111',
+      'max_clients'                => 100,
       'one_location'               => ENV['ONE_LOCATION'],
       'one_endpoint'               => 'http://localhost:2633/RPC2',
       'gfarm_location'             => '/usr',
