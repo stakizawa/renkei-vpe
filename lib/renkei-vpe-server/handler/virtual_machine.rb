@@ -267,7 +267,7 @@ DISK = [
 DISK = [
   TYPE   = "swap",
   SIZE   = #{(type.memory * 1.5).to_i},
-  TARGET = "hdd"
+  TARGET = "vdb"
 ]
 
 EOS
