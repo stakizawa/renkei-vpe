@@ -95,10 +95,10 @@ module RenkeiVPE
         one_secret = secret
       elsif ENV["ONE_AUTH"] and !ENV["ONE_AUTH"].empty? and File.file?(ENV["ONE_AUTH"])
         one_secret=File.read(ENV["ONE_AUTH"])
-      elsif File.file?(ENV["HOME"]+"/.one/one_auth")
-        one_secret=File.read(ENV["HOME"]+"/.one/one_auth")
+      elsif File.file?(ENV["HOME"]+"/.rvpe_env/one_auth")
+        one_secret=File.read(ENV["HOME"]+"/.rvpe_env/one_auth")
       else
-        raise "ONE_AUTH file not present"
+        raise "Authentication file is not present"
       end
 
       if !one_secret.match(".+:.+")
