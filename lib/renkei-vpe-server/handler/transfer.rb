@@ -249,7 +249,8 @@ module RenkeiVPE
       @transfer_storage = nil
       def transfer_storage
         unless @transfer_storage
-          @transfer_storage = $server_config.transfer_temporal_path
+          @transfer_storage = $server_config.gfarm_mount_point +
+            '/temporal_transfer'
           unless FileTest.exist?(@transfer_storage)
             FileUtils.mkdir_p(@transfer_storage)
           end

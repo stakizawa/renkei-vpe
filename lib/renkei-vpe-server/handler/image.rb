@@ -213,20 +213,14 @@ EOT
           rc = call_one_xmlrpc('one.image.allocate', session, one_template)
 
           if rc[0]
-            # call gfreg to copy OS image into gfarm
+            # move OS image to the image storage directory
             rc2 = call_one_xmlrpc('one.image.info', session, rc[1])
             unless rc2[0]
               t.cleanup
               raise rc2[1]
             end
             doc = REXML::Document.new(rc2[1])
-            file_name = doc.get_text('IMAGE/SOURCE').value.split('/')[-1]
-            gf_file_name = $server_config.gfarm_local_path + '/' + file_name
-            gfreg = $server_config.gfarm_location + '/bin/gfreg'
-            output = `#{gfreg} #{t.path} #{gf_file_name} 2>&1`
-            output.each_line do |line|
-              @log.info line.chomp
-            end
+            FileUtils.mv(t.path, doc.get_text('IMAGE/SOURCE').value)
           end
           t.cleanup
           rc

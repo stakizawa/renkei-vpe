@@ -108,7 +108,7 @@ SQL
 
       # It deletes itself and the assosiated file.
       def cleanup
-        FileUtils.rm(@path)
+        FileUtils.rm_f(@path)
         delete
       end
 
