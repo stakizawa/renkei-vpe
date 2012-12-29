@@ -124,6 +124,19 @@ module RenkeiVPE
       end
 
       @server=XMLRPC::Client.new2(@rvpe_endpoint)
+
+      if ENV['RVPE_RPC_TIMEOUT']
+        if /^\s*(\d+)\s*$/ =~ ENV['RVPE_RPC_TIMEOUT']
+          timeout = $1.to_i
+          if timeout > 0
+            @server.timeout = timeout
+          else
+            raise 'RVPE_RPC_TIMEOUT should be bigger than 0.'
+          end
+        else
+          raise 'RVPE_RPC_TIMEOUT should be an integer bigger than 0.'
+        end
+      end
     end
 
     def call(action, *args)
