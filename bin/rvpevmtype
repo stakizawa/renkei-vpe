@@ -57,6 +57,7 @@ Description
 
     The <command> is a name of a subcommand of #{CMD_NAME} command.
 
+
 Commands
     create <definition_file>
         Create a new VM type
@@ -84,7 +85,13 @@ Commands
     help
         Show this message.
 
-Options:
+
+Environment Variables
+    RVPE_RPC_TIMEOUT
+        Set XMLRPC timeout in seconds. Default is 30 seconds.
+
+
+Options
 EOS
 
 ##############################################################################

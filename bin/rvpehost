@@ -56,6 +56,7 @@ Description
 
     The <command> is a name of a subcommand of #{CMD_NAME} command.
 
+
 Commands
     enable <zone_name> <host_name> [ <host_name> ... ]
         Enable hosts.  An enabled host can run VMs on it.
@@ -83,6 +84,12 @@ Commands
 
     help
         Show this message.
+
+
+Environment Variables
+    RVPE_RPC_TIMEOUT
+        Set XMLRPC timeout in seconds. Default is 30 seconds.
+
 
 Options
 EOS

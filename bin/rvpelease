@@ -62,6 +62,7 @@ Description
     of lease that equals to DNS hostname,  and 2) IP address that mapped to
     the hostname.
 
+
 Commands
     assign <lease_name> <user_name>
         Assign a lease whose name is <lease_name>  to a user whose name is
@@ -100,6 +101,12 @@ Commands
 
     help
         Show this message.
+
+
+Environment Variables
+    RVPE_RPC_TIMEOUT
+        Set XMLRPC timeout in seconds. Default is 30 seconds.
+
 
 Options
 EOS

@@ -59,6 +59,7 @@ Description
 
     The <command> is a name of a subcommand of #{CMD_NAME} command.
 
+
 Commands
     create <vm_type> <image_name> <root_key_file> <zone> \\
            <network1>[#<lease1>] [ <network2>[#<lease2>] ... ]
@@ -182,6 +183,12 @@ Commands
 
     help
         Show this message.
+
+
+Environment Variables
+    RVPE_RPC_TIMEOUT
+        Set XMLRPC timeout in seconds. Default is 30 seconds.
+
 
 Options
 EOS

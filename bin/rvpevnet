@@ -58,6 +58,7 @@ Description
 
     The <command> is a name of a subcommand of #{CMD_NAME} command.
 
+
 Commands
     adddns <zone_name> <vnet_name> <dns_server_name> \\
            [ <dns_server_name> ... ]
@@ -142,6 +143,12 @@ Commands
 
     help
         Show this message.
+
+
+Environment Variables
+    RVPE_RPC_TIMEOUT
+        Set XMLRPC timeout in seconds. Default is 30 seconds.
+
 
 Options
 EOS
