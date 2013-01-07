@@ -29,6 +29,26 @@ module RenkeiVPE
   ############################################################################
   module Database
     @@db_file = nil
+    @@_set_db_handler = lambda do |db|
+      #db.busy_timeout($server_config.database_timeout)
+      db.busy_handler do |count|
+        if count == 0
+          msg = 'DB access failed, '
+        else
+          msg = "DB access retried #{count} times, "
+        end
+        result = (count < $server_config.database_retry_count)
+        if result
+          sleep($server_config.database_timeout)
+          msg += 'retry access again.'
+        else
+          msg += 'give up access.'
+        end
+        RenkeiVPE::Logger.get_logger.info msg
+        result
+      end
+    end
+
 
     # set db file
     def file=(db_file)
@@ -44,7 +64,7 @@ module RenkeiVPE
     def execute(sql)
       begin
         db = SQLite3::Database.new(@@db_file)
-        db.busy_timeout($server_config.database_timeout)
+        @@_set_db_handler.call(db)
         if block_given?
           db.execute(sql) do |row|
             yield row
@@ -61,7 +81,7 @@ module RenkeiVPE
     def transaction(*sqls)
       begin
         db = SQLite3::Database.new(@@db_file)
-        db.busy_timeout($server_config.database_timeout)
+        @@_set_db_handler.call(db)
         db.transaction do
           sqls.each do |sql|
             db.execute(sql)
