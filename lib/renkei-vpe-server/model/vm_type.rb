@@ -31,10 +31,11 @@ module RenkeiVPE
       @table_schema = <<SQL
 CREATE TABLE #{@table_name} (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
-  name        VARCHAR(256),
+  name        VARCHAR(256) UNIQUE,
   cpu         INTEGER,
   memory      INTEGER,
-  description TEXT
+  description TEXT,
+  weight      INTEGER
 );
 SQL
 
@@ -48,6 +49,8 @@ SQL
       attr_accessor(:memory) { |v| v.to_i }
       # description of the VM type
       attr_accessor :description
+      # weight of VM type
+      attr_accessor(:weight) { |v| v.to_i }
 
       def initialize
         super
@@ -55,15 +58,17 @@ SQL
         @cpu         =  0
         @memory      =  0
         @description = ''
+        @weight      =  1
       end
 
       def to_s
-        "VMType<"                         +
-          "id=#{@id},"                    +
-          "name='#{@name}',"              +
-          "cpu=#{@cpu},"                  +
-          "memory=#{@memory},"            +
-          "description='#{@description}'" +
+        "VMType<"                          +
+          "id=#{@id},"                     +
+          "name='#{@name}',"               +
+          "cpu=#{@cpu},"                   +
+          "memory=#{@memory},"             +
+          "description='#{@description}'," +
+          "weight=#{@weight}"              +
           ">"
       end
 
@@ -91,6 +96,11 @@ SQL
         mem_e.add(REXML::Text.new(@memory.to_s))
         type_e.add(mem_e)
 
+        # set weight
+        wei_e = REXML::Element.new('WEIGHT')
+        wei_e.add(REXML::Text.new(@weight.to_s))
+        type_e.add(wei_e)
+
         # set description
         desc_e = REXML::Element.new('DESCRIPTION')
         desc_e.add(REXML::Text.new(@description))
@@ -106,13 +116,15 @@ SQL
         raise_if_nil_and_not_class(@cpu,         'cpu',         Integer)
         raise_if_nil_and_not_class(@memory,      'memory',      Integer)
         raise_if_nil_or_not_class( @description, 'description', String)
+        raise_if_nil_and_not_class(@weight,      'weight',      Integer)
       end
 
       def to_create_record_str
         "'#{@name}',"  +
           "#{@cpu},"   +
           "#{@memory}," +
-          "'#{@description}'"
+          "'#{@description}'," +
+          "#{@weight}"
       end
 
       def to_find_id_str
@@ -123,19 +135,21 @@ SQL
         "name='#{@name}',"    +
           "cpu=#{@cpu},"      +
           "memory=#{@memory}," +
-          "description='#{@description}'"
+          "description='#{@description}'," +
+          "weight=#{@weight}"
       end
 
 
       def self.setup_attrs(type, attrs)
-        return type unless attrs.size == 5
+        return type unless attrs.size == 6
         type.instance_eval do
-          @id          = attrs[0].to_i
+          @id            = attrs[0].to_i
         end
         type.name        = attrs[1]
         type.cpu         = attrs[2]
         type.memory      = attrs[3]
         type.description = attrs[4]
+        type.weight      = attrs[5]
         return type
       end
 
