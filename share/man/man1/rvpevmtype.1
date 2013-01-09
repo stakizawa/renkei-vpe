@@ -8,8 +8,9 @@ rvpevmtype \- manipulate virtual machine type configuration
 \fBrvpevmtype\fR <command> [ \fB\fIargs\fB\fR ] [ \fB\fIoptions\fB\fR ]
 .SH DESCRIPTION
 This command manipulate VM type configuration.
-VM type containts 1)name, 2)number of CPUs, 3)amount of memory and 4)its short description.
-The administrator can create/delete VM type and the user can show them.
+VM type containts 1)name, 2)number of CPUs, 3)amount of memory, 4)weight and 5)its short description.
+Weight is used for limiting amount of resources a user can use and weight of richer VM type is bigger.
+The administrator can create/delete VM types and users can only show them.
 .PP
 The \fI<command>\fR is a name of a subcommand of rvpevmtype command.
 Run \'rvpevmtype help\' to see the detail of the usage.
