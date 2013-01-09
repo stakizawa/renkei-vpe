@@ -139,11 +139,21 @@ module RenkeiVPE
             raise 'Format error of ' + ResourceFile::VMType::MEMORY +
               err_msg_suffix + '  Its value should be digits.'
           end
+          # check weight
+          weight = type_def[ResourceFile::VMType::WEIGHT]
+          unless weight
+            raise 'Specify ' + ResourceFile::VMType::WEIGHT + err_msg_suffix
+          end
+          unless /^\d+$/ =~ weight.to_s
+            raise 'Format error of ' + ResourceFile::VMType::WEIGHT +
+              err_msg_suffix + '  Its value should be digits.'
+          end
 
           type = VMType.new
           type.name        = name
           type.cpu         = cpu
           type.memory      = memory
+          type.weight      = weight
           type.description = type_def[ResourceFile::VMType::DESCRIPTION]
           type.create
 

@@ -56,6 +56,7 @@ module RenkeiVPE
       NAME        = 'NAME'
       CPU         = 'CPU'
       MEMORY      = 'MEMORY'
+      WEIGHT      = 'WEIGHT'
       DESCRIPTION = 'DESCRIPTION'
     end
 
