@@ -197,7 +197,10 @@ when 'list'
       :mem     => { :name => 'MEM(MB)',
                     :size => 8,
                     :proc => lambda {|d,e| d['MEMORY']} },
-      :default => [:id, :user, :desc, :cpu, :mem]
+      :weit    => { :name => 'WEIGHT',
+                    :size => 7,
+                    :proc => lambda {|d,e| d['WEIGHT']} },
+      :default => [:id, :user, :desc, :cpu, :mem, :weit]
     }
     print_xml_in_table(list_columns, vmtype_pool, verbose)
   end
@@ -229,6 +232,8 @@ when 'show'
         puts str % ['CPU', type['CPU']]
         # print Memory
         puts str % ['MEMORY(MB)', type['MEMORY']]
+        # print Weight
+        puts str % ['WEIGHT', type['WEIGHT']]
         # print Description
         puts str % ['DESCRIPTION', type['DESCRIPTION']]
       end
