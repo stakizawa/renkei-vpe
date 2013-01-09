@@ -175,7 +175,7 @@ def print_user(user, xml_output, verbose=false)
     zones_i.size.times do |i|
       zone = zones_n[i] + '  ('
       zone += "ID:#{zones_i[i]}  "                   if verbose
-      zone += "LIMIT:#{zones_l[i]})"
+      zone += "QUOTA:#{zones_l[i]})"
       zones << zone
     end
     puts str % ['ZONES', zones.shift]
