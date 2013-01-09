@@ -101,10 +101,10 @@ Commands
         $ #{CMD_NAME} disable 1
 
 
-    enable_zone <user_name> <zone_name> [ <vm_limit> ]
+    enable_zone <user_name> <zone_name> [ <vm_quota> ]
         Allow  the specified user  to run VMs in the zone.  When a user is
-        enaled,  the user  can run VMs  in the zone  upto <vm_limit> count.
-        Default of <vm_limit> is 1.
+        enaled,  the user  can run VMs  in the zone  upto <vm_quota> quota.
+        Default of <vm_quota> is 1.
 
         $ #{CMD_NAME} enable_zone user1 'tokyo tech' 10
 
