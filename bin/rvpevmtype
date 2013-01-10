@@ -52,8 +52,10 @@ Synopsis
 
 Description
     This command manipulate VM type configuration.  VM type containts 1)name,
-    2)number of CPUs,  3)amount of memory and  4)its short description.  The
-    administrator can create/delete VM type and the user can show them.
+    2)number  of  CPUs,  3)amount  of  memory,  4)weight  and 5)its  short
+    description.  Weight is used for limiting amount of resources a user can
+    use and weight of richer VM type is bigger.
+    The administrator can create/delete VM types and users can only show them.
 
     The <command> is a name of a subcommand of #{CMD_NAME} command.
 
@@ -197,7 +199,10 @@ when 'list'
       :mem     => { :name => 'MEM(MB)',
                     :size => 8,
                     :proc => lambda {|d,e| d['MEMORY']} },
-      :default => [:id, :user, :desc, :cpu, :mem]
+      :weit    => { :name => 'WEIGHT',
+                    :size => 7,
+                    :proc => lambda {|d,e| d['WEIGHT']} },
+      :default => [:id, :user, :desc, :cpu, :mem, :weit]
     }
     print_xml_in_table(list_columns, vmtype_pool, verbose)
   end
@@ -229,6 +234,8 @@ when 'show'
         puts str % ['CPU', type['CPU']]
         # print Memory
         puts str % ['MEMORY(MB)', type['MEMORY']]
+        # print Weight
+        puts str % ['WEIGHT', type['WEIGHT']]
         # print Description
         puts str % ['DESCRIPTION', type['DESCRIPTION']]
       end

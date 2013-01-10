@@ -159,21 +159,23 @@ module RenkeiVPE
             raise "User[#{user_name}] don't have permission to run VMs " +
               "in Zone[#{zone_n}]."
           end
-          # 1-2. check if the user don't overcommit his maximum VM count
-          #      int the specified zone
+          # 1-2. check if the user don't overcommit his maximum VM weight
+          #      in the specified zone
           user_max = user.limits_in_array[user.zones_in_array.index(zone.id)]
-          vms_in_zone = 0
+          vm_weight_in_zone = type.weight
           rc = call_one_xmlrpc('one.vmpool.info', session, user.oid, false, -1)
           raise rc[1] unless rc[0]
           doc = REXML::Document.new(rc[1])
           REXML::XPath.match(doc, 'VM_POOL/VM/ID').each do |oid_e|
             oid = oid_e.get_text.to_s
             vm = VirtualMachine.find("oid=#{oid}")[0]
-            vms_in_zone += 1 if vm.zone_id == zone.id
+            if vm.zone_id == zone.id
+              _type = VMType.find_by_id(vm.type_id)[0]
+              vm_weight_in_zone += _type.weight
+            end
           end
-          if vms_in_zone >= user_max
-            raise "User[#{user_name}] can't run more than #{user_max} VMs " +
-              "in Zone[#{zone_n}]."
+          if vm_weight_in_zone > user_max
+            raise "User[#{user_name}] can't run any more VMs in Zone[#{zone_n}] as quota reached."
           end
 
           # 2. get image information

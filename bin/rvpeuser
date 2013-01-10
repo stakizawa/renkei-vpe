@@ -101,10 +101,10 @@ Commands
         $ #{CMD_NAME} disable 1
 
 
-    enable_zone <user_name> <zone_name> [ <vm_limit> ]
+    enable_zone <user_name> <zone_name> [ <vm_quota> ]
         Allow  the specified user  to run VMs in the zone.  When a user is
-        enaled,  the user  can run VMs  in the zone  upto <vm_limit> count.
-        Default of <vm_limit> is 1.
+        enaled,  the user  can run VMs  in the zone  upto <vm_quota> quota.
+        Default of <vm_quota> is 1.
 
         $ #{CMD_NAME} enable_zone user1 'tokyo tech' 10
 
@@ -175,7 +175,7 @@ def print_user(user, xml_output, verbose=false)
     zones_i.size.times do |i|
       zone = zones_n[i] + '  ('
       zone += "ID:#{zones_i[i]}  "                   if verbose
-      zone += "LIMIT:#{zones_l[i]})"
+      zone += "QUOTA:#{zones_l[i]})"
       zones << zone
     end
     puts str % ['ZONES', zones.shift]
