@@ -11,6 +11,7 @@
         <xs:element name="NAME" type="xs:string"/>
         <xs:element name="CPU" type="xs:integer"/>
         <xs:element name="MEMORY" type="xs:integer"/>
+        <xs:element name="WEIGHT" type="xs:integer"/>
         <xs:element name="DESCRIPTION" type="xs:string"/>
       </xs:sequence>
     </xs:complexType>

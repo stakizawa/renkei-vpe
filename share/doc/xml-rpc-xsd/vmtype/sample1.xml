@@ -3,5 +3,6 @@
   <NAME>small</NAME>
   <CPU>1</CPU>
   <MEMORY>1024</MEMORY>
+  <WEIGHT>1</WEIGHT>
   <DESCRIPTION>small size VM</DESCRIPTION>
 </VMTYPE>
