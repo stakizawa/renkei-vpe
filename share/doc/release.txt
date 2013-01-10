@@ -1,4 +1,4 @@
-Release note for RENKEI-VPE 1.4.3
+Release note for RENKEI-VPE 1.5.0
 =================================
 
 [2013.01.xx]
@@ -7,6 +7,13 @@ Release note for RENKEI-VPE 1.4.3
 * XMLRPC client access timeout can be configured by environment value
 * improve performance of 'rvpeimage import'
 * implement DB access retry
+* Implement user VM quota
+
+As this release contains DB schema modification, run the following migration
+script if you update from previous version.
+
+  $ cd $RVPE_HOME
+  $ ruby share/scripts/schema_migration/run_migrations.rb var/rvped.db
 
 
 Release note for RENKEI-VPE 1.4.2
