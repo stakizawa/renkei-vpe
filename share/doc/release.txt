@@ -1,3 +1,26 @@
+Release note for RENKEI-VPE 1.4.3
+=================================
+
+[2013.01.xx]
+
+* change default path of authentication file
+* XMLRPC client access timeout can be configured by environment value
+* improve performance of 'rvpeimage import'
+* implement DB access retry
+
+
+Release note for RENKEI-VPE 1.4.2
+=================================
+
+[2012.12.27]
+
+* support Scientific Linux 5.x & 6.x VM
+* maximum number of XMLRPC clients is now configurable
+* implement DB access error handling
+* [bug] modify progress bar display error
+* [bug] modify VM's swap disk target
+
+
 Release note for RENKEI-VPE 1.4.1
 =================================
 
