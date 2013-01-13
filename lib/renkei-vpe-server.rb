@@ -138,8 +138,8 @@ module RenkeiVPE
     DEFAULTS = {
       'port'                       => 3111,
       'max_clients'                => 100,
-      'database_retry_count'       => 10,                            # 10times
-      'database_timeout'           => 1,                             # 1sec
+      'database_retry_count'       => 30,                            # 30times
+      'database_timeout'           => 2,                             # 2sec
       'one_location'               => ENV['ONE_LOCATION'],
       'one_endpoint'               => 'http://localhost:2633/RPC2',
       'gfarm_location'             => '/usr',
