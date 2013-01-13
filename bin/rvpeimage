@@ -155,11 +155,24 @@ verbose    = false
 ##############################################################################
 # Functions
 ##############################################################################
-def get_expanded_image_path(template)
+def value_from_template(template, key)
   template.each_line do |l|
-    if /^\s*path\s*:\s*(.+)$/i =~ l
-      return File.expand_path($1)
+    if /^\s*#{key}\s*:\s*(.+)$/i =~ l
+      yield $1
     end
+  end
+end
+
+def get_image_name(template)
+  value_from_template(template, 'name') do |val|
+    return val
+  end
+  return nil
+end
+
+def get_expanded_image_path(template)
+  value_from_template(template, 'path') do |val|
+    return File.expand_path(val)
   end
   return nil
 end
@@ -213,6 +226,17 @@ when 'import'
   check_command('import', 1)
   unless FileTest.exist?(ARGV[0])
     $stderr.puts "Error: Can't read definition file: #{ARGV[0]}"
+    exit 1
+  end
+
+  image_name = get_image_name(File.read(ARGV[0]))
+  unless image_name
+    $stderr.puts "Error: Can't find OS Image name in the definition file."
+    exit 1
+  end
+  rc = RenkeiVPE::ImagePool.new(client).ask_id(image_name)
+  unless RenkeiVPE.is_error?(rc)
+    $stderr.puts "Error: Image[#{image_name}] already exists."
     exit 1
   end
 
