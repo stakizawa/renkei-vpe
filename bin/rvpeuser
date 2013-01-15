@@ -350,7 +350,7 @@ when 'enable_zone'
   rc = user.enable_zone(zone_id, zone_limit)
   if RenkeiVPE.is_successful?(rc)
     puts "User[#{user_name}] enabled to use Zone[#{zone_name}]" +
-      " with Limit[#{rc}]"
+      " with Quota[#{rc}]"
   else
     $stderr.puts 'Error: ' + rc.message
     exit 1
