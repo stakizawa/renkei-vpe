@@ -30,6 +30,7 @@ module RenkeiVPE
       :publish     => "image.publish",
       :persistent  => "image.persistent",
       :description => "image.description",
+      :validate    => "image.validate",
       :delete      => "image.delete"
     }
 
@@ -115,6 +116,13 @@ module RenkeiVPE
       return Error.new('ID not defined') if !@pe_id
 
       rc = @client.call(IMAGE_METHODS[:description], @pe_id, new_desc)
+      rc = nil if !RenkeiVPE.is_error?(rc)
+
+      return rc
+    end
+
+    def validate(attrs)
+      rc = @client.call(IMAGE_METHODS[:validate], attrs)
       rc = nil if !RenkeiVPE.is_error?(rc)
 
       return rc

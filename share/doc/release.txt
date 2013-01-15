@@ -7,7 +7,8 @@ Release note for RENKEI-VPE 1.5.0
 * XMLRPC client access timeout can be configured by environment value
 * improve performance of 'rvpeimage import'
 * implement DB access retry
-* Implement user VM quota
+* implement user VM quota
+* OS images are validated before transferring them to the server
 
 As this release contains DB schema modification, run the following migration
 script if you update from previous version.

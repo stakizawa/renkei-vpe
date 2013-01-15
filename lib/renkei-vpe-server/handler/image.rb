@@ -53,6 +53,9 @@ module RenkeiVPE
         meth('val description(string, int, string)',
              'Update description of an image',
              'description')
+        meth('val validate(string, string)',
+             'Validate attributes of an image',
+             'validate')
       end
 
 
@@ -310,6 +313,19 @@ EOT
         end
       end
 
+      # validate attributes of an image.
+      # +session+     string that represents user session
+      # +attributes+  string that represents image attributes
+      # +return[0]+   true or false whenever is successful or not
+      # +return[1]+   if an error occurs this is error message,
+      #               otherwise it does not exist.
+      def validate(session, attributes)
+        read_task('rvpe.image.validate', session) do
+          image_attr_sanity_check(attributes)
+          [true, '']
+        end
+      end
+
       private
 
       # It checks the image access permission.
@@ -387,12 +403,9 @@ EOT
         @image_max_vsize
       end
 
-      # It checks image file existence & attributes.
-      def image_sanity_check(image_path)
-        unless FileTest.exist?(image_path)
-          raise "Image file is not found: #{image_path}"
-        end
-        `#{CMD_QEMUIMG} info #{image_path}`.each_line do |l|
+      # It checks image attributes.
+      def image_attr_sanity_check(attr_str)
+        attr_str.each_line do |l|
           k,v = l.split(':').map { |e| e.strip }
           case k
           when 'file format'
@@ -409,6 +422,14 @@ EOT
             end
           end
         end
+      end
+
+      # It checks image file existence & attributes.
+      def image_sanity_check(image_path)
+        unless FileTest.exist?(image_path)
+          raise "Image file is not found: #{image_path}"
+        end
+        image_attr_sanity_check(`#{CMD_QEMUIMG} info #{image_path}`)
       end
 
     end

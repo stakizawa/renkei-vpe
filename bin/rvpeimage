@@ -245,6 +245,15 @@ when 'import'
     $stderr.puts "Error: Can't find OS Image file path in the definition file."
     exit 1
   end
+  if (system('type qemu-img 1>/dev/null 2>/dev/null'))
+    image = RenkeiVPE::Image.new(RenkeiVPE::Image.build_xml, client)
+    rc = image.validate(`qemu-img info #{image_file_path}`)
+    if RenkeiVPE.is_error?(rc)
+      $stderr.puts 'Error: ' + rc.message
+      exit 1
+    end
+  end
+
   transfer = RenkeiVPE::Transfer.new(client)
   rc = transfer.transfer_put(image_file_path)
   if RenkeiVPE.is_error?(rc)
