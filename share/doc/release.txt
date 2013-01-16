@@ -1,7 +1,7 @@
 Release note for RENKEI-VPE 1.5.0
 =================================
 
-[2013.01.xx]
+[2013.01.17]
 
 * change default path of authentication file
 * XMLRPC client access timeout can be configured by environment value
