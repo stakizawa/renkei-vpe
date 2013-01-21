@@ -349,7 +349,7 @@ module RenkeiVPE
 
         # allocate host (only in OpenNebula)
         rc = call_one_xmlrpc('one.host.allocate', session,
-                             host_name, 'im_kvm', 'vmm_rvpe', 'tm_gfarm')
+                             host_name, 'im_rvpe', 'vmm_rvpe', 'tm_gfarm')
         raise rc[1] unless rc[0]
 
         # add the host to a site in OpenNebula
