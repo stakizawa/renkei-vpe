@@ -16,71 +16,52 @@
 #
 
 def print_info(name, value)
-    value = "0" if value.nil? or value.to_s.strip.empty?
-    puts "#{name}=#{value}"
+  value = "0" if value.nil? or value.to_s.strip.empty?
+  puts "#{name}=#{value}"
 end
 
-######
-#  First, get all the posible info out of virsh
-#  TODO : use virsh freecell when available
-######
 
 nodeinfo_text = `virsh -c qemu:///system nodeinfo`
-exit(-1) if $?!=0
+exit(-1) if $? != 0
+nodeinfo_text.split(/\n/).each do |each|
+  if each.match('^CPU\(s\)')
+    $total_cpu    = each.split(":")[1].strip.to_i * 100
+  elsif each.match('^CPU frequency')
+    $cpu_speed    = each.split(":")[1].strip.split(" ")[0]
+  elsif each.match('^Memory size')
+    $total_memory = each.split(":")[1].strip.split(" ")[0].to_i
+  end
+end
 
-nodeinfo_text.split(/\n/).each{|line|
-    if     line.match('^CPU\(s\)')
-        $total_cpu   = line.split(":")[1].strip.to_i * 100
-    elsif  line.match('^CPU frequency')
-        $cpu_speed   = line.split(":")[1].strip.split(" ")[0]
-    elsif  line.match('^Memory size')
-        $total_memory = line.split(":")[1].strip.split(" ")[0]
+nodelist_text = `virsh -c qemu:///system list`
+exit(-1) if $? != 0
+nodelist = []
+nodelist_text.split(/\n/).each do |each|
+  if each.match('^\s*(\d+)')
+    nodelist << $1
+  end
+end
+
+$used_cpu = 0
+nodelist.each do |each|
+  vcpuinfo_text = `virsh -c qemu:///system vcpuinfo #{each}`
+  vcpuinfo_text.split(/\n/).each do |each|
+    $used_cpu += 100 if each.match('^\s*VCPU')
+  end
+end
+$free_cpu = $total_cpu - $used_cpu
+
+$used_memory = 0
+nodelist.each do |each|
+  dommemstat_text = `virsh -c qemu:///system dommemstat #{each}`
+  dommemstat_text.split(/\n/).each do |each|
+    if each.match('^\s*actual')
+      $used_memory += each.split(/\s+/)[1].to_i
     end
-}
+  end
+end
+$free_memory = $total_memory - $used_memory
 
-######
-#   for everything else, top & proc
-#####
-
-NETINTERFACE = "eth1"
-
-top_text=`top -bin2`
-exit(-1) if $?!=0
-
-top_text.gsub!(/^top.*^top.*?$/m, "") # Strip first top output
-
-top_text.split(/\n/).each{|line|
-    if line.match('^Cpu')
-        line[7..-1].split(",").each{|elemento|
-            temp = elemento.strip.split("%")
-            if temp[1]=="id"
-            idle = temp[0]
-            $free_cpu = idle.to_f * $total_cpu.to_f / 100
-            $used_cpu = $total_cpu.to_f - $free_cpu
-                break
-            end
-
-        }
-    end
-}
-
-$total_memory = `free -k|grep "Mem:" | awk '{print $2}'`
-tmp=`free -k|grep "buffers\/cache"|awk '{print $3 " " $4}'`.split
-
-$used_memory=tmp[0]
-$free_memory=tmp[1]
-
-net_text=`cat /proc/net/dev`
-exit(-1) if $?!=0
-
-net_text.split(/\n/).each{|line|
-    if line.match("^ *#{NETINTERFACE}")
-        arr   = line.split(":")[1].split(" ")
-        $netrx = arr[0]
-        $nettx = arr[8]
-        break
-    end
-}
 
 print_info("HYPERVISOR","kvm")
 
