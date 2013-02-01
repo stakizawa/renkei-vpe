@@ -24,7 +24,7 @@ RENKEI-VPE runs on CentOS 6.x (i386/amd64) with the following software.
 RENKEI-VPE can control VMs running the following OS.
 
 * CentOS 5.x and 6.x
-* Scientific Linux 5.x and 6.x (will be supported)
+* Scientific Linux 5.x and 6.x
 
 Servers which run VMs using RENKEI-VPE can be any Linux machines.
 We have tested on the following servers as resources of RENKEI-VPE.
