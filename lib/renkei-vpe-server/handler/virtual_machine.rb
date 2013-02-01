@@ -311,7 +311,8 @@ EOS
   CREATE_DATE    = "#{Time.new.to_i}"
 ]
 
-REQUIREMENTS = "CLUSTER = \\"#{one_cluster}\\""
+REQUIREMENTS = "CLUSTER = \\"#{one_cluster}\\" & FREECPU > #{type.cpu * 100} & FREEMEMORY > #{type.memory}"
+RANK = FREECPU
 
 GRAPHICS = [
   TYPE   = "vnc",
