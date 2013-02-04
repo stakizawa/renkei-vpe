@@ -172,9 +172,24 @@ SQL
         @zones.strip.split(ITEM_SEPARATOR).map { |i| i.to_i }
       end
 
-      # It returns an array containing limits on each zone in integer.
+      # It returns an array containing limits in each zone in integer.
       def limits_in_array
         @limits.strip.split(ITEM_SEPARATOR).map { |i| i.to_i }
+      end
+
+      # It returns an array containing uses in each zone in intger.
+      def uses_in_array
+        @uses.strip.split(ITEM_SEPARATOR).map { |i| i.to_i }
+      end
+
+      def modify_zone_use(zone_id, vm_weight)
+        zids = zones_in_array
+        if zids.include? zone_id
+          idx = zids.index(zone_id)
+          uses = uses_in_array
+          uses[idx] += vm_weight
+          @uses = uses.join(ITEM_SEPARATOR)
+        end
       end
 
       protected
