@@ -5,6 +5,7 @@ Release note for RENKEI-VPE 1.5.1
 
 * implement RENKEI-VPE information manager
 * [bug] modify not to overprovision hardware resources to VMs
+* [bug] modify behavior of reading config file
 
 
 Release note for RENKEI-VPE 1.5.0

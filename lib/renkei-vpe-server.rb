@@ -164,7 +164,7 @@ module RenkeiVPE
     end
 
     def initialize(conf_hash)
-      @configs = DEFAULTS.merge(conf_hash)
+      @configs = (conf_hash)? DEFAULTS.merge(conf_hash) : DEFAULTS
     end
 
     def method_missing(action, *args)
