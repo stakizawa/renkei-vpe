@@ -36,7 +36,8 @@ CREATE TABLE #{@table_name} (
   enabled INTEGER,
   zones   TEXT,
   vm_cnt  INTEGER,
-  limits  TEXT
+  limits  TEXT,
+  uses    TEXT
 );
 SQL
 
@@ -54,6 +55,8 @@ SQL
       attr_accessor(:vm_cnt)  { |v| v.to_i }
       # number of VMs the user can run on each zone in 'zones'
       attr_accessor :limits
+      # number of VMs the user currently runs on each zone in 'zones'
+      attr_accessor :uses
 
       def initialize
         super
@@ -63,6 +66,7 @@ SQL
         @zones   = ''
         @vm_cnt  = -1
         @limits  = ''
+        @uses    = ''
       end
 
       def to_s
@@ -73,7 +77,8 @@ SQL
           "enabled=#{@enabled}," +
           "zones='#{@zones}',"   +
           "vm_cnt=#{@vm_cnt},"   +
-          "limits='#{@limits}'"  +
+          "limits='#{@limits}'," +
+          "uses='#{@uses}'"      +
           ">"
       end
 
@@ -127,6 +132,11 @@ SQL
         e.add(REXML::Text.new(@limits))
         user_e.add(e)
 
+        # set uses
+        e = REXML::Element.new('ZONE_USES')
+        e.add(REXML::Text.new(@uses))
+        user_e.add(e)
+
         return user_e
       end
 
@@ -176,15 +186,17 @@ SQL
         raise_if_nil_or_not_class( @zones,   'zones',   String)
         raise_if_nil_and_not_class(@vm_cnt,  'vm_cnt',  Integer)
         raise_if_nil_or_not_class( @limits,  'limits',  String)
+        raise_if_nil_or_not_class( @uses,    'uses',    String)
       end
 
       def to_create_record_str
-        "#{@oid},"       +
-          "'#{@name}',"  +
-          "#{@enabled}," +
-          "'#{@zones}'," +
-          "#{@vm_cnt},"  +
-          "'#{@limits}'"
+        "#{@oid},"        +
+          "'#{@name}',"   +
+          "#{@enabled},"  +
+          "'#{@zones}',"  +
+          "#{@vm_cnt},"   +
+          "'#{@limits}'," +
+          "'#{@uses}'"
       end
 
       def to_find_id_str
@@ -197,7 +209,8 @@ SQL
           "enabled=#{@enabled}," +
           "zones='#{@zones}',"   +
           "vm_cnt=#{@vm_cnt},"   +
-          "limits='#{@limits}'"
+          "limits='#{@limits}'," +
+          "uses='#{@uses}'"
       end
 
       def self.each(one_session)
@@ -214,7 +227,7 @@ SQL
       end
 
       def self.setup_attrs(u, attrs)
-        return u unless attrs.size == 7
+        return u unless attrs.size == 8
         u.instance_eval do
           @id      = attrs[0].to_i
         end
@@ -224,6 +237,7 @@ SQL
         u.zones   = attrs[4]
         u.vm_cnt  = attrs[5]
         u.limits  = attrs[6]
+        u.uses    = attrs[7]
         return u
       end
 

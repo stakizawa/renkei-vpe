@@ -25,11 +25,11 @@ module RenkeiVPE
       Log_File = 'user_spec.log'
       DB_File  = 'user_spec.db'
 
-      User0 = [ 0, 0, 'popadmin', 1, '1;2;3', 10, '1;1;1' ]
-      User1 = [ 1, 1, 'test'    , 0, ''     , 0 , ''      ]
+      User0 = [ 0, 0, 'popadmin', 1, '1;2;3', 10, '1;1;1', '0:0:0' ]
+      User1 = [ 1, 1, 'test'    , 0, ''     , 0 , ''     , ''      ]
 
-      User0_SQL = "(0,0,'popadmin',1,'1;2;3',10,'1;1;1')"
-      User1_SQL = "(1,1,'test',0,'',0,'')"
+      User0_SQL = "(0,0,'popadmin',1,'1;2;3',10,'1;1;1','0;0;0')"
+      User1_SQL = "(1,1,'test',0,'',0,'','')"
 
       def run_sql(sql)
         system("sqlite3 #{DB_File} \"#{sql}\" 2>/dev/null")
