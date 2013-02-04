@@ -4,9 +4,26 @@ Release note for RENKEI-VPE 1.5.1
 [2013.02.xx]
 
 * implement RENKEI-VPE information manager
+* show current quota use in 'rvpeuser show/info'
+* RENKEI-VPE VM manager returns VM's assigned CPUs when it monitors a VM
 * default log level is set to 'info'
 * [bug] modify not to overprovision hardware resources to VMs
 * [bug] modify behavior of reading config file
+
+As this release contains DB schema modification, run the following migration
+script if you update from previous version.
+
+  $ cd $RVPE_HOME
+  $ ruby share/scripts/schema_migration/run_migrations.rb var/rvped.db
+
+As this release uses the newly implemented RENKEI-VPE information manager,
+the definition of hosting servers should be done again.  To do this, first
+shutdown all VMs, then remove all hosting servers and finaly add all servers
+again.
+
+  $ rvpevm shutdown HOST
+  $ rvpezone removehost ZONE HOST
+  $ rvpezone addhost ZONE HOST
 
 
 Release note for RENKEI-VPE 1.5.0
