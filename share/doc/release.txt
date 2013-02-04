@@ -4,6 +4,7 @@ Release note for RENKEI-VPE 1.5.1
 [2013.02.xx]
 
 * implement RENKEI-VPE information manager
+* default log level is set to 'info'
 * [bug] modify not to overprovision hardware resources to VMs
 * [bug] modify behavior of reading config file
 
