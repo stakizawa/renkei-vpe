@@ -172,10 +172,12 @@ def print_user(user, xml_output, verbose=false)
     zones_i = user['ZONE_IDS'].split(RenkeiVPE::Const::ITEM_SEPARATOR)
     zones_n = user['ZONE_NAMES'].split(RenkeiVPE::Const::ITEM_SEPARATOR)
     zones_l = user['ZONE_LIMITS'].split(RenkeiVPE::Const::ITEM_SEPARATOR)
+    zones_u = user['ZONE_USES'].split(RenkeiVPE::Const::ITEM_SEPARATOR)
     zones_i.size.times do |i|
       zone = zones_n[i] + '  ('
-      zone += "ID:#{zones_i[i]}  "                   if verbose
-      zone += "QUOTA:#{zones_l[i]})"
+      zone += "ID:#{"%2d"%[zones_i[i]]}  "              if verbose
+      zone += "QUOTA:#{"%4d"%[zones_l[i]]}  "
+      zone += "USE:#{"%4d"%[zones_u[i]]})"
       zones << zone
     end
     puts str % ['ZONES', zones.shift]

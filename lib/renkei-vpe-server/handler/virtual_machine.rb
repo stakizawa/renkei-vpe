@@ -162,20 +162,10 @@ module RenkeiVPE
           # 1-2. check if the user don't overcommit his maximum VM weight
           #      in the specified zone
           user_max = user.limits_in_array[user.zones_in_array.index(zone.id)]
-          vm_weight_in_zone = type.weight
-          rc = call_one_xmlrpc('one.vmpool.info', session, user.oid, false, -1)
-          raise rc[1] unless rc[0]
-          doc = REXML::Document.new(rc[1])
-          REXML::XPath.match(doc, 'VM_POOL/VM/ID').each do |oid_e|
-            oid = oid_e.get_text.to_s
-            vm = VirtualMachine.find("oid=#{oid}")[0]
-            if vm.zone_id == zone.id
-              _type = VMType.find_by_id(vm.type_id)[0]
-              vm_weight_in_zone += _type.weight
-            end
-          end
-          if vm_weight_in_zone > user_max
-            raise "User[#{user_name}] can't run any more VMs in Zone[#{zone_n}] as quota reached."
+          user_use = user.uses_in_array[user.zones_in_array.index(zone.id)]
+          if user_use + type.weight > user_max
+            raise "User[#{user_name}] can't run any more VMs " +
+              "in Zone[#{zone_n}] as quota reached."
           end
 
           # 2. get image information
@@ -353,7 +343,8 @@ EOS
           # 9-2. create an empty file whose name is vm.id
           FileUtils.touch(vmtmpdir + "/#{vm.id}")
 
-          # 10. finalize: mark leases as used
+          # 10. finalize
+          # 10-1. mark leases as used
           leases.each do |lease|
             begin
               lease.used = 1
@@ -364,6 +355,20 @@ EOS
               FileUtils.rm_rf(vmtmpdir)
               raise e
             end
+          end
+          # 10-2. update quota use
+          begin
+            user.modify_zone_use(zone.id, type.weight)
+            user.update
+          rescue => e
+            call_one_xmlrpc('one.vm.action', session, 'finalize', rc[1])
+            vm.delete
+            FileUtils.rm_rf(vmtmpdir)
+            leases.each do |lease|
+              lease.used = 0
+              lease.update
+            end
+            raise e
           end
 
           [true, vm.id]
@@ -396,6 +401,11 @@ EOS
                 lease.used = 0
                 lease.update
               end
+              # reduce quota use
+              user = User.find_by_id(vm.user_id).last
+              type = VMType.find_by_id(vm.type_id).last
+              user.modify_zone_use(vm.zone_id, -type.weight)
+              user.update
             end
 
             rc

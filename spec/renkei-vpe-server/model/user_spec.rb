@@ -25,11 +25,11 @@ module RenkeiVPE
       Log_File = 'user_spec.log'
       DB_File  = 'user_spec.db'
 
-      User0 = [ 0, 0, 'popadmin', 1, '1;2;3', 10, '1;1;1' ]
-      User1 = [ 1, 1, 'test'    , 0, ''     , 0 , ''      ]
+      User0 = [ 0, 0, 'popadmin', 1, '1;2;3', 10, '1;1;1', '0;0;0' ]
+      User1 = [ 1, 1, 'test'    , 0, ''     , 0 , ''     , ''      ]
 
-      User0_SQL = "(0,0,'popadmin',1,'1;2;3',10,'1;1;1')"
-      User1_SQL = "(1,1,'test',0,'',0,'')"
+      User0_SQL = "(0,0,'popadmin',1,'1;2;3',10,'1;1;1','0;0;0')"
+      User1_SQL = "(1,1,'test',0,'',0,'','')"
 
       def run_sql(sql)
         system("sqlite3 #{DB_File} \"#{sql}\" 2>/dev/null")
@@ -288,6 +288,49 @@ module RenkeiVPE
           ls = u.limits_in_array
           ls.class.should == Array
           ls.size.should == 0
+        end
+      end
+
+      context '#uses_in_array' do
+        it 'will return zone uses in an array' do
+          u = gen_user_from_native_sql(User0[0])
+          us = u.uses_in_array
+          us.class.should == Array
+          us.size.should == 3
+          us[0].should == 0
+
+          u = gen_user_from_native_sql(User1[0])
+          us = u.uses_in_array
+          us.class.should == Array
+          us.size.should == 0
+        end
+      end
+
+      context '#modify_zone_use' do
+        it 'will increase zone use if a positive value is given.' do
+          u = User.gen_instance(User0)
+          u.modify_zone_use(2, 1)
+          u.update
+          uu = gen_user_from_native_sql(User0[0])
+          uu.uses.should == '0;1;0'
+
+          u.modify_zone_use(2, 2)
+          u.update
+          uu = gen_user_from_native_sql(User0[0])
+          uu.uses.should == '0;3;0'
+        end
+
+        it 'will decrease zone use if a negative value is given.' do
+          u = User.gen_instance(User0)
+          u.modify_zone_use(3, -1)
+          u.update
+          uu = gen_user_from_native_sql(User0[0])
+          uu.uses.should == '0;0;-1'
+
+          u.modify_zone_use(3, -2)
+          u.update
+          uu = gen_user_from_native_sql(User0[0])
+          uu.uses.should == '0;0;-3'
         end
       end
 
