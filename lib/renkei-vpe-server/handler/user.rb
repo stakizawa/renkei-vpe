@@ -256,6 +256,9 @@ module RenkeiVPE
         write_task('rvpe.user.enable_zone', session, true) do
           user = User.find_by_id(id)[0]
           raise "User[#{id}] does not exist." unless user
+          unless Zone.find_by_id(zone_id)[0]
+            raise "Zone[#{zone_id}] does not exist."
+          end
 
           unless limit.kind_of? Integer
             if limit.instance_of?(String) && /^-?[0123456789]+$/ =~ limit
