@@ -395,6 +395,7 @@ EOS
               lease = Lease.find_by_id(vm.lease_id)[0]
               vmtmpdir  = "#{$rvpe_path}/var/#{lease.name}"
               FileUtils.rm_rf(vmtmpdir)
+              flg_release_by_this_action = true if lease.used == 1
               # mark leases as not-used
               vm.leases.split(ITEM_SEPARATOR).map { |i| i.to_i }.each do |lid|
                 lease = Lease.find_by_id(lid)[0]
@@ -402,10 +403,12 @@ EOS
                 lease.update
               end
               # reduce quota use
-              user = User.find_by_id(vm.user_id).last
-              type = VMType.find_by_id(vm.type_id).last
-              user.modify_zone_use(vm.zone_id, -type.weight)
-              user.update
+              if flg_release_by_this_action
+                user = User.find_by_id(vm.user_id).last
+                type = VMType.find_by_id(vm.type_id).last
+                user.modify_zone_use(vm.zone_id, -type.weight)
+                user.update
+              end
             end
 
             rc
