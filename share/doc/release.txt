@@ -9,6 +9,8 @@ Release note for RENKEI-VPE 1.5.1
 * default log level is set to 'info'
 * [bug] modify not to overprovision hardware resources to VMs
 * [bug] modify behavior of reading config file
+* [bug] modify not to register undefined zones to users
+        when 'rvpeuser enable_zone' is called
 
 As this release contains DB schema modification, run the following migration
 script if you update from previous version.
