@@ -1,7 +1,7 @@
 Release note for RENKEI-VPE 1.5.1
 =================================
 
-[2013.02.xx]
+[2013.02.19]
 
 * implement RENKEI-VPE information manager
 * show current quota use in 'rvpeuser show/info'
