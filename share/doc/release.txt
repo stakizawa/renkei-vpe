@@ -1,3 +1,12 @@
+Release note for RENKEI-VPE 1.5.2
+n=================================
+
+[2013.03.03]
+
+* [bug] modify the behavior of reading osimage attribute file
+* [bug] modify the behavior of 'rvpeuser enable_zone'
+
+
 Release note for RENKEI-VPE 1.5.1
 =================================
 
