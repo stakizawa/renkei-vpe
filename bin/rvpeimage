@@ -180,10 +180,12 @@ end
 def update_template(template, transfer_session)
   new_template = ''
   template.each_line do |l|
-    if /^(\s*path\s*:\s*)(.+)$/i =~ l
-      l = $1 + File.expand_path($2)
+    if /^\s*(path)\s*:\s*(.+)$/i =~ l
+      l = $1 + ': ' + File.expand_path($2)
+    elsif /^\s*(.+)\s*:\s*(.+)$/i =~ l
+      l = $1 + ': ' + $2
     end
-    new_template += l
+    new_template += l + "\n"
   end
   data = YAML.load(new_template)
   data['transfer'] = transfer_session
