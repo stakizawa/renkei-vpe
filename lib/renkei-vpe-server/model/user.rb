@@ -148,11 +148,13 @@ SQL
       def modify_zone(zone_id, enabled, limit)
         zids = zones_in_array
         lmts = limits_in_array
+        uses = uses_in_array
 
         if enabled
           unless zids.include? zone_id
             zids << zone_id
             lmts << limit
+            uses << 0
           else
             lmts[zids.index(zone_id)] = limit
           end
@@ -161,10 +163,12 @@ SQL
             idx = zids.index(zone_id)
             zids.delete_at(idx)
             lmts.delete_at(idx)
+            uses.delete_at(idx)
           end
         end
         @zones = zids.join(ITEM_SEPARATOR)
         @limits = lmts.join(ITEM_SEPARATOR)
+        @uses = uses.join(ITEM_SEPARATOR)
       end
 
       # It returns an array containing zone ids in integer.
