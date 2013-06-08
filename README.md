@@ -15,7 +15,7 @@ Supported Platforms
 RENKEI-VPE runs on CentOS 6.x (i386/amd64) with the following software.
 
 * Ruby 1.8.7 (1.9.x is NOT tested yet)
-  * ruby-progressbar (>= 1.0.2)
+  * ruby-progressbar (= 1.0.2)
   * nokogiri (>= 1.5.0)
   * sqlite3 (>= 1.3.5)
 * OpenNebula 2.2.1

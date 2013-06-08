@@ -1,5 +1,13 @@
+Release note for RENKEI-VPE 1.5.3
+=================================
+
+[2013.06.08]
+
+* [bug] modify the management of a persistent image
+
+
 Release note for RENKEI-VPE 1.5.2
-n=================================
+=================================
 
 [2013.03.03]
 
