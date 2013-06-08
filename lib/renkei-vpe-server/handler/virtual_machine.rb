@@ -185,6 +185,10 @@ module RenkeiVPE
             raise 'NIC_MODEL attributes is not set to the image.'
           end
           persistent_image = doc.elements['/IMAGE/PERSISTENT'].get_text.to_s
+          image_state = doc.elements['/IMAGE/STATE'].get_text.to_s
+          if persistent_image == '1' && image_state == '2'
+            raise "A persistent image can't be used by two or more VMs."
+          end
 
           # 3. get cluster name from OpenNebula
           rc = call_one_xmlrpc('one.cluster.info', session, zone.oid)
